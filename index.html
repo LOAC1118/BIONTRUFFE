@@ -4,433 +4,394 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BIO N TRUFFE — Portail Commercial</title>
-<meta name="description" content="Espace commercial BIO N TRUFFE — Eridan BNT">
 <meta name="robots" content="noindex, nofollow">
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --ink:    #0a1a0f;
-  --forest: #1a3d26;
-  --moss:   #2d6040;
-  --sage:   #4a8a5e;
-  --mist:   #e8f0eb;
-  --cream:  #f6f4ef;
+  --night:  #0a0f1e;
+  --navy:   #0d1b3e;
+  --blue:   #1a3a8f;
+  --mid:    #2563eb;
+  --sky:    #3b82f6;
+  --light:  #eff6ff;
+  --mist:   #f0f4ff;
   --white:  #ffffff;
-  --border: rgba(10,26,15,.10);
-  --serif:  'Instrument Serif', Georgia, serif;
-  --sans:   'DM Sans', system-ui, sans-serif;
+  --ink:    #0a0f1e;
+  --sub:    #64748b;
+  --border: rgba(10,15,30,.08);
+  --syne:   'Syne', sans-serif;
+  --inter:  'Inter', sans-serif;
 }
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-
-html { scroll-behavior:smooth; }
-
-body {
-  font-family: var(--sans);
-  background: var(--cream);
-  color: var(--ink);
-  font-size: 15px;
-  line-height: 1.6;
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--inter);background:var(--white);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
 
 /* ── TOPBAR ── */
-.topbar {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  height: 56px;
-  background: rgba(246,244,239,.92);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 2.5rem;
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:58px;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 3rem;
 }
-.topbar-brand {
-  display: flex; align-items: center; gap: 10px;
-  text-decoration: none; color: var(--ink);
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;}
+.brand-mark{
+  width:34px;height:34px;border-radius:9px;
+  background:var(--navy);
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;
 }
-.topbar-logo {
-  width: 32px; height: 32px; border-radius: 8px;
-  background: var(--forest);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px;
+.brand-name{font-family:var(--syne);font-size:.95rem;font-weight:700;color:var(--navy);letter-spacing:.01em;}
+.topbar-right{display:flex;align-items:center;gap:1rem;}
+.badge{
+  font-family:var(--syne);font-size:.65rem;font-weight:600;
+  color:var(--blue);background:var(--light);
+  border:1px solid rgba(37,99,235,.18);
+  padding:3px 11px;border-radius:20px;letter-spacing:.08em;text-transform:uppercase;
 }
-.topbar-name {
-  font-family: var(--serif);
-  font-size: 1rem; font-weight: 400;
-  color: var(--forest);
+.user-chip{
+  display:flex;align-items:center;gap:8px;
+  font-size:.78rem;color:var(--sub);
 }
-.topbar-right { display:flex; align-items:center; gap:1rem; }
-.topbar-badge {
-  font-size: .68rem; font-weight: 600;
-  color: var(--moss); background: var(--mist);
-  border: 1px solid rgba(45,96,64,.2);
-  padding: 3px 10px; border-radius: 20px;
-  letter-spacing: .06em; text-transform: uppercase;
-}
-.topbar-user {
-  display: flex; align-items: center; gap: 8px;
-  font-size: .8rem; color: var(--moss);
-}
-.topbar-avatar {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: var(--forest); color: var(--white);
-  display: flex; align-items: center; justify-content: center;
-  font-size: .62rem; font-weight: 600;
+.avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:var(--navy);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--syne);font-size:.65rem;font-weight:700;
 }
 
 /* ── HERO ── */
-.hero {
-  min-height: 100vh;
-  display: flex; flex-direction: column;
-  padding-top: 56px;
+.hero{
+  min-height:100vh;
+  display:grid;grid-template-columns:1fr 1fr;
+  padding-top:58px;
 }
-.hero-main {
-  flex: 1;
-  display: grid; grid-template-columns: 1fr 1fr;
-  min-height: calc(100vh - 56px);
+.hero-left{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:5rem 4rem 5rem 6rem;
+  background:var(--white);
+  position:relative;
 }
-.hero-left {
-  display: flex; flex-direction: column;
-  justify-content: center;
-  padding: 5rem 4rem 5rem 6rem;
-  background: var(--white);
-  border-right: 1px solid var(--border);
+.hero-left::after{
+  content:'';position:absolute;right:0;top:10%;bottom:10%;
+  width:1px;background:linear-gradient(to bottom,transparent,var(--border) 20%,var(--border) 80%,transparent);
 }
-.hero-eyebrow {
-  font-size: .72rem; font-weight: 600;
-  color: var(--sage); letter-spacing: .14em; text-transform: uppercase;
-  margin-bottom: 1.5rem;
-  display: flex; align-items: center; gap: .5rem;
+.eyebrow{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:var(--syne);font-size:.7rem;font-weight:600;
+  color:var(--mid);letter-spacing:.12em;text-transform:uppercase;
+  margin-bottom:2rem;
 }
-.hero-eyebrow::before {
-  content: ''; width: 20px; height: 1px; background: var(--sage);
+.eyebrow-line{width:24px;height:1.5px;background:var(--mid);}
+.hero-h1{
+  font-family:var(--syne);
+  font-size:clamp(3rem,5.5vw,4.5rem);
+  font-weight:800;line-height:1.05;
+  color:var(--navy);letter-spacing:-.02em;
+  margin-bottom:1.75rem;
 }
-.hero-title {
-  font-family: var(--serif);
-  font-size: clamp(2.8rem, 5vw, 4rem);
-  line-height: 1.1;
-  color: var(--ink);
-  margin-bottom: 1.5rem;
+.hero-h1 .accent{color:var(--mid);}
+.hero-sub{
+  font-size:1rem;color:var(--sub);line-height:1.75;
+  max-width:420px;margin-bottom:2.75rem;font-weight:300;
 }
-.hero-title em {
-  font-style: italic; color: var(--forest);
+.cta-row{display:flex;gap:.85rem;flex-wrap:wrap;}
+.btn-p{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.85rem 2rem;
+  background:var(--navy);color:#fff;
+  font-family:var(--syne);font-size:.85rem;font-weight:600;
+  border:none;border-radius:10px;text-decoration:none;
+  letter-spacing:.02em;cursor:pointer;
+  transition:background .2s,transform .15s;
 }
-.hero-sub {
-  font-size: 1rem; color: var(--moss);
-  line-height: 1.7; max-width: 440px;
-  margin-bottom: 2.5rem;
+.btn-p:hover{background:var(--night);transform:translateY(-1px);}
+.btn-s{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.85rem 2rem;
+  background:transparent;color:var(--navy);
+  font-family:var(--syne);font-size:.85rem;font-weight:600;
+  border:1.5px solid rgba(13,27,62,.18);border-radius:10px;
+  text-decoration:none;letter-spacing:.02em;cursor:pointer;
+  transition:border-color .2s,background .2s;
 }
-.hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
-.btn-primary {
-  display: inline-flex; align-items: center; gap: .5rem;
-  padding: .8rem 1.75rem;
-  background: var(--forest); color: var(--white);
-  font-family: var(--sans); font-size: .88rem; font-weight: 500;
-  border: none; border-radius: 8px; cursor: pointer;
-  text-decoration: none; letter-spacing: .01em;
-  transition: background .2s;
+.btn-s:hover{border-color:var(--mid);background:var(--light);}
+.hero-right{
+  background:var(--navy);
+  display:flex;flex-direction:column;justify-content:center;
+  padding:4rem 4rem 4rem 5rem;
+  position:relative;overflow:hidden;
 }
-.btn-primary:hover { background: var(--ink); }
-.btn-secondary {
-  display: inline-flex; align-items: center; gap: .5rem;
-  padding: .8rem 1.75rem;
-  background: transparent; color: var(--forest);
-  font-family: var(--sans); font-size: .88rem; font-weight: 500;
-  border: 1.5px solid rgba(26,61,38,.25); border-radius: 8px;
-  cursor: pointer; text-decoration: none;
-  transition: border-color .2s, background .2s;
+/* Cercles décoratifs subtils */
+.hero-right::before{
+  content:'';position:absolute;
+  top:-80px;right:-80px;
+  width:320px;height:320px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.06);
 }
-.btn-secondary:hover { border-color: var(--forest); background: var(--mist); }
+.hero-right::after{
+  content:'';position:absolute;
+  bottom:-60px;left:60px;
+  width:220px;height:220px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.04);
+}
+.crm-eyebrow{
+  font-family:var(--syne);font-size:.62rem;font-weight:600;
+  color:rgba(255,255,255,.3);letter-spacing:.16em;text-transform:uppercase;
+  margin-bottom:2rem;
+  display:flex;align-items:center;gap:.5rem;
+}
+.crm-eyebrow::before{content:'';width:18px;height:1px;background:rgba(255,255,255,.25);}
 
-.hero-right {
-  background: var(--forest);
-  display: flex; flex-direction: column;
-  justify-content: center; align-items: flex-start;
-  padding: 4rem;
-  position: relative; overflow: hidden;
+/* Stats grid */
+.stats-wrap{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:1px;
+  background:rgba(255,255,255,.06);
+  border-radius:14px;overflow:hidden;
+  margin-bottom:2rem;position:relative;z-index:1;
 }
-.hero-right::before {
-  content: '';
-  position: absolute; top: -60px; right: -60px;
-  width: 300px; height: 300px;
-  border-radius: 50%;
-  background: rgba(255,255,255,.04);
+.stat{
+  background:rgba(255,255,255,.04);
+  padding:1.5rem 1.75rem;
+  transition:background .15s;
 }
-.hero-right::after {
-  content: '';
-  position: absolute; bottom: -40px; left: -40px;
-  width: 200px; height: 200px;
-  border-radius: 50%;
-  background: rgba(255,255,255,.03);
+.stat:hover{background:rgba(255,255,255,.07);}
+.stat-n{
+  font-family:var(--syne);font-size:2.4rem;font-weight:800;
+  color:#fff;line-height:1;margin-bottom:.2rem;
 }
+.stat-l{font-size:.7rem;font-weight:500;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.1em;}
 
-/* STATS rapides */
-.hero-stats {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 1px; background: rgba(255,255,255,.1);
-  border-radius: 12px; overflow: hidden;
-  width: 100%; margin-bottom: 2rem; position: relative; z-index:1;
-}
-.stat-block {
-  background: rgba(255,255,255,.05);
-  padding: 1.4rem 1.5rem;
-  display: flex; flex-direction: column; gap: .2rem;
-}
-.stat-block:hover { background: rgba(255,255,255,.08); }
-.stat-num {
-  font-family: var(--serif); font-size: 2.2rem;
-  color: var(--white); line-height: 1;
-}
-.stat-lbl {
-  font-size: .72rem; font-weight: 500;
-  color: rgba(255,255,255,.5);
-  text-transform: uppercase; letter-spacing: .08em;
-}
-
-/* Infos catalogue */
-.cat-infos {
-  display: flex; gap: 1rem; flex-wrap: wrap; position: relative; z-index:1;
-}
-.cat-pill {
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.15);
-  border-radius: 20px;
-  padding: .3rem .9rem;
-  font-size: .75rem; color: rgba(255,255,255,.75);
-  font-weight: 500;
+/* Pills info */
+.pills{display:flex;gap:.6rem;flex-wrap:wrap;position:relative;z-index:1;}
+.pill{
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;
+  padding:.3rem .9rem;
+  font-size:.72rem;color:rgba(255,255,255,.6);font-weight:500;
 }
 
-/* CRM label */
-.crm-label {
-  font-size: .65rem; font-weight: 600; letter-spacing: .12em;
-  text-transform: uppercase; color: rgba(255,255,255,.4);
-  margin-bottom: 1.5rem;
-  display: flex; align-items: center; gap: .5rem;
+/* ── MODULES ── */
+.modules{
+  background:var(--mist);
+  padding:6rem;
 }
-.crm-label::before { content:''; width:16px; height:1px; background:rgba(255,255,255,.3); }
+.modules-top{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  margin-bottom:3.5rem;
+}
+.mod-label{
+  font-family:var(--syne);font-size:.68rem;font-weight:600;
+  color:var(--mid);letter-spacing:.12em;text-transform:uppercase;
+  margin-bottom:.75rem;
+}
+.mod-h2{
+  font-family:var(--syne);font-size:2.25rem;font-weight:800;
+  color:var(--navy);letter-spacing:-.02em;line-height:1.15;
+}
+.mod-sub-right{font-size:.85rem;color:var(--sub);max-width:280px;text-align:right;line-height:1.65;}
 
-/* ── MODULES SECTION ── */
-.modules {
-  padding: 5rem 6rem;
-  background: var(--cream);
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5px;background:rgba(13,27,62,.08);border-radius:16px;overflow:hidden;}
+.mod-card{
+  background:var(--white);
+  padding:2.25rem 2.5rem;
+  text-decoration:none;display:flex;flex-direction:column;
+  position:relative;overflow:hidden;
+  transition:background .15s;
 }
-.modules-header {
-  margin-bottom: 3rem;
-  display: flex; align-items: flex-end; justify-content: space-between;
+.mod-card:hover{background:var(--light);}
+.mod-num{
+  font-family:var(--syne);font-size:3rem;font-weight:800;
+  color:rgba(13,27,62,.06);line-height:1;
+  position:absolute;top:1.25rem;right:1.75rem;
 }
-.modules-title {
-  font-family: var(--serif);
-  font-size: 2rem; color: var(--ink);
-  line-height: 1.2;
+.mod-icon-wrap{
+  width:44px;height:44px;border-radius:11px;
+  background:var(--mist);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;margin-bottom:1.25rem;
+  border:1px solid rgba(13,27,62,.06);
+  transition:background .15s;
 }
-.modules-sub {
-  font-size: .82rem; color: var(--moss);
-  margin-top: .4rem;
+.mod-card:hover .mod-icon-wrap{background:var(--light);}
+.mod-name{
+  font-family:var(--syne);font-size:1.1rem;font-weight:700;
+  color:var(--navy);margin-bottom:.5rem;
 }
-.section-tag {
-  font-size: .68rem; font-weight: 600; color: var(--sage);
-  letter-spacing: .12em; text-transform: uppercase;
+.mod-desc{font-size:.82rem;color:var(--sub);line-height:1.65;flex:1;}
+.mod-link{
+  display:flex;align-items:center;gap:.35rem;
+  font-family:var(--syne);font-size:.75rem;font-weight:600;
+  color:var(--mid);margin-top:1.5rem;letter-spacing:.04em;
+  opacity:0;transform:translateX(-4px);
+  transition:opacity .2s,transform .2s;
 }
-
-.modules-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr);
-  gap: 1px; background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: 16px; overflow: hidden;
-}
-.mod-card {
-  background: var(--white);
-  padding: 2rem 2.25rem;
-  text-decoration: none;
-  display: block;
-  transition: background .15s;
-  position: relative; overflow: hidden;
-}
-.mod-card:hover { background: var(--mist); }
-.mod-card:hover .mod-arrow { transform: translate(3px,-3px); }
-.mod-icon {
-  width: 42px; height: 42px; border-radius: 10px;
-  background: var(--mist);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.1rem; margin-bottom: 1.25rem;
-  transition: background .15s;
-}
-.mod-card:hover .mod-icon { background: rgba(45,96,64,.15); }
-.mod-name {
-  font-family: var(--serif);
-  font-size: 1.2rem; color: var(--ink);
-  margin-bottom: .4rem; line-height: 1.25;
-}
-.mod-desc {
-  font-size: .82rem; color: var(--moss);
-  line-height: 1.65; max-width: 340px;
-}
-.mod-arrow {
-  position: absolute; top: 1.75rem; right: 1.75rem;
-  font-size: .85rem; color: var(--sage);
-  transition: transform .2s;
-}
+.mod-card:hover .mod-link{opacity:1;transform:translateX(0);}
 
 /* ── FOOTER ── */
-footer {
-  background: var(--forest);
-  padding: 2.5rem 6rem;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 1rem;
+footer{
+  background:var(--navy);
+  padding:3rem 6rem;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;
 }
-.footer-brand {
-  font-family: var(--serif);
-  font-size: 1rem; color: rgba(255,255,255,.9);
+.footer-left{display:flex;align-items:center;gap:14px;}
+.footer-mark{
+  width:36px;height:36px;border-radius:9px;
+  background:rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;font-size:15px;
 }
-.footer-brand span { color: rgba(255,255,255,.45); font-size:.85rem; display:block; margin-top:.2rem; }
-.footer-meta {
-  font-size: .75rem; color: rgba(255,255,255,.4);
-  text-align: right; line-height: 1.8;
-}
-.footer-meta a { color: rgba(255,255,255,.6); text-decoration:none; }
-.footer-meta a:hover { color: rgba(255,255,255,.9); }
+.footer-name{font-family:var(--syne);font-size:.95rem;font-weight:700;color:#fff;}
+.footer-sub{font-size:.7rem;color:rgba(255,255,255,.35);margin-top:2px;}
+.footer-right{font-size:.75rem;color:rgba(255,255,255,.35);text-align:right;line-height:1.9;}
+.footer-right a{color:rgba(255,255,255,.55);text-decoration:none;transition:color .15s;}
+.footer-right a:hover{color:#fff;}
 
 /* ── ANIMATIONS ── */
-@keyframes fadeUp {
-  from { opacity:0; transform:translateY(20px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-.hero-eyebrow { animation: fadeUp .6s .1s both; }
-.hero-title   { animation: fadeUp .6s .2s both; }
-.hero-sub     { animation: fadeUp .6s .3s both; }
-.hero-actions { animation: fadeUp .6s .4s both; }
-.hero-right   { animation: fadeUp .5s .15s both; }
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.hero-left > *{animation:fadeUp .7s both;}
+.eyebrow{animation-delay:.05s;}
+.hero-h1{animation-delay:.15s;}
+.hero-sub{animation-delay:.25s;}
+.cta-row{animation-delay:.35s;}
+.hero-right{animation:fadeUp .6s .1s both;}
 
 /* ── RESPONSIVE ── */
-@media(max-width:900px){
-  .hero-main { grid-template-columns:1fr; }
-  .hero-left { padding:3rem 2rem; }
-  .hero-right { padding:2.5rem 2rem; }
-  .hero-stats { grid-template-columns:1fr 1fr; }
-  .modules { padding:3rem 2rem; }
-  .modules-grid { grid-template-columns:1fr; }
-  .modules-header { flex-direction:column; align-items:flex-start; gap:.5rem; }
-  footer { padding:2rem; flex-direction:column; text-align:center; }
-  .footer-meta { text-align:center; }
-  .topbar { padding:0 1.5rem; }
-  .topbar-user span { display:none; }
+@media(max-width:980px){
+  .hero{grid-template-columns:1fr;}
+  .hero-left{padding:3.5rem 2.5rem;border-right:none;}
+  .hero-left::after{display:none;}
+  .hero-right{padding:3rem 2.5rem;}
+  .stats-wrap{grid-template-columns:1fr 1fr;}
+  .modules{padding:4rem 2.5rem;}
+  .modules-top{flex-direction:column;align-items:flex-start;gap:.75rem;}
+  .mod-sub-right{text-align:left;max-width:none;}
+  .grid{grid-template-columns:1fr;}
+  .topbar{padding:0 1.5rem;}
+  footer{padding:2.5rem;flex-direction:column;}
+  .footer-right{text-align:left;}
 }
 </style>
 </head>
 <body>
 
-<!-- TOPBAR -->
 <header class="topbar">
-  <a class="topbar-brand" href="#">
-    <div class="topbar-logo">🌿</div>
-    <div class="topbar-name">BIO N TRUFFE</div>
+  <a class="brand" href="#">
+    <div class="brand-mark">🌿</div>
+    <div class="brand-name">BIO N TRUFFE</div>
   </a>
   <div class="topbar-right">
-    <span class="topbar-badge">AB · Certifié Bio</span>
-    <div class="topbar-user">
-      <div class="topbar-avatar">CS</div>
+    <span class="badge">AB · Certifié Bio</span>
+    <div class="user-chip">
+      <div class="avatar">CS</div>
       <span>Christophe SPOTO</span>
     </div>
   </div>
 </header>
 
-<!-- HERO -->
 <section class="hero">
-  <div class="hero-main">
-    <div class="hero-left">
-      <div class="hero-eyebrow">Plateforme CRM · Eridan BNT</div>
-      <h1 class="hero-title">
-        Gérez votre activité<br>
-        <em>BIO N TRUFFE</em><br>
-        en un seul espace
-      </h1>
-      <p class="hero-sub">
-        Prospection, commandes, clients et catalogue —
-        tout centralisé pour Christophe SPOTO et l'équipe commerciale Eridan BNT.
-      </p>
-      <div class="hero-actions">
-        <a href="crm_bnt.html" class="btn-primary">Ouvrir le CRM →</a>
-        <a href="commande.html" class="btn-secondary">Bon de commande</a>
+  <div class="hero-left">
+    <div class="eyebrow"><span class="eyebrow-line"></span>Plateforme CRM · Eridan BNT</div>
+    <h1 class="hero-h1">
+      Gérez votre<br>
+      activité <span class="accent">BIO N TRUFFE</span><br>
+      en un seul espace
+    </h1>
+    <p class="hero-sub">
+      Prospection, commandes, clients et catalogue —
+      tout centralisé pour Christophe SPOTO et l'équipe commerciale Eridan BNT.
+    </p>
+    <div class="cta-row">
+      <a href="crm_bnt.html" class="btn-p">Ouvrir le CRM →</a>
+      <a href="commande.html" class="btn-s">Bon de commande</a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="crm-eyebrow">CRM · Vue rapide</div>
+    <div class="stats-wrap">
+      <div class="stat">
+        <div class="stat-n" id="s-prospects">—</div>
+        <div class="stat-l">Prospects</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n" id="s-clients">—</div>
+        <div class="stat-l">Clients actifs</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n" id="s-commandes">—</div>
+        <div class="stat-l">Commandes</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n" id="s-ca">—</div>
+        <div class="stat-l">CA Total HT</div>
       </div>
     </div>
-
-    <div class="hero-right">
-      <div class="crm-label">CRM · Vue rapide</div>
-      <div class="hero-stats" id="stats-grid">
-        <div class="stat-block">
-          <div class="stat-num" id="s-prospects">—</div>
-          <div class="stat-lbl">Prospects</div>
-        </div>
-        <div class="stat-block">
-          <div class="stat-num" id="s-clients">—</div>
-          <div class="stat-lbl">Clients actifs</div>
-        </div>
-        <div class="stat-block">
-          <div class="stat-num" id="s-commandes">—</div>
-          <div class="stat-lbl">Commandes</div>
-        </div>
-        <div class="stat-block">
-          <div class="stat-num" id="s-ca">—</div>
-          <div class="stat-lbl">CA Total HT</div>
-        </div>
-      </div>
-      <div class="cat-infos">
-        <span class="cat-pill">13 produits catalogue</span>
-        <span class="cat-pill">3 profils revendeurs</span>
-        <span class="cat-pill">Franco 5 colis</span>
-        <span class="cat-pill">TVA 5,5%</span>
-      </div>
+    <div class="pills">
+      <span class="pill">13 produits</span>
+      <span class="pill">3 profils revendeurs</span>
+      <span class="pill">Franco 5 colis</span>
+      <span class="pill">TVA 5,5%</span>
     </div>
   </div>
 </section>
 
-<!-- MODULES -->
 <section class="modules">
-  <div class="modules-header">
+  <div class="modules-top">
     <div>
-      <div class="section-tag">Modules disponibles</div>
-      <h2 class="modules-title">Vos outils commerciaux</h2>
-      <p class="modules-sub">Tout l'essentiel pour piloter l'activité BIO N TRUFFE</p>
+      <div class="mod-label">Modules disponibles</div>
+      <h2 class="mod-h2">Vos outils<br>commerciaux</h2>
     </div>
+    <p class="mod-sub-right">Tout l'essentiel pour piloter l'activité BIO N TRUFFE au quotidien.</p>
   </div>
-  <div class="modules-grid">
+
+  <div class="grid">
     <a href="commande.html" class="mod-card">
-      <span class="mod-arrow">↗</span>
-      <div class="mod-icon">📋</div>
+      <div class="mod-num">01</div>
+      <div class="mod-icon-wrap">📋</div>
       <div class="mod-name">Bon de commande</div>
-      <p class="mod-desc">Saisissez une commande revendeur avec remises automatiques, calcul HT/TVA/TTC et récapitulatif email.</p>
+      <p class="mod-desc">Saisissez une commande revendeur avec remises automatiques, calcul HT/TVA/TTC et récapitulatif email. PDF tarif joint automatiquement.</p>
+      <div class="mod-link">Ouvrir →</div>
     </a>
     <a href="prospect.html" class="mod-card">
-      <span class="mod-arrow">↗</span>
-      <div class="mod-icon">👤</div>
+      <div class="mod-num">02</div>
+      <div class="mod-icon-wrap">👤</div>
       <div class="mod-name">Nouveau prospect</div>
-      <p class="mod-desc">Créez une fiche complète : magasin, contacts, livraisons. Envoi direct à Christophe SPOTO.</p>
+      <p class="mod-desc">Créez une fiche complète : magasin, contacts, livraisons. Envoi direct à Christophe SPOTO avec toutes les informations.</p>
+      <div class="mod-link">Créer →</div>
     </a>
     <a href="crm_bnt.html" class="mod-card">
-      <span class="mod-arrow">↗</span>
-      <div class="mod-icon">🗂️</div>
+      <div class="mod-num">03</div>
+      <div class="mod-icon-wrap">🗂️</div>
       <div class="mod-name">CRM Clients</div>
-      <p class="mod-desc">Convertissez vos prospects en clients, gérez leur historique de commandes et lancez un BDC pré-rempli.</p>
+      <p class="mod-desc">Convertissez vos prospects en clients, gérez leur historique de commandes, leur CA et lancez un BDC pré-rempli en un clic.</p>
+      <div class="mod-link">Accéder →</div>
     </a>
     <a href="admin.html" class="mod-card">
-      <span class="mod-arrow">↗</span>
-      <div class="mod-icon">⚙️</div>
+      <div class="mod-num">04</div>
+      <div class="mod-icon-wrap">⚙️</div>
       <div class="mod-name">Administration</div>
-      <p class="mod-desc">Catalogue produits, tarifs, profils revendeurs et configuration générale de l'espace BIO N TRUFFE.</p>
+      <p class="mod-desc">Catalogue produits, tarifs V15, profils revendeurs et configuration générale de l'espace BIO N TRUFFE Eridan BNT.</p>
+      <div class="mod-link">Configurer →</div>
     </a>
   </div>
 </section>
 
-<!-- FOOTER -->
 <footer>
-  <div class="footer-brand">
-    BIO N TRUFFE · Eridan BNT SARL
-    <span>65 Allée des Oliviers II · 84290 Cairanne</span>
+  <div class="footer-left">
+    <div class="footer-mark">🌿</div>
+    <div>
+      <div class="footer-name">BIO N TRUFFE · Eridan BNT SARL</div>
+      <div class="footer-sub">65 Allée des Oliviers II · 84290 Cairanne</div>
+    </div>
   </div>
-  <div class="footer-meta">
+  <div class="footer-right">
     Christophe SPOTO · 06 78 37 89 06<br>
-    <a href="mailto:contact@biontruffe.fr">contact@biontruffe.fr</a> ·
-    Franco : <strong style="color:rgba(255,255,255,.7)">5 colis</strong>
+    <a href="mailto:contact@biontruffe.fr">contact@biontruffe.fr</a>
+    · Franco : <strong style="color:rgba(255,255,255,.6)">5 colis</strong>
   </div>
 </footer>
 

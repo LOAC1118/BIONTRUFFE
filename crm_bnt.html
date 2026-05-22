@@ -6,67 +6,72 @@
 <title>BIO N TRUFFE — CRM Commercial</title>
 <meta name="description" content="CRM BIO N TRUFFE — Bons de commande, base clients, suivi commercial">
 <meta name="robots" content="noindex, nofollow">
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --ink:    #0a1a0f;
-  --forest: #1a3d26;
-  --moss:   #2d6040;
-  --sage:   #4a8a5e;
-  --sage2:  #3d7550;
-  --mist:   #e8f0eb;
-  --cream:  #f6f4ef;
+  --night:  #0a0f1e;
+  --navy:   #0d1b3e;
+  --blue:   #1a3a8f;
+  --mid:    #2563eb;
+  --sky:    #3b82f6;
+  --light:  #eff6ff;
+  --mist:   #f0f4ff;
   --white:  #ffffff;
+  --ink:    #0a0f1e;
+  --sub:    #64748b;
   --amber:  #b45309;
   --amber-bg:#fffbeb;
   --red:    #c0392b;
   --red-bg: #fdf2f0;
-  --border: rgba(10,26,15,.10);
-  --border-med: rgba(10,26,15,.15);
-  --shadow-sm: 0 1px 4px rgba(10,26,15,.06);
-  --shadow-md: 0 4px 14px rgba(10,26,15,.09);
-  --shadow-lg: 0 8px 28px rgba(10,26,15,.12);
-  --shadow-xl: 0 16px 48px rgba(10,26,15,.15);
-  --serif: 'Instrument Serif', Georgia, serif;
-  --sans:  'DM Sans', system-ui, sans-serif;
+  --border: rgba(10,15,30,.08);
+  --border-med: rgba(10,15,30,.14);
+  --shadow-sm: 0 1px 4px rgba(10,15,30,.06);
+  --shadow-md: 0 4px 14px rgba(10,15,30,.09);
+  --shadow-lg: 0 8px 28px rgba(10,15,30,.12);
+  --shadow-xl: 0 16px 48px rgba(10,15,30,.15);
+  --syne:  'Syne', sans-serif;
+  --inter: 'Inter', sans-serif;
   /* compat aliases */
-  --fd: var(--sans); --fdisp: var(--serif);
-  --bg: var(--cream); --bg2: var(--mist);
-  --surface: var(--white); --surface2: #f9f8f5;
-  --g900: var(--ink); --g800: var(--forest); --g700: var(--moss);
-  --g600: var(--sage); --g500: #6b9f7e; --g400: #94bda6;
-  --g300: #c0d9ca; --g200: var(--mist); --g100: #f1f6f3;
-  --blue-p900: var(--ink); --blue-p800: var(--forest); --blue-p700: var(--moss);
-  --blue-p600: var(--sage); --blue-p500: #6b9f7e; --blue-p400: #94bda6;
-  --blue-p300: #c0d9ca; --blue-p100: var(--mist); --blue-p50: #f1f6f3;
-  --green: var(--sage); --green-bg: var(--mist);
-  --bnt: var(--sage); --bnt2: var(--moss); --bnt-light: var(--mist);
+  --fd: var(--inter); --fdisp: var(--syne);
+  --serif: var(--syne); --sans: var(--inter);
+  --bg: var(--mist); --bg2: var(--light);
+  --surface: var(--white); --surface2: #f8faff;
+  --cream: var(--mist); --forest: var(--navy); --moss: var(--blue);
+  --sage: var(--mid); --sage2: var(--sky);
+  --g900: var(--ink); --g800: var(--navy); --g700: var(--blue);
+  --g600: var(--mid); --g500: var(--sub); --g400: #94a3b8;
+  --g300: #cbd5e1; --g200: var(--light); --g100: var(--mist);
+  --blue-p900: var(--navy); --blue-p800: var(--navy); --blue-p700: var(--blue);
+  --blue-p600: var(--mid); --blue-p500: var(--sky); --blue-p400: #93c5fd;
+  --blue-p300: #bfdbfe; --blue-p100: var(--light); --blue-p50: var(--mist);
+  --green: var(--mid); --green-bg: var(--light);
+  --bnt: var(--mid); --bnt2: var(--blue); --bnt-light: var(--light);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:var(--sans);background:var(--cream);color:var(--ink);font-size:14px;min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;}
+body{font-family:var(--inter);background:var(--mist);color:var(--ink);font-size:14px;min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;}
 
 /* ── LOGIN ── */
-#login-screen{position:fixed;inset:0;background:var(--forest);z-index:900;display:none;align-items:center;justify-content:center;padding:1rem;}
+#login-screen{position:fixed;inset:0;background:var(--navy);z-index:900;display:none;align-items:center;justify-content:center;padding:1rem;}
 .login-box{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:2.5rem 2.2rem;width:100%;max-width:380px;box-shadow:var(--shadow-xl);}
 .login-logo{text-align:center;margin-bottom:2rem;}
-.login-logo-ico{width:56px;height:56px;border-radius:14px;background:var(--forest);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto .9rem;}
-.login-logo-name{font-family:var(--serif);font-size:1.35rem;color:var(--ink);}
+.login-logo-ico{width:56px;height:56px;border-radius:14px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto .9rem;}
+.login-logo-name{font-family:var(--syne);font-size:1.35rem;font-weight:800;color:var(--ink);}
 .login-logo-sub{font-size:.68rem;color:var(--sage);letter-spacing:.1em;text-transform:uppercase;margin-top:4px;}
 .login-subtitle{font-size:.84rem;color:var(--moss);text-align:center;margin-bottom:1.5rem;}
 .login-field{margin-bottom:1rem;}
 .login-field label{display:block;font-size:.68rem;font-weight:600;color:var(--moss);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.4rem;}
-.login-field input{width:100%;background:var(--cream);border:1.5px solid var(--border-med);border-radius:9px;padding:.65rem .9rem;color:var(--ink);font-family:var(--sans);font-size:.9rem;outline:none;transition:all .2s;}
-.login-field input:focus{border-color:var(--forest);background:var(--white);}
+.login-field input{width:100%;background:#f8faff;border:1.5px solid var(--border-med);border-radius:9px;padding:.65rem .9rem;color:var(--ink);font-family:var(--sans);font-size:.9rem;outline:none;transition:all .2s;}
+.login-field input:focus{border-color:var(--mid);background:var(--white);}
 .login-field input::placeholder{color:var(--g400);}
 .login-err{font-size:.78rem;color:var(--red);background:var(--red-bg);border:1px solid rgba(192,57,43,.15);border-radius:7px;padding:.5rem .9rem;margin-bottom:.9rem;display:none;}
-.btn-login{width:100%;padding:.8rem;background:var(--forest);color:#fff;border:none;border-radius:9px;font-family:var(--sans);font-size:.9rem;font-weight:500;cursor:pointer;letter-spacing:.01em;transition:background .2s;}
-.btn-login:hover{background:var(--ink);}
+.btn-login{width:100%;padding:.8rem;background:var(--navy);color:#fff;border:none;border-radius:9px;font-family:var(--sans);font-size:.9rem;font-weight:500;cursor:pointer;letter-spacing:.01em;transition:background .2s;}
+.btn-login:hover{background:var(--night);}
 
 /* ── TOPBAR ── */
-.topbar{background:var(--forest);border-bottom:1px solid rgba(255,255,255,.08);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;flex-shrink:0;}
+.topbar{background:var(--navy);border-bottom:1px solid rgba(255,255,255,.08);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;flex-shrink:0;}
 .brand{display:flex;align-items:center;gap:10px;}
 .brand-ico{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
-.brand-name{font-family:var(--serif);font-size:1rem;color:#fff;line-height:1.2;}
+.brand-name{font-family:var(--syne);font-size:1rem;font-weight:700;color:#fff;line-height:1.2;}
 .brand-sub{font-size:.58rem;color:rgba(255,255,255,.45);letter-spacing:.09em;text-transform:uppercase;}
 .topbar-center{display:flex;gap:2px;}
 .t-tab{padding:.38rem .9rem;border-radius:7px;border:none;background:transparent;color:rgba(255,255,255,.5);font-family:var(--sans);font-size:.82rem;font-weight:400;cursor:pointer;transition:all .18s;}
@@ -88,34 +93,34 @@ body{font-family:var(--sans);background:var(--cream);color:var(--ink);font-size:
 
 /* ── APP LAYOUT ── */
 .app{display:flex;flex:1;overflow:hidden;height:calc(100vh - 56px);width:100%;}
-.sidebar{width:210px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+.sidebar{width:215px;background:var(--navy);border-right:none;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
 .nav-section{padding:1rem 0 .4rem;}
-.nav-label{font-size:.58rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);padding:0 .9rem .4rem;}
-.nav-item{display:flex;align-items:center;gap:8px;padding:.5rem .85rem;cursor:pointer;transition:all .15s;color:var(--moss);font-size:.82rem;font-weight:400;margin:0 .5rem;border-radius:7px;}
-.nav-item:hover{background:var(--mist);color:var(--ink);}
-.nav-item.active{background:var(--forest);color:#fff;font-weight:500;}
-.nav-badge{margin-left:auto;background:var(--mist);color:var(--moss);border-radius:99px;padding:1px 7px;font-size:.67rem;font-weight:600;}
-.nav-item.active .nav-badge{background:rgba(255,255,255,.2);color:#fff;}
-.nav-divider{height:1px;background:var(--border);margin:.5rem .9rem;}
-.sidebar-footer{margin-top:auto;padding:.9rem;border-top:1px solid var(--border);}
-.sf-avatar{width:30px;height:30px;border-radius:50%;background:var(--forest);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0;}
-.sf-name{font-size:.78rem;color:var(--moss);font-weight:500;}
+.nav-label{font-size:.58rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:0 .9rem .4rem;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:.5rem .85rem;cursor:pointer;transition:all .15s;color:rgba(255,255,255,.5);font-family:var(--inter);font-size:.82rem;font-weight:400;margin:0 .5rem;border-radius:7px;}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff;}
+.nav-item.active{background:var(--mid);color:#fff;font-weight:600;}
+.nav-badge{margin-left:auto;background:rgba(255,255,255,.12);color:#fff;border-radius:99px;padding:1px 7px;font-size:.67rem;font-weight:600;}
+.nav-item.active .nav-badge{background:rgba(255,255,255,.25);color:#fff;}
+.nav-divider{height:1px;background:rgba(255,255,255,.07);margin:.5rem .9rem;}
+.sidebar-footer{margin-top:auto;padding:.9rem;border-top:1px solid rgba(255,255,255,.08);}
+.sf-avatar{width:30px;height:30px;border-radius:50%;background:var(--mid);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0;}
+.sf-name{font-size:.78rem;color:rgba(255,255,255,.6);font-weight:500;}
 
 /* ── MAIN ── */
-.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;background:var(--cream);}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;background:var(--mist);}
 .section{display:flex;flex-direction:column;flex:1;padding:1.75rem 2rem;animation:fadeIn .2s ease;}
 .section.hidden{display:none!important;}
 .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap;padding-bottom:1.25rem;border-bottom:1px solid var(--border);}
-.page-title{font-family:var(--serif);font-size:1.4rem;color:var(--ink);letter-spacing:-.01em;}
-.page-sub{font-size:.78rem;color:var(--sage);margin-top:3px;}
+.page-title{font-family:var(--syne);font-size:1.35rem;font-weight:800;color:var(--navy);letter-spacing:-.02em;}
+.page-sub{font-size:.78rem;color:var(--sub);margin-top:3px;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
 /* ── BOUTONS ── */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:.45rem .9rem;border-radius:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:.82rem;font-weight:500;transition:all .15s;}
-.btn-primary{background:var(--forest);color:#fff;}
-.btn-primary:hover{background:var(--ink);}
-.btn-ghost{background:transparent;border:1px solid var(--border-med);color:var(--moss);}
-.btn-ghost:hover{background:var(--mist);border-color:var(--sage);}
+.btn-primary{background:var(--navy);color:#fff;}
+.btn-primary:hover{background:var(--night);}
+.btn-ghost{background:transparent;border:1px solid var(--border-med);color:var(--sub);}
+.btn-ghost:hover{background:var(--light);border-color:var(--sky);}
 .btn-danger{background:transparent;border:1px solid rgba(192,57,43,.2);color:var(--red);}
 .btn-danger:hover{background:var(--red-bg);}
 
@@ -126,18 +131,18 @@ body{font-family:var(--sans);background:var(--cream);color:var(--ink);font-size:
 
 /* ── STATS ── */
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem;}
-.stat-card{background:var(--white);border:1px solid var(--border);border-radius:11px;padding:1rem 1.1rem;box-shadow:var(--shadow-sm);border-top:2px solid var(--forest);}
-.stat-label{font-size:.65rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--sage);margin-bottom:.35rem;}
-.stat-val{font-family:var(--serif);font-size:1.75rem;color:var(--ink);letter-spacing:-.02em;}
-.stat-delta{font-size:.72rem;color:var(--sage);margin-top:2px;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:11px;padding:1rem 1.1rem;box-shadow:var(--shadow-sm);border-top:2px solid var(--mid);}
+.stat-label{font-size:.65rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--sub);margin-bottom:.35rem;}
+.stat-val{font-family:var(--syne);font-size:1.75rem;font-weight:800;color:var(--navy);letter-spacing:-.02em;}
+.stat-delta{font-size:.72rem;color:var(--sub);margin-top:2px;}
 
 /* ── TABLEAU ── */
 table{width:100%;border-collapse:collapse;font-size:.8rem;}
 thead{position:sticky;top:0;z-index:5;}
-th{background:var(--cream);color:var(--sage);font-size:.66rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:.55rem .75rem;text-align:left;border-bottom:1px solid var(--border);}
+th{background:#f8faff;color:var(--sub);font-size:.66rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:.55rem .75rem;text-align:left;border-bottom:1px solid var(--border);}
 td{padding:.55rem .75rem;border-bottom:1px solid var(--border);color:var(--ink);}
 tr:last-child td{border-bottom:none;}
-tr:hover td{background:var(--mist);}
+tr:hover td{background:var(--light);}
 .tbl-wrap{overflow-y:auto;max-height:calc(100vh - 300px);}
 
 /* ── MODALS ── */
@@ -145,44 +150,44 @@ tr:hover td{background:var(--mist);}
 .modal-bg.hidden{display:none!important;}
 .modal{background:var(--white);border-radius:14px;width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shadow-xl);}
 .modal-wide{max-width:700px;}
-.modal-head{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;border-bottom:1px solid var(--border);background:var(--forest);border-radius:14px 14px 0 0;}
-.modal-title{font-family:var(--serif);font-size:.95rem;color:#fff;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;border-bottom:1px solid var(--border);background:var(--navy);border-radius:14px 14px 0 0;}
+.modal-title{font-family:var(--syne);font-size:.95rem;font-weight:700;color:#fff;}
 .close-btn{background:rgba(255,255,255,.12);border:none;color:#fff;width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center;}
 .modal-body{padding:1.25rem;overflow-y:auto;flex:1;}
 .modal-foot{padding:.75rem 1.25rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
 .form-row{margin-bottom:.75rem;}
-.form-row label{display:block;font-size:.67rem;font-weight:600;color:var(--moss);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.3rem;}
-.form-row input,.form-row select,.form-row textarea{width:100%;background:var(--cream);border:1.5px solid var(--border-med);border-radius:8px;padding:.5rem .75rem;color:var(--ink);font-family:var(--sans);font-size:.83rem;outline:none;transition:border-color .18s;}
-.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--forest);background:var(--white);}
+.form-row label{display:block;font-size:.67rem;font-weight:600;color:var(--sub);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.3rem;}
+.form-row input,.form-row select,.form-row textarea{width:100%;background:#f8faff;border:1.5px solid var(--border-med);border-radius:8px;padding:.5rem .75rem;color:var(--ink);font-family:var(--sans);font-size:.83rem;outline:none;transition:border-color .18s;}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--mid);background:var(--white);}
 .form-row textarea{min-height:70px;resize:vertical;}
 .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem;}
-.form-row-2 label{display:block;font-size:.67rem;font-weight:600;color:var(--moss);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.3rem;}
-.form-row-2 input,.form-row-2 select,.form-row-2 textarea{width:100%;background:var(--cream);border:1.5px solid var(--border-med);border-radius:8px;padding:.5rem .75rem;color:var(--ink);font-family:var(--sans);font-size:.83rem;outline:none;transition:border-color .18s;}
-.form-row-2 input:focus,.form-row-2 select:focus{border-color:var(--forest);}
+.form-row-2 label{display:block;font-size:.67rem;font-weight:600;color:var(--sub);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.3rem;}
+.form-row-2 input,.form-row-2 select,.form-row-2 textarea{width:100%;background:#f8faff;border:1.5px solid var(--border-med);border-radius:8px;padding:.5rem .75rem;color:var(--ink);font-family:var(--sans);font-size:.83rem;outline:none;transition:border-color .18s;}
+.form-row-2 input:focus,.form-row-2 select:focus{border-color:var(--mid);}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;}
-.lb{display:block;font-size:.67rem;font-weight:600;color:var(--moss);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.28rem;}
-.form-grid input,.form-grid select,.form-grid textarea{width:100%;background:var(--cream);border:1.5px solid var(--border-med);border-radius:8px;padding:.5rem .7rem;color:var(--ink);font-family:var(--sans);font-size:.82rem;outline:none;}
-.form-grid input:focus,.form-grid select:focus,.form-grid textarea:focus{border-color:var(--forest);background:var(--white);}
+.lb{display:block;font-size:.67rem;font-weight:600;color:var(--sub);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.28rem;}
+.form-grid input,.form-grid select,.form-grid textarea{width:100%;background:#f8faff;border:1.5px solid var(--border-med);border-radius:8px;padding:.5rem .7rem;color:var(--ink);font-family:var(--sans);font-size:.82rem;outline:none;}
+.form-grid input:focus,.form-grid select:focus,.form-grid textarea:focus{border-color:var(--mid);background:var(--white);}
 .form-grid textarea{min-height:55px;resize:vertical;}
 
 /* ── TOAST ── */
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--ink);color:#fff;padding:.65rem 1.25rem;border-radius:9px;font-size:.82rem;font-weight:500;z-index:9999;transition:transform .3s;box-shadow:var(--shadow-lg);white-space:nowrap;}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--navy);color:#fff;padding:.65rem 1.25rem;border-radius:9px;font-size:.82rem;font-weight:500;z-index:9999;transition:transform .3s;box-shadow:var(--shadow-lg);white-space:nowrap;}
 #toast.show{transform:translateX(-50%) translateY(0);}
 
 /* ── BDC ── */
-.bdc-rem-btn{padding:.22rem .55rem;border-radius:5px;border:1px solid var(--border-med);background:var(--cream);color:var(--moss);font-family:var(--sans);font-size:.7rem;cursor:pointer;transition:all .15s;}
-.bdc-rem-btn.active{background:var(--forest);color:#fff;border-color:var(--forest);}
-.bdc-rem-btn:hover:not(.active){background:var(--mist);}
-.bdc-mode-btn{padding:.22rem .55rem;border-radius:5px;border:1px solid var(--border-med);background:var(--cream);color:var(--moss);font-family:var(--sans);font-size:.7rem;cursor:pointer;transition:all .15s;}
-.bdc-mode-btn.active{background:var(--forest);color:#fff;border-color:var(--forest);}
+.bdc-rem-btn{padding:.22rem .55rem;border-radius:5px;border:1px solid var(--border-med);background:#f8faff;color:var(--sub);font-family:var(--sans);font-size:.7rem;cursor:pointer;transition:all .15s;}
+.bdc-rem-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.bdc-rem-btn:hover:not(.active){background:var(--light);}
+.bdc-mode-btn{padding:.22rem .55rem;border-radius:5px;border:1px solid var(--border-med);background:#f8faff;color:var(--sub);font-family:var(--sans);font-size:.7rem;cursor:pointer;transition:all .15s;}
+.bdc-mode-btn.active{background:var(--mid);color:#fff;border-color:var(--mid);}
 .bdc-tr-has-qty td{background:rgba(26,61,38,.04)!important;}
 .bdc-tr-hidden{display:none!important;}
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
 
 /* ── TAGS ── */
 .tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:.67rem;font-weight:500;}
-.tag-green{background:var(--mist);color:var(--moss);}
-.tag-blue{background:var(--mist);color:var(--forest);}
+.tag-green{background:var(--light);color:var(--blue);}
+.tag-blue{background:var(--light);color:var(--navy);}
 .tag-amber{background:var(--amber-bg);color:var(--amber);}
 .tag-red{background:var(--red-bg);color:var(--red);}
 
@@ -312,7 +317,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
 
 <!-- ══ BON DE COMMANDE ══ -->
 <div id="sec-bdc" class="section hidden" style="padding:0;overflow:hidden;">
-  <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:.55rem 1rem;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
+  <div style="background:var(--white);border-bottom:1px solid var(--border);padding:.55rem 1rem;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
     <div style="font-family:var(--fdisp);font-size:.9rem;color:var(--g900);flex:1;min-width:140px;">🌿 Bon de Commande BIO N TRUFFE — Tarif V15 2026</div>
     <div style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--amber);">
       <span>📄 PDF tarif joint automatiquement</span>
@@ -321,22 +326,22 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
     <button class="btn btn-primary" style="font-size:.72rem;padding:.3rem .7rem;" onclick="bdcSendOrder()">Envoyer la commande</button>
   </div>
   <!-- Bandeau recap sticky -->
-  <div id="bdc-recap-bar" style="display:none;background:var(--blue-p800);border-bottom:2px solid var(--bnt);padding:.4rem .8rem;overflow-x:auto;white-space:nowrap;flex-shrink:0;">
+  <div id="bdc-recap-bar" style="display:none;background:var(--navy);border-bottom:2px solid var(--mid);padding:.4rem .8rem;overflow-x:auto;white-space:nowrap;flex-shrink:0;">
     <span style="font-size:.65rem;font-weight:700;color:#93c5fd;text-transform:uppercase;letter-spacing:.08em;margin-right:.6rem;">📋 En cours :</span>
     <span id="bdc-recap-items" style="font-size:.72rem;color:#e2e8f0;"></span>
     <span id="bdc-recap-total" style="font-size:.75rem;font-weight:700;color:#4ade80;margin-left:1rem;"></span>
   </div>
   <div style="display:flex;flex:1;overflow:hidden;">
     <!-- Sidebar BDC -->
-    <div style="width:255px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;padding:.9rem;">
+    <div style="width:255px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;padding:.9rem;">
       <div style="font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:.5rem;">Informations client</div>
-      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Magasin *</label><input type="text" id="bdc-magasin" placeholder="Nom du magasin" style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--g800);font-family:var(--fd);font-size:.78rem;outline:none;"></div>
-      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">N° Client</label><input type="text" id="bdc-numclient" placeholder="BNT-0001" style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--g800);font-family:var(--fd);font-size:.78rem;outline:none;"></div>
-      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Contact</label><input type="text" id="bdc-contact" placeholder="Prénom Nom" style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--g800);font-family:var(--fd);font-size:.78rem;outline:none;"></div>
-      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Email *</label><input type="email" id="bdc-email" placeholder="votre@email.fr" style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--g800);font-family:var(--fd);font-size:.78rem;outline:none;"></div>
-      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Téléphone</label><input type="tel" id="bdc-tel" placeholder="06 xx xx xx xx" style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--g800);font-family:var(--fd);font-size:.78rem;outline:none;"></div>
-      <div style="margin-bottom:.8rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Date livraison souhaitée</label><input type="date" id="bdc-datelivraison" style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--g800);font-family:var(--fd);font-size:.78rem;outline:none;"></div>
-      <div style="margin-bottom:.8rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Commentaire</label><input type="text" id="bdc-comment" placeholder="Instructions…" style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--g800);font-family:var(--fd);font-size:.78rem;outline:none;"></div>
+      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Magasin *</label><input type="text" id="bdc-magasin" placeholder="Nom du magasin" style="width:100%;background:#f8faff;border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--ink);font-family:var(--inter);font-size:.78rem;outline:none;"></div>
+      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">N° Client</label><input type="text" id="bdc-numclient" placeholder="BNT-0001" style="width:100%;background:#f8faff;border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--ink);font-family:var(--inter);font-size:.78rem;outline:none;"></div>
+      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Contact</label><input type="text" id="bdc-contact" placeholder="Prénom Nom" style="width:100%;background:#f8faff;border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--ink);font-family:var(--inter);font-size:.78rem;outline:none;"></div>
+      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Email *</label><input type="email" id="bdc-email" placeholder="votre@email.fr" style="width:100%;background:#f8faff;border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--ink);font-family:var(--inter);font-size:.78rem;outline:none;"></div>
+      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Téléphone</label><input type="tel" id="bdc-tel" placeholder="06 xx xx xx xx" style="width:100%;background:#f8faff;border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--ink);font-family:var(--inter);font-size:.78rem;outline:none;"></div>
+      <div style="margin-bottom:.8rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Date livraison souhaitée</label><input type="date" id="bdc-datelivraison" style="width:100%;background:#f8faff;border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--ink);font-family:var(--inter);font-size:.78rem;outline:none;"></div>
+      <div style="margin-bottom:.8rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Commentaire</label><input type="text" id="bdc-comment" placeholder="Instructions…" style="width:100%;background:#f8faff;border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--ink);font-family:var(--inter);font-size:.78rem;outline:none;"></div>
       <div style="font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:.5rem;">Remise groupement</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.8rem;" id="bdc-remise-btns">
         <button class="bdc-rem-btn active" onclick="bdcSetRemise(0,this)">Aucune</button>
@@ -352,14 +357,14 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
         <div style="background:var(--surface2);border-radius:6px;padding:.35rem;text-align:center;"><div style="font-size:.95rem;font-weight:600;color:var(--g900);" id="bdc-nb-colis">0</div><div style="font-size:.58rem;color:var(--g500);text-transform:uppercase;">Colis</div></div>
         <div style="background:var(--surface2);border-radius:6px;padding:.35rem;text-align:center;"><div style="font-size:.95rem;font-weight:600;color:var(--g900);" id="bdc-nb-uvc">0</div><div style="font-size:.58rem;color:var(--g500);text-transform:uppercase;">UVC</div></div>
       </div>
-      <div style="background:var(--blue-p50);border:1px solid rgba(43,181,160,.2);border-radius:7px;padding:.7rem;">
+      <div style="background:var(--light);border:1px solid rgba(37,99,235,.15);border-radius:7px;padding:.7rem;">
         <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--g500);padding:.15rem 0;">Total HT brut<span style="font-weight:600;color:var(--g800);" id="bdc-total-brut">0,00€</span></div>
         <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--g500);padding:.15rem 0;">Remise<span style="font-weight:600;color:var(--g800);" id="bdc-total-remise">0,00€</span></div>
         <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--g500);padding:.15rem 0;">TVA 5,5%<span style="font-weight:600;color:var(--g800);" id="bdc-total-tva">0,00€</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:.82rem;font-weight:600;color:var(--bnt);padding:.35rem 0;border-top:1px solid rgba(43,181,160,.2);margin-top:.25rem;">Total HT net<span id="bdc-total-net">0,00€</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.82rem;font-weight:600;color:var(--mid);padding:.35rem 0;border-top:1px solid rgba(37,99,235,.15);margin-top:.25rem;">Total HT net<span id="bdc-total-net">0,00€</span></div>
       </div>
       <!-- Franco -->
-      <div id="bdc-franco-box" style="margin-top:.5rem;border-radius:6px;padding:.45rem .6rem;font-size:.71rem;background:rgba(201,124,26,.1);border:1px solid rgba(201,124,26,.2);color:var(--amber);">🚚 Franco : 5 colis ou 450€ HT</div>
+      <div id="bdc-franco-box" style="margin-top:.5rem;border-radius:6px;padding:.45rem .6rem;font-size:.71rem;background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.15);color:var(--mid);">🚚 Franco : 5 colis ou 450€ HT</div>
       <div id="bdc-alert" style="display:none;border-radius:6px;padding:.5rem .7rem;font-size:.72rem;margin-top:.6rem;line-height:1.4;"></div>
       <button id="bdc-btn-send" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:.7rem;" onclick="bdcSendOrder()">
         <div id="bdc-spinner" style="display:none;width:11px;height:11px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:5px;"></div>
@@ -368,7 +373,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
     </div>
     <!-- Catalogue -->
     <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
-      <div style="padding:.5rem .7rem;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <div style="padding:.5rem .7rem;background:#f8faff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
         <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.32rem .6rem;flex:1;min-width:180px;">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#64748b" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
           <input type="text" id="bdc-search" placeholder="Rechercher produit (désignation, EAN…)" oninput="bdcDoSearch()" style="background:transparent;border:none;outline:none;color:var(--g800);font-family:var(--fd);font-size:.75rem;width:100%;">
@@ -408,7 +413,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
     </div>
   </div>
   <!-- Filtres -->
-  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:.7rem 1rem;background:var(--surface2);border-radius:10px;margin-bottom:1rem;border:1px solid var(--border);">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:.7rem 1rem;background:#f8faff;border-radius:10px;margin-bottom:1rem;border:1px solid var(--border);">
     <input type="text" id="cdb-search" oninput="renderClients()" placeholder="🔎 Rechercher (nom, ville, code…)" style="flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border-med);border-radius:7px;padding:.4rem .7rem;font-size:.82rem;font-family:var(--fd);outline:none;color:var(--g800);">
     <select id="cdb-filter-profil" onchange="renderClients()" style="font-size:.78rem;background:var(--surface);border:1px solid var(--border-med);border-radius:7px;padding:.4rem .6rem;font-family:var(--fd);outline:none;color:var(--g800);">
       <option value="">Tous profils</option>
@@ -496,8 +501,8 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
           <label style="display:block;font-size:.68rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.4rem;">Contenu *</label>
           <div id="ml-editor" contenteditable="true" oninput="mlUpdatePreview()" style="min-height:200px;max-height:400px;overflow-y:auto;padding:1rem;font-size:.88rem;line-height:1.55;color:var(--g800);outline:none;border-top:1px solid var(--border);background:var(--surface2);border-radius:8px;border:1.5px solid var(--border-med);" placeholder="Bonjour,&#10;&#10;Veuillez trouver ci-joint notre nouveau tarif BIO N TRUFFE..."></div>
         </div>
-        <div style="background:var(--blue-p50);border:1px solid rgba(43,181,160,.2);border-radius:9px;padding:.8rem 1rem;display:flex;align-items:center;justify-content:space-between;">
-          <div><div style="font-size:.78rem;font-weight:600;color:var(--g700);">📄 Pièce jointe : <span style="color:var(--bnt);">Tarif_BioNTruffe_V15_2026.pdf</span></div><div id="ml-send-summary" style="font-size:.68rem;color:var(--g500);margin-top:2px;">Aucun destinataire</div></div>
+        <div style="background:var(--light);border:1px solid rgba(37,99,235,.2);border-radius:9px;padding:.8rem 1rem;display:flex;align-items:center;justify-content:space-between;">
+          <div><div style="font-size:.78rem;font-weight:600;color:var(--g700);">📄 Pièce jointe : <span style="color:var(--mid);">Tarif_BioNTruffe_V15_2026.pdf</span></div><div id="ml-send-summary" style="font-size:.68rem;color:var(--g500);margin-top:2px;">Aucun destinataire</div></div>
           <button class="btn btn-primary" onclick="mlSendAll()" id="ml-send-btn" style="font-size:.85rem;padding:.55rem 1.1rem;" disabled>🚀 Envoyer</button>
         </div>
       </div>
@@ -783,7 +788,7 @@ function refreshDashboard() {
           <div style="font-size:.83rem;font-weight:600;color:var(--g900);">${esc(o.clientNom||'—')}</div>
           <div style="font-size:.7rem;color:var(--g500);">${fmtDate(o.createdAt)} · ${o.nbRefs||0} réf. · ${o.nbColis||0} colis</div>
         </div>
-        <div style="font-size:.85rem;font-weight:700;color:var(--bnt);">${bdcFmt(o.montant||0)}</div>
+        <div style="font-size:.85rem;font-weight:700;color:var(--mid);">${bdcFmt(o.montant||0)}</div>
       </div>`).join('');
   }
   renderActivite();
@@ -833,12 +838,12 @@ function buildTable() {
       prixCell = bdcFmt(pCarton);
       if (bdcRemise > 0 || (rl!==''&&parseFloat(rl)>0)) {
         const pBrut = p.pu_ht * pcb;
-        prixCell = `<strong style="color:var(--bnt)">${bdcFmt(pCarton)}</strong> <span style="text-decoration:line-through;color:var(--g500);font-size:10px;">${bdcFmt(pBrut)}</span>`;
+        prixCell = `<strong style="color:var(--mid)">${bdcFmt(pCarton)}</strong> <span style="text-decoration:line-through;color:var(--g500);font-size:10px;">${bdcFmt(pBrut)}</span>`;
       }
     }
 
     const newBadge = p.new ? '<span style="font-size:.6rem;font-weight:700;background:#dcfce7;color:#15803d;border-radius:3px;padding:1px 5px;margin-left:4px;">NOUVEAU</span>' : '';
-    const certif = p.certif ? `<span style="font-size:.62rem;padding:1px 5px;border-radius:3px;background:rgba(43,181,160,.15);color:var(--bnt2);">${p.certif}</span>` : '';
+    const certif = p.certif ? `<span style="font-size:.62rem;padding:1px 5px;border-radius:3px;background:rgba(43,181,160,.15);color:var(--blue);">${p.certif}</span>` : '';
 
     rows += `<tr class="${hasQty}" data-code="${dCode}" data-lib="${dLib}" data-ean="${dEan}" style="border-bottom:1px solid var(--border);">`;
     rows += `<td style="padding:.4rem .55rem;color:var(--g500);font-family:monospace;font-size:.66rem;white-space:nowrap;">${bdcEsc(p.ean||'—')}</td>`;
@@ -860,7 +865,7 @@ function buildTable() {
       </td>`;
       rows += `<td style="padding:.35rem .45rem;"><input type="number" min="0" max="100" step="0.5" value="${rl}" placeholder="—" data-code="${dCode}" oninput="bdcOnRemiseLigne(this)" style="width:50px;text-align:right;font-size:.75rem;padding:.25rem .4rem;background:var(--surface2);border:1px solid var(--border-med);border-radius:5px;outline:none;font-family:var(--fd);" title="Remise % spécifique"></td>`;
       rows += `<td id="bdc-uvc-${dCode}" style="padding:.4rem .55rem;font-size:.72rem;color:var(--g500);text-align:center;">${qty>0?qty*pcb:'—'}</td>`;
-      rows += `<td id="bdc-t-${dCode}" style="padding:.4rem .55rem;font-weight:600;color:var(--bnt);white-space:nowrap;">${qty?bdcFmt(total):''}</td>`;
+      rows += `<td id="bdc-t-${dCode}" style="padding:.4rem .55rem;font-weight:600;color:var(--mid);white-space:nowrap;">${qty?bdcFmt(total):''}</td>`;
     }
     rows += '</tr>';
   }
@@ -1134,7 +1139,7 @@ function renderClients() {
       <td style="color:var(--g600);">${esc(c.ville||'—')}${c.cp?' ('+c.cp+')':''}</td>
       <td style="color:var(--g500);font-size:.78rem;">${esc(c.email||'—')}</td>
       <td style="color:var(--g500);font-size:.78rem;">${esc(c.tel||'—')}</td>
-      <td style="font-weight:600;color:var(--bnt);">${bdcFmt(ca(c))}</td>
+      <td style="font-weight:600;color:var(--mid);">${bdcFmt(ca(c))}</td>
       <td><div style="display:flex;gap:4px;">
         <button class="btn btn-ghost" style="font-size:.72rem;padding:.25rem .55rem;" onclick="event.stopPropagation();bdcFromClient('${c.id}')">📋 BDC</button>
         <button class="btn btn-ghost" style="font-size:.72rem;padding:.25rem .55rem;" onclick="event.stopPropagation();openClientModal('${c.id}')">✏️</button>
@@ -1227,7 +1232,7 @@ function renderCommandes() {
       <td style="font-family:monospace;font-size:.72rem;color:var(--blue-p700);">${esc(o.numClient||'—')}</td>
       <td style="text-align:center;">${o.nbRefs||0}</td>
       <td style="text-align:center;">${o.nbColis||0}</td>
-      <td style="font-weight:600;color:var(--bnt);">${bdcFmt(o.montant||0)}</td>
+      <td style="font-weight:600;color:var(--mid);">${bdcFmt(o.montant||0)}</td>
       <td><span class="tag ${o.statut==='Envoyée'?'tag-green':'tag-amber'}">${esc(o.statut||'—')}</span></td>
       <td><button class="btn btn-danger" style="font-size:.7rem;padding:.2rem .55rem;" onclick="deleteCommande('${o.id}')">🗑</button></td>
     </tr>`).join('');
