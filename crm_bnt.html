@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>BIO N TRUFFE — CRM Commercial</title>
+<meta name="description" content="CRM BIO N TRUFFE — Bons de commande, base clients, suivi commercial">
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:    #0a1a0f;
+  --forest: #1a3d26;
+  --moss:   #2d6040;
+  --sage:   #4a8a5e;
+  --sage2:  #3d7550;
+  --mist:   #e8f0eb;
+  --cream:  #f6f4ef;
+  --white:  #ffffff;
+  --amber:  #b45309;
+  --amber-bg:#fffbeb;
+  --red:    #c0392b;
+  --red-bg: #fdf2f0;
+  --border: rgba(10,26,15,.10);
+  --border-med: rgba(10,26,15,.15);
+  --shadow-sm: 0 1px 4px rgba(10,26,15,.06);
+  --shadow-md: 0 4px 14px rgba(10,26,15,.09);
+  --shadow-lg: 0 8px 28px rgba(10,26,15,.12);
+  --shadow-xl: 0 16px 48px rgba(10,26,15,.15);
+  --serif: 'Instrument Serif', Georgia, serif;
+  --sans:  'DM Sans', system-ui, sans-serif;
+  /* compat aliases */
+  --fd: var(--sans); --fdisp: var(--serif);
+  --bg: var(--cream); --bg2: var(--mist);
+  --surface: var(--white); --surface2: #f9f8f5;
+  --g900: var(--ink); --g800: var(--forest); --g700: var(--moss);
+  --g600: var(--sage); --g500: #6b9f7e; --g400: #94bda6;
+  --g300: #c0d9ca; --g200: var(--mist); --g100: #f1f6f3;
+  --blue-p900: var(--ink); --blue-p800: var(--forest); --blue-p700: var(--moss);
+  --blue-p600: var(--sage); --blue-p500: #6b9f7e; --blue-p400: #94bda6;
+  --blue-p300: #c0d9ca; --blue-p100: var(--mist); --blue-p50: #f1f6f3;
+  --green: var(--sage); --green-bg: var(--mist);
+  --bnt: var(--sage); --bnt2: var(--moss); --bnt-light: var(--mist);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--sans);background:var(--cream);color:var(--ink);font-size:14px;min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;}
+
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;background:var(--forest);z-index:900;display:none;align-items:center;justify-content:center;padding:1rem;}
+.login-box{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:2.5rem 2.2rem;width:100%;max-width:380px;box-shadow:var(--shadow-xl);}
+.login-logo{text-align:center;margin-bottom:2rem;}
+.login-logo-ico{width:56px;height:56px;border-radius:14px;background:var(--forest);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto .9rem;}
+.login-logo-name{font-family:var(--serif);font-size:1.35rem;color:var(--ink);}
+.login-logo-sub{font-size:.68rem;color:var(--sage);letter-spacing:.1em;text-transform:uppercase;margin-top:4px;}
+.login-subtitle{font-size:.84rem;color:var(--moss);text-align:center;margin-bottom:1.5rem;}
+.login-field{margin-bottom:1rem;}
+.login-field label{display:block;font-size:.68rem;font-weight:600;color:var(--moss);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.4rem;}
+.login-field input{width:100%;background:var(--cream);border:1.5px solid var(--border-med);border-radius:9px;padding:.65rem .9rem;color:var(--ink);font-family:var(--sans);font-size:.9rem;outline:none;transition:all .2s;}
+.login-field input:focus{border-color:var(--forest);background:var(--white);}
+.login-field input::placeholder{color:var(--g400);}
+.login-err{font-size:.78rem;color:var(--red);background:var(--red-bg);border:1px solid rgba(192,57,43,.15);border-radius:7px;padding:.5rem .9rem;margin-bottom:.9rem;display:none;}
+.btn-login{width:100%;padding:.8rem;background:var(--forest);color:#fff;border:none;border-radius:9px;font-family:var(--sans);font-size:.9rem;font-weight:500;cursor:pointer;letter-spacing:.01em;transition:background .2s;}
+.btn-login:hover{background:var(--ink);}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--forest);border-bottom:1px solid rgba(255,255,255,.08);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;flex-shrink:0;}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand-ico{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.brand-name{font-family:var(--serif);font-size:1rem;color:#fff;line-height:1.2;}
+.brand-sub{font-size:.58rem;color:rgba(255,255,255,.45);letter-spacing:.09em;text-transform:uppercase;}
+.topbar-center{display:flex;gap:2px;}
+.t-tab{padding:.38rem .9rem;border-radius:7px;border:none;background:transparent;color:rgba(255,255,255,.5);font-family:var(--sans);font-size:.82rem;font-weight:400;cursor:pointer;transition:all .18s;}
+.t-tab:hover{background:rgba(255,255,255,.1);color:#fff;}
+.t-tab.active{background:rgba(255,255,255,.15);color:#fff;font-weight:500;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.sync-indicator{display:flex;align-items:center;gap:5px;font-size:.72rem;color:rgba(255,255,255,.4);}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3);}
+.sync-dot.loading{background:var(--amber);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.badge-count{background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600;}
+.avatar{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;cursor:pointer;position:relative;}
+.avatar-menu{position:absolute;top:40px;right:0;background:var(--white);border:1px solid var(--border);border-radius:11px;min-width:180px;padding:.3rem 0;z-index:300;box-shadow:var(--shadow-lg);display:none;}
+.avatar-menu.open{display:block;}
+.avatar-menu-item{padding:.5rem .9rem;font-size:.8rem;color:var(--moss);cursor:pointer;transition:background .12s;}
+.avatar-menu-item:hover{background:var(--mist);}
+.avatar-menu-sep{border-top:1px solid var(--border);margin:.3rem 0;}
+.avatar-menu-item.danger{color:var(--red);}
+
+/* ── APP LAYOUT ── */
+.app{display:flex;flex:1;overflow:hidden;height:calc(100vh - 56px);width:100%;}
+.sidebar{width:210px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+.nav-section{padding:1rem 0 .4rem;}
+.nav-label{font-size:.58rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);padding:0 .9rem .4rem;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:.5rem .85rem;cursor:pointer;transition:all .15s;color:var(--moss);font-size:.82rem;font-weight:400;margin:0 .5rem;border-radius:7px;}
+.nav-item:hover{background:var(--mist);color:var(--ink);}
+.nav-item.active{background:var(--forest);color:#fff;font-weight:500;}
+.nav-badge{margin-left:auto;background:var(--mist);color:var(--moss);border-radius:99px;padding:1px 7px;font-size:.67rem;font-weight:600;}
+.nav-item.active .nav-badge{background:rgba(255,255,255,.2);color:#fff;}
+.nav-divider{height:1px;background:var(--border);margin:.5rem .9rem;}
+.sidebar-footer{margin-top:auto;padding:.9rem;border-top:1px solid var(--border);}
+.sf-avatar{width:30px;height:30px;border-radius:50%;background:var(--forest);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0;}
+.sf-name{font-size:.78rem;color:var(--moss);font-weight:500;}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;background:var(--cream);}
+.section{display:flex;flex-direction:column;flex:1;padding:1.75rem 2rem;animation:fadeIn .2s ease;}
+.section.hidden{display:none!important;}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap;padding-bottom:1.25rem;border-bottom:1px solid var(--border);}
+.page-title{font-family:var(--serif);font-size:1.4rem;color:var(--ink);letter-spacing:-.01em;}
+.page-sub{font-size:.78rem;color:var(--sage);margin-top:3px;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── BOUTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:.45rem .9rem;border-radius:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:.82rem;font-weight:500;transition:all .15s;}
+.btn-primary{background:var(--forest);color:#fff;}
+.btn-primary:hover{background:var(--ink);}
+.btn-ghost{background:transparent;border:1px solid var(--border-med);color:var(--moss);}
+.btn-ghost:hover{background:var(--mist);border-color:var(--sage);}
+.btn-danger{background:transparent;border:1px solid rgba(192,57,43,.2);color:var(--red);}
+.btn-danger:hover{background:var(--red-bg);}
+
+/* ── CARDS ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sm);overflow:hidden;}
+.card-head{padding:.75rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:.88rem;font-weight:500;color:var(--ink);}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:11px;padding:1rem 1.1rem;box-shadow:var(--shadow-sm);border-top:2px solid var(--forest);}
+.stat-label{font-size:.65rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--sage);margin-bottom:.35rem;}
+.stat-val{font-family:var(--serif);font-size:1.75rem;color:var(--ink);letter-spacing:-.02em;}
+.stat-delta{font-size:.72rem;color:var(--sage);margin-top:2px;}
+
+/* ── TABLEAU ── */
+table{width:100%;border-collapse:collapse;font-size:.8rem;}
+thead{position:sticky;top:0;z-index:5;}
+th{background:var(--cream);color:var(--sage);font-size:.66rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:.55rem .75rem;text-align:left;border-bottom:1px solid var(--border);}
+td{padding:.55rem .75rem;border-bottom:1px solid var(--border);color:var(--ink);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--mist);}
+.tbl-wrap{overflow-y:auto;max-height:calc(100vh - 300px);}
+
+/* ── MODALS ── */
+.modal-bg{position:fixed;inset:0;background:rgba(10,26,15,.5);z-index:500;display:flex;align-items:center;justify-content:center;padding:1rem;}
+.modal-bg.hidden{display:none!important;}
+.modal{background:var(--white);border-radius:14px;width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shadow-xl);}
+.modal-wide{max-width:700px;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;border-bottom:1px solid var(--border);background:var(--forest);border-radius:14px 14px 0 0;}
+.modal-title{font-family:var(--serif);font-size:.95rem;color:#fff;}
+.close-btn{background:rgba(255,255,255,.12);border:none;color:#fff;width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center;}
+.modal-body{padding:1.25rem;overflow-y:auto;flex:1;}
+.modal-foot{padding:.75rem 1.25rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.form-row{margin-bottom:.75rem;}
+.form-row label{display:block;font-size:.67rem;font-weight:600;color:var(--moss);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.3rem;}
+.form-row input,.form-row select,.form-row textarea{width:100%;background:var(--cream);border:1.5px solid var(--border-med);border-radius:8px;padding:.5rem .75rem;color:var(--ink);font-family:var(--sans);font-size:.83rem;outline:none;transition:border-color .18s;}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--forest);background:var(--white);}
+.form-row textarea{min-height:70px;resize:vertical;}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem;}
+.form-row-2 label{display:block;font-size:.67rem;font-weight:600;color:var(--moss);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.3rem;}
+.form-row-2 input,.form-row-2 select,.form-row-2 textarea{width:100%;background:var(--cream);border:1.5px solid var(--border-med);border-radius:8px;padding:.5rem .75rem;color:var(--ink);font-family:var(--sans);font-size:.83rem;outline:none;transition:border-color .18s;}
+.form-row-2 input:focus,.form-row-2 select:focus{border-color:var(--forest);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;}
+.lb{display:block;font-size:.67rem;font-weight:600;color:var(--moss);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.28rem;}
+.form-grid input,.form-grid select,.form-grid textarea{width:100%;background:var(--cream);border:1.5px solid var(--border-med);border-radius:8px;padding:.5rem .7rem;color:var(--ink);font-family:var(--sans);font-size:.82rem;outline:none;}
+.form-grid input:focus,.form-grid select:focus,.form-grid textarea:focus{border-color:var(--forest);background:var(--white);}
+.form-grid textarea{min-height:55px;resize:vertical;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--ink);color:#fff;padding:.65rem 1.25rem;border-radius:9px;font-size:.82rem;font-weight:500;z-index:9999;transition:transform .3s;box-shadow:var(--shadow-lg);white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ── BDC ── */
+.bdc-rem-btn{padding:.22rem .55rem;border-radius:5px;border:1px solid var(--border-med);background:var(--cream);color:var(--moss);font-family:var(--sans);font-size:.7rem;cursor:pointer;transition:all .15s;}
+.bdc-rem-btn.active{background:var(--forest);color:#fff;border-color:var(--forest);}
+.bdc-rem-btn:hover:not(.active){background:var(--mist);}
+.bdc-mode-btn{padding:.22rem .55rem;border-radius:5px;border:1px solid var(--border-med);background:var(--cream);color:var(--moss);font-family:var(--sans);font-size:.7rem;cursor:pointer;transition:all .15s;}
+.bdc-mode-btn.active{background:var(--forest);color:#fff;border-color:var(--forest);}
+.bdc-tr-has-qty td{background:rgba(26,61,38,.04)!important;}
+.bdc-tr-hidden{display:none!important;}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+
+/* ── TAGS ── */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:.67rem;font-weight:500;}
+.tag-green{background:var(--mist);color:var(--moss);}
+.tag-blue{background:var(--mist);color:var(--forest);}
+.tag-amber{background:var(--amber-bg);color:var(--amber);}
+.tag-red{background:var(--red-bg);color:var(--red);}
+
+/* ── ACTIVITÉ ── */
+.act-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .sidebar{display:none;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .topbar-center{display:none;}
+  .section{padding:1rem;}
+  .form-row-2,.form-grid{grid-template-columns:1fr;}
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-ico">🌿</div>
+      <div class="login-logo-name">BIO N TRUFFE</div>
+      <div class="login-logo-sub">Espace commercial · Eridan BNT</div>
+    </div>
+    <div class="login-subtitle" id="login-subtitle">Connexion à votre espace</div>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-field"><label>Email</label><input type="email" id="l-email" placeholder="votre@email.fr" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="login-field"><label>Mot de passe</label><input type="password" id="l-pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-login" onclick="doLogin()">Se connecter →</button>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="app-shell" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:100vh;">
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-ico">🌿</div>
+    <div>
+      <div class="brand-name">BIO N TRUFFE</div>
+      <div class="brand-sub">CRM Commercial · Eridan BNT</div>
+    </div>
+  </div>
+  <div class="topbar-center">
+    <button class="t-tab active" onclick="showSection('dashboard',this)">📊 Dashboard</button>
+    <button class="t-tab" onclick="showSection('bdc',this)">📋 Bon de commande</button>
+    <button class="t-tab" onclick="showSection('clients',this)">👥 Base clients</button>
+    <button class="t-tab" onclick="showSection('commandes',this)">📦 Commandes</button>
+    <button class="t-tab" onclick="showSection('mailing',this)">📧 Mailing</button>
+  </div>
+  <div class="topbar-right">
+    <div class="sync-indicator"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Connexion…</span></div>
+    <span class="badge-count" id="badge-prospects">0</span>
+    <div class="avatar" id="avatar-btn" onclick="toggleAvatarMenu()">
+      <span id="avatar-initials">CS</span>
+      <div class="avatar-menu" id="avatar-menu">
+        <div class="avatar-menu-item" style="font-weight:600;color:var(--g900);" id="menu-email">—</div>
+        <div class="avatar-menu-sep"></div>
+        <div class="avatar-menu-item danger" onclick="doLogout()">⏻ Déconnexion</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="app">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="nav-section">
+    <div class="nav-label">Vue générale</div>
+    <div class="nav-item active" onclick="showSection('dashboard',this)">📊 Dashboard</div>
+    <div class="nav-item" onclick="showSection('bdc',this)">📋 Bon de commande</div>
+  </div>
+  <div class="nav-divider"></div>
+  <div class="nav-section">
+    <div class="nav-label">CRM</div>
+    <div class="nav-item" onclick="showSection('clients',this)">👥 Base clients <span class="nav-badge" id="nb-clients">0</span></div>
+    <div class="nav-item" onclick="showSection('commandes',this)">📦 Commandes <span class="nav-badge" id="nb-commandes">0</span></div>
+    <div class="nav-item" onclick="showSection('prospects',this)">🔵 Prospects <span class="nav-badge" id="nb-prospects">0</span></div>
+  </div>
+  <div class="nav-divider"></div>
+  <div class="nav-section">
+    <div class="nav-label">Outils</div>
+    <div class="nav-item" onclick="showSection('mailing',this)">📧 Mailing</div>
+  </div>
+  <div class="sidebar-footer">
+    <div style="display:flex;align-items:center;gap:9px;">
+      <div class="sf-avatar" id="sb-avatar">CS</div>
+      <div><div class="sf-name" id="sb-name">Christophe SPOTO</div><div style="font-size:.65rem;color:var(--blue-p400);">Administrateur</div></div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+<!-- ══ DASHBOARD ══ -->
+<div id="sec-dashboard" class="section">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Tableau de bord</div>
+      <div class="page-sub">BIO N TRUFFE · Eridan BNT SARL · Tarif V15 — 01/03/2026</div>
+    </div>
+    <button class="btn btn-primary" onclick="showSection('bdc',null)">📋 Nouveau BDC</button>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Clients</div><div class="stat-val" id="stat-clients">—</div><div class="stat-delta">base clients</div></div>
+    <div class="stat-card"><div class="stat-label">Prospects</div><div class="stat-val" id="stat-prospects">—</div><div class="stat-delta">en qualification</div></div>
+    <div class="stat-card"><div class="stat-label">Commandes</div><div class="stat-val" id="stat-commandes">—</div><div class="stat-delta">BDC envoyés</div></div>
+    <div class="stat-card"><div class="stat-label">CA Total HT</div><div class="stat-val" id="stat-ca">—</div><div class="stat-delta">toutes commandes</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+    <div class="card">
+      <div class="card-head"><span class="card-title">📦 Dernières commandes</span><button class="btn btn-ghost" style="font-size:.72rem" onclick="showSection('commandes',null)">Voir tout →</button></div>
+      <div style="padding:.5rem;" id="dash-last-commandes"><div style="padding:1rem;text-align:center;color:var(--g400);font-size:.8rem;">Aucune commande</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">🕐 Activité récente</span></div>
+      <div id="dash-activite" style="padding:.5rem;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BON DE COMMANDE ══ -->
+<div id="sec-bdc" class="section hidden" style="padding:0;overflow:hidden;">
+  <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:.55rem 1rem;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
+    <div style="font-family:var(--fdisp);font-size:.9rem;color:var(--g900);flex:1;min-width:140px;">🌿 Bon de Commande BIO N TRUFFE — Tarif V15 2026</div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--amber);">
+      <span>📄 PDF tarif joint automatiquement</span>
+    </div>
+    <button class="btn btn-ghost" style="font-size:.72rem;padding:.3rem .7rem;" onclick="resetBDC()">🗑 Effacer</button>
+    <button class="btn btn-primary" style="font-size:.72rem;padding:.3rem .7rem;" onclick="bdcSendOrder()">Envoyer la commande</button>
+  </div>
+  <!-- Bandeau recap sticky -->
+  <div id="bdc-recap-bar" style="display:none;background:var(--blue-p800);border-bottom:2px solid var(--bnt);padding:.4rem .8rem;overflow-x:auto;white-space:nowrap;flex-shrink:0;">
+    <span style="font-size:.65rem;font-weight:700;color:#93c5fd;text-transform:uppercase;letter-spacing:.08em;margin-right:.6rem;">📋 En cours :</span>
+    <span id="bdc-recap-items" style="font-size:.72rem;color:#e2e8f0;"></span>
+    <span id="bdc-recap-total" style="font-size:.75rem;font-weight:700;color:#4ade80;margin-left:1rem;"></span>
+  </div>
+  <div style="display:flex;flex:1;overflow:hidden;">
+    <!-- Sidebar BDC -->
+    <div style="width:255px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;padding:.9rem;">
+      <div style="font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:.5rem;">Informations client</div>
+      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Magasin *</label><input type="text" id="bdc-magasin" placeholder="Nom du magasin" style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--g800);font-family:var(--fd);font-size:.78rem;outline:none;"></div>
+      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">N° Client</label><input type="text" id="bdc-numclient" placeholder="BNT-0001" style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--g800);font-family:var(--fd);font-size:.78rem;outline:none;"></div>
+      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Contact</label><input type="text" id="bdc-contact" placeholder="Prénom Nom" style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--g800);font-family:var(--fd);font-size:.78rem;outline:none;"></div>
+      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Email *</label><input type="email" id="bdc-email" placeholder="votre@email.fr" style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--g800);font-family:var(--fd);font-size:.78rem;outline:none;"></div>
+      <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Téléphone</label><input type="tel" id="bdc-tel" placeholder="06 xx xx xx xx" style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--g800);font-family:var(--fd);font-size:.78rem;outline:none;"></div>
+      <div style="margin-bottom:.8rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Date livraison souhaitée</label><input type="date" id="bdc-datelivraison" style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--g800);font-family:var(--fd);font-size:.78rem;outline:none;"></div>
+      <div style="margin-bottom:.8rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Commentaire</label><input type="text" id="bdc-comment" placeholder="Instructions…" style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--g800);font-family:var(--fd);font-size:.78rem;outline:none;"></div>
+      <div style="font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:.5rem;">Remise groupement</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.8rem;" id="bdc-remise-btns">
+        <button class="bdc-rem-btn active" onclick="bdcSetRemise(0,this)">Aucune</button>
+        <button class="bdc-rem-btn" onclick="bdcSetRemise(5,this)">−5%</button>
+        <button class="bdc-rem-btn" onclick="bdcSetRemise(10,this)">−10%</button>
+        <button class="bdc-rem-btn" onclick="bdcSetRemise(15,this)">−15%</button>
+        <button class="bdc-rem-btn" onclick="bdcSetRemise(20,this)">−20%</button>
+        <input type="number" id="bdc-remise-custom" min="0" max="99" step="0.5" placeholder="%" style="width:50px;padding:3px 5px;border:1.5px solid var(--border-med);border-radius:6px;background:var(--surface2);color:var(--g800);font-family:var(--fd);font-size:.72rem;outline:none;" oninput="bdcSetRemise(parseFloat(this.value)||0,null)">
+      </div>
+      <div style="font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:.5rem;">Récapitulatif</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:.6rem;">
+        <div style="background:var(--surface2);border-radius:6px;padding:.35rem;text-align:center;"><div style="font-size:.95rem;font-weight:600;color:var(--g900);" id="bdc-nb-refs">0</div><div style="font-size:.58rem;color:var(--g500);text-transform:uppercase;">Réf.</div></div>
+        <div style="background:var(--surface2);border-radius:6px;padding:.35rem;text-align:center;"><div style="font-size:.95rem;font-weight:600;color:var(--g900);" id="bdc-nb-colis">0</div><div style="font-size:.58rem;color:var(--g500);text-transform:uppercase;">Colis</div></div>
+        <div style="background:var(--surface2);border-radius:6px;padding:.35rem;text-align:center;"><div style="font-size:.95rem;font-weight:600;color:var(--g900);" id="bdc-nb-uvc">0</div><div style="font-size:.58rem;color:var(--g500);text-transform:uppercase;">UVC</div></div>
+      </div>
+      <div style="background:var(--blue-p50);border:1px solid rgba(43,181,160,.2);border-radius:7px;padding:.7rem;">
+        <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--g500);padding:.15rem 0;">Total HT brut<span style="font-weight:600;color:var(--g800);" id="bdc-total-brut">0,00€</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--g500);padding:.15rem 0;">Remise<span style="font-weight:600;color:var(--g800);" id="bdc-total-remise">0,00€</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--g500);padding:.15rem 0;">TVA 5,5%<span style="font-weight:600;color:var(--g800);" id="bdc-total-tva">0,00€</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.82rem;font-weight:600;color:var(--bnt);padding:.35rem 0;border-top:1px solid rgba(43,181,160,.2);margin-top:.25rem;">Total HT net<span id="bdc-total-net">0,00€</span></div>
+      </div>
+      <!-- Franco -->
+      <div id="bdc-franco-box" style="margin-top:.5rem;border-radius:6px;padding:.45rem .6rem;font-size:.71rem;background:rgba(201,124,26,.1);border:1px solid rgba(201,124,26,.2);color:var(--amber);">🚚 Franco : 5 colis ou 450€ HT</div>
+      <div id="bdc-alert" style="display:none;border-radius:6px;padding:.5rem .7rem;font-size:.72rem;margin-top:.6rem;line-height:1.4;"></div>
+      <button id="bdc-btn-send" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:.7rem;" onclick="bdcSendOrder()">
+        <div id="bdc-spinner" style="display:none;width:11px;height:11px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:5px;"></div>
+        <span id="bdc-send-label">📄 Envoyer + PDF joint</span>
+      </button>
+    </div>
+    <!-- Catalogue -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:.5rem .7rem;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.32rem .6rem;flex:1;min-width:180px;">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#64748b" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+          <input type="text" id="bdc-search" placeholder="Rechercher produit (désignation, EAN…)" oninput="bdcDoSearch()" style="background:transparent;border:none;outline:none;color:var(--g800);font-family:var(--fd);font-size:.75rem;width:100%;">
+        </div>
+        <div style="display:flex;gap:3px;">
+          <button class="bdc-mode-btn active" data-mode="all" onclick="bdcSetMode(this)">Tout</button>
+          <button class="bdc-mode-btn" data-mode="libelle" onclick="bdcSetMode(this)">Nom</button>
+          <button class="bdc-mode-btn" data-mode="ean" onclick="bdcSetMode(this)">EAN</button>
+        </div>
+        <span id="bdc-search-count" style="font-size:.68rem;color:var(--g500);"></span>
+        <button onclick="bdcClearSearch()" style="padding:.22rem .55rem;border-radius:4px;border:1px solid rgba(239,68,68,.2);background:transparent;color:#ef4444;font-family:var(--fd);font-size:.68rem;cursor:pointer;">✕</button>
+      </div>
+      <div style="flex:1;overflow:auto;">
+        <table id="bdc-table" style="width:100%;border-collapse:collapse;font-size:.73rem;">
+          <thead style="position:sticky;top:0;z-index:10;">
+            <tr>
+              <th>EAN</th><th style="min-width:220px;">Désignation</th><th>Poids</th><th>PCB</th><th>TVA</th><th>Prix HT/colis</th><th>Qté (colis)</th><th>Rem.%</th><th>UVC</th><th>Total HT</th>
+            </tr>
+          </thead>
+          <tbody id="bdc-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BASE CLIENTS ══ -->
+<div id="sec-clients" class="section hidden">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Base clients <span id="cdb-total" style="font-size:.72rem;font-weight:400;color:var(--g500);margin-left:8px;">0 contacts</span></div>
+      <div class="page-sub">Création et gestion manuelle des fiches clients BIO N TRUFFE</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="exportClientsCSV()" style="font-size:.78rem;">📥 Export CSV</button>
+      <button class="btn btn-primary" onclick="openClientModal(null)" style="font-size:.78rem;">+ Nouveau client</button>
+    </div>
+  </div>
+  <!-- Filtres -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:.7rem 1rem;background:var(--surface2);border-radius:10px;margin-bottom:1rem;border:1px solid var(--border);">
+    <input type="text" id="cdb-search" oninput="renderClients()" placeholder="🔎 Rechercher (nom, ville, code…)" style="flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border-med);border-radius:7px;padding:.4rem .7rem;font-size:.82rem;font-family:var(--fd);outline:none;color:var(--g800);">
+    <select id="cdb-filter-profil" onchange="renderClients()" style="font-size:.78rem;background:var(--surface);border:1px solid var(--border-med);border-radius:7px;padding:.4rem .6rem;font-family:var(--fd);outline:none;color:var(--g800);">
+      <option value="">Tous profils</option>
+      <option>Biocoop</option><option>Biomonde</option><option>Indépendant</option>
+      <option>Restaurateur</option><option>Grossiste</option><option>Prospect</option>
+    </select>
+    <span style="font-size:.72rem;color:var(--g600);" id="cdb-count-filtered">—</span>
+  </div>
+  <div class="card">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Code</th><th>Raison sociale</th><th>Profil</th><th>Ville</th><th>Email</th><th>Téléphone</th><th>CA HT</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="cdb-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ COMMANDES ══ -->
+<div id="sec-commandes" class="section hidden">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Commandes</div>
+      <div class="page-sub">Historique des bons de commande BIO N TRUFFE</div>
+    </div>
+    <button class="btn btn-primary" onclick="showSection('bdc',null)">📋 Nouveau BDC</button>
+  </div>
+  <div class="card">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Date</th><th>Magasin</th><th>N° Client</th><th>Réf.</th><th>Colis</th><th>HT net</th><th>Statut</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="cmd-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PROSPECTS ══ -->
+<div id="sec-prospects" class="section hidden">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Prospects</div>
+      <div class="page-sub">Leads commerciaux en qualification</div>
+    </div>
+    <button class="btn btn-primary" onclick="openProspectModal(null)">+ Nouveau prospect</button>
+  </div>
+  <div class="card">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Raison sociale</th><th>Contact</th><th>Ville</th><th>Profil</th><th>Statut</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="prsp-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAILING ══ -->
+<div id="sec-mailing" class="section hidden">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Mailing promotionnel</div>
+      <div class="page-sub">Envoi groupé avec le tarif BIO N TRUFFE V15 en pièce jointe PDF</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 380px;gap:1rem;">
+    <div class="card">
+      <div class="card-head"><span class="card-title">✉️ Composition</span></div>
+      <div style="padding:1rem;">
+        <div style="margin-bottom:.75rem;">
+          <label style="display:block;font-size:.68rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.4rem;">Destinataires (un email par ligne)</label>
+          <textarea id="ml-recipients" oninput="mlUpdateRecipients()" placeholder="client1@example.com&#10;client2@example.com" style="width:100%;min-height:90px;background:var(--surface2);border:1.5px solid var(--border-med);border-radius:8px;padding:.5rem .75rem;font-family:monospace;font-size:.82rem;outline:none;resize:vertical;color:var(--g800);"></textarea>
+          <div style="font-size:.7rem;color:var(--g500);margin-top:.25rem;" id="ml-recipients-count">0 destinataire(s)</div>
+        </div>
+        <div style="margin-bottom:.75rem;">
+          <label style="display:block;font-size:.68rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.4rem;">Objet *</label>
+          <input type="text" id="ml-subject" placeholder="Nouveautés BIO N TRUFFE — Tarif V15 2026" oninput="mlUpdatePreview()" style="width:100%;background:var(--surface2);border:1.5px solid var(--border-med);border-radius:8px;padding:.5rem .75rem;font-family:var(--fd);font-size:.83rem;outline:none;color:var(--g800);">
+        </div>
+        <div style="margin-bottom:.75rem;">
+          <label style="display:block;font-size:.68rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.4rem;">Contenu *</label>
+          <div id="ml-editor" contenteditable="true" oninput="mlUpdatePreview()" style="min-height:200px;max-height:400px;overflow-y:auto;padding:1rem;font-size:.88rem;line-height:1.55;color:var(--g800);outline:none;border-top:1px solid var(--border);background:var(--surface2);border-radius:8px;border:1.5px solid var(--border-med);" placeholder="Bonjour,&#10;&#10;Veuillez trouver ci-joint notre nouveau tarif BIO N TRUFFE..."></div>
+        </div>
+        <div style="background:var(--blue-p50);border:1px solid rgba(43,181,160,.2);border-radius:9px;padding:.8rem 1rem;display:flex;align-items:center;justify-content:space-between;">
+          <div><div style="font-size:.78rem;font-weight:600;color:var(--g700);">📄 Pièce jointe : <span style="color:var(--bnt);">Tarif_BioNTruffe_V15_2026.pdf</span></div><div id="ml-send-summary" style="font-size:.68rem;color:var(--g500);margin-top:2px;">Aucun destinataire</div></div>
+          <button class="btn btn-primary" onclick="mlSendAll()" id="ml-send-btn" style="font-size:.85rem;padding:.55rem 1.1rem;" disabled>🚀 Envoyer</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="position:sticky;top:70px;align-self:start;">
+      <div class="card-head"><span class="card-title">👁 Aperçu</span></div>
+      <div style="padding:1rem;background:var(--g100);border-radius:0 0 10px 10px;">
+        <div style="background:#fff;border-radius:8px;padding:1rem;box-shadow:var(--shadow-sm);min-height:250px;">
+          <div style="font-size:.7rem;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:.4rem;margin-bottom:.6rem;"><strong>Objet :</strong> <span id="ml-preview-subject" style="color:var(--g800);">(à saisir)</span></div>
+          <div id="ml-preview-body" style="font-size:.8rem;line-height:1.5;color:var(--g800);min-height:200px;"><em style="color:var(--g400);">Le contenu apparaîtra ici…</em></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div><!-- /app -->
+</div><!-- /app-shell -->
+
+<!-- MODAL CLIENT -->
+<div class="modal-bg hidden" id="modal-client">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <span class="modal-title" id="modal-client-title">Nouveau client</span>
+      <button class="close-btn" onclick="closeModal('client')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="c-edit-id">
+      <div class="form-grid">
+        <div><label class="lb">Code Client (ex: BNT-0001)</label><input type="text" id="c-numClient" placeholder="BNT-0001"></div>
+        <div><label class="lb">Statut</label><select id="c-statut"><option value="client">✅ Client</option><option value="prospect">🔵 Prospect</option></select></div>
+        <div style="grid-column:span 2;"><label class="lb">Raison sociale *</label><input type="text" id="c-raison"></div>
+        <div><label class="lb">Contact principal</label><input type="text" id="c-contact" placeholder="Prénom Nom"></div>
+        <div><label class="lb">Téléphone</label><input type="tel" id="c-tel" placeholder="06 XX XX XX XX"></div>
+        <div style="grid-column:span 2;"><label class="lb">Email</label><input type="email" id="c-email"></div>
+        <div style="grid-column:span 2;"><label class="lb">Adresse</label><input type="text" id="c-adresse" placeholder="Rue et numéro"></div>
+        <div><label class="lb">Code postal</label><input type="text" id="c-cp" placeholder="84000"></div>
+        <div><label class="lb">Ville</label><input type="text" id="c-ville" placeholder="Avignon"></div>
+        <div><label class="lb">Profil revendeur</label>
+          <select id="c-profil">
+            <option>Biocoop</option><option>Biomonde</option><option>Indépendant</option>
+            <option>Restaurateur</option><option>Grossiste</option><option>Caviste</option><option>Épicerie fine</option>
+          </select>
+        </div>
+        <div><label class="lb">Remise (%)</label><input type="number" id="c-remise" min="0" max="50" step="0.5" value="0"></div>
+        <div><label class="lb">SIRET</label><input type="text" id="c-siret" placeholder="XXX XXX XXX XXXXX"></div>
+        <div><label class="lb">N° TVA intracommunautaire</label><input type="text" id="c-tva-intra" placeholder="FR 00 XXX XXX XXX"></div>
+        <div style="grid-column:span 2;"><label class="lb">Notes internes</label><textarea id="c-notes" placeholder="Historique, conditions particulières…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="c-delete-btn" onclick="deleteClient()" style="margin-right:auto;display:none;">🗑 Supprimer</button>
+      <button class="btn btn-ghost" onclick="closeModal('client')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveClient()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PROSPECT -->
+<div class="modal-bg hidden" id="modal-prospect">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title" id="modal-prospect-title">Nouveau prospect</span><button class="close-btn" onclick="closeModal('prospect')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="p-edit-id">
+      <div class="form-row"><label>Raison sociale *</label><input type="text" id="p-raison" placeholder="Épicerie du Soleil"></div>
+      <div class="form-row-2"><div><label>Contact</label><input type="text" id="p-contact" placeholder="Prénom Nom"></div><div><label>Téléphone</label><input type="tel" id="p-tel" placeholder="06 XX XX XX XX"></div></div>
+      <div class="form-row"><label>Email</label><input type="email" id="p-email" placeholder="contact@magasin.fr"></div>
+      <div class="form-row-2"><div><label>Ville</label><input type="text" id="p-ville" placeholder="Avignon"></div><div><label>Code postal</label><input type="text" id="p-cp" placeholder="84000"></div></div>
+      <div class="form-row-2">
+        <div><label>Statut</label><select id="p-statut"><option>Nouveau</option><option>Contacté</option><option>Relancé</option><option>Qualifié</option></select></div>
+        <div><label>Profil</label><select id="p-profil"><option>Biocoop</option><option>Biomonde</option><option>Indépendant</option><option>Restaurateur</option><option>Grossiste</option></select></div>
+      </div>
+      <div class="form-row"><label>Notes</label><textarea id="p-notes" placeholder="Contexte, observations…"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="p-delete-btn" onclick="deleteProspect()" style="margin-right:auto;display:none;">🗑 Supprimer</button>
+      <button class="btn btn-ghost" onclick="closeModal('prospect')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveProspect()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- SCRIPTS -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+// ══════════════════════════════════════════════════
+//  CONFIG FIREBASE BNT
+// ══════════════════════════════════════════════════
+// ⚠️ REMPLACER par votre projet Firebase BNT
+const BNT_FIREBASE_CONFIG = {
+  apiKey:            "VOTRE_API_KEY",
+  authDomain:        "VOTRE_PROJECT.firebaseapp.com",
+  projectId:         "VOTRE_PROJECT",
+  storageBucket:     "VOTRE_PROJECT.appspot.com",
+  messagingSenderId: "VOTRE_SENDER_ID",
+  appId:             "VOTRE_APP_ID"
+};
+
+// ══════════════════════════════════════════════════
+//  CATALOGUE BNT — Tarif V15 — 01/03/2026
+//  Source : 2026-03-01_TG_MBS_BIONTRUFFE_2026_Pi_v15.pdf
+// ══════════════════════════════════════════════════
+const PRODUCTS = [
+  { code:'BNT-001', ean:'3770028175086', libelle:'TARTUFFADE À LA TRUFFE NOIRE 2% BIO',                poids:'80g',   pcb:12, pu_ht:8.50,  tva:5.5, certif:'AB Bio' },
+  { code:'BNT-002', ean:'3770028175079', libelle:'DÉLICE DE CÈPES ET TRUFFE NOIRE 2% BIO',             poids:'80g',   pcb:12, pu_ht:8.50,  tva:5.5, certif:'AB Bio' },
+  { code:'BNT-003', ean:'3770028175062', libelle:'SAUCE CRÉMÉE À LA TRUFFE NOIRE 1,5% BIO',            poids:'80g',   pcb:12, pu_ht:8.50,  tva:5.5, certif:'AB Bio' },
+  { code:'BNT-004', ean:'3770028175055', libelle:'CRÈME DE PARMESAN ET TRUFFE NOIRE 1,5% BIO',         poids:'80g',   pcb:12, pu_ht:8.50,  tva:5.5, certif:'AB Bio' },
+  { code:'BNT-005', ean:'3770028175017', libelle:'CRÈME DE BALSAMIQUE À LA TRUFFE NOIRE 1,1% BIO',     poids:'150ml', pcb:12, pu_ht:10.50, tva:5.5, certif:'AB Bio' },
+  { code:'BNT-006', ean:'3770028175147', libelle:'CRÈME DE BALSAMIQUE À LA TRUFFE NOIRE 1,1% BIO',     poids:'100ml', pcb:12, pu_ht:10.50, tva:5.5, certif:'AB Bio' },
+  { code:'BNT-007', ean:'3770028175109', libelle:"HUILE D'OLIVE VIERGE EXTRA Aromatisée TRUFFE NOIRE BIO", poids:'250ml', pcb:12, pu_ht:19.00, tva:5.5, certif:'AB Bio' },
+  { code:'BNT-008', ean:'3770028175116', libelle:"HUILE D'OLIVE VIERGE EXTRA Aromatisée TRUFFE NOIRE BIO", poids:'100ml', pcb:12, pu_ht:11.00, tva:5.5, certif:'AB Bio' },
+  { code:'BNT-009', ean:'3770028175000', libelle:"MIEL D'ACCACIA À LA TRUFFE NOIRE 1,1% BIO",          poids:'100g',  pcb:12, pu_ht:10.50, tva:5.5, certif:'AB Bio' },
+  { code:'BNT-010', ean:'3770028175130', libelle:'TRUFFES NOIRES "TUBER MELANO" BROSSÉES 1ÈRE CUISSON BIO', poids:'20g', pcb:6, pu_ht:25.00, tva:5.5, certif:'AB Bio' },
+  { code:'BNT-011', ean:'3770028175123', libelle:'TRUFFE NOIRE "TUBER MELANO" BRISURES 1ÈRE CUISSON BIO',  poids:'20g', pcb:6, pu_ht:20.00, tva:5.5, certif:'AB Bio' },
+  { code:'BNT-012', ean:'3770028175161', libelle:"DUO CAJOU AMANDE À LA TRUFFE D'ÉTÉ 1,4% BIO — Nouveauté !", poids:'100g', pcb:6, pu_ht:9.50, tva:5.5, certif:'AB Bio', new:true },
+  { code:'BNT-013', ean:'3770028175154', libelle:"CHIPS ARTISANALES À LA TRUFFE D'ÉTÉ 1% BIO — Pomme de Terre France", poids:'100g', pcb:16, pu_ht:3.90, tva:5.5, certif:'AB Bio', new:true },
+  { code:'BNT-014', ean:'3770028175093', libelle:"COFFRET FESTIF AIDES CULINAIRES À LA TRUFFE — Cadeaux clients / CSE / Séminaires (composition sur demande)", poids:'', pcb:1, pu_ht:0, tva:5.5, certif:'AB Bio', surDemande:true }
+];
+
+// Prix HT par unité (pu_ht = prix HT par unité vendue)
+// Pour le BDC on affiche le prix HT par carton = pu_ht * pcb
+// Franco : 5 colis ou 450€ HT
+const FRANCO_COLIS = 5;
+const FRANCO_HT    = 450;
+const TVA_TAUX     = 5.5;
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+let db = null, auth = null, currentUser = null;
+let cache = { clients:[], prospects:[], commandes:[], activite:[] };
+let listeners = [];
+let bdcQtys = {}, bdcRemiseLigne = {}, bdcRemise = 0, bdcSearchMode = 'all';
+
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(BNT_FIREBASE_CONFIG);
+    auth = firebase.auth();
+    db   = firebase.firestore();
+    document.getElementById('login-screen').style.display = 'flex';
+    auth.onAuthStateChanged(user => {
+      if (user) { currentUser = user; showApp(); }
+    });
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    // Mode démo sans Firebase
+    showAppDemo();
+  }
+});
+
+async function doLogin() {
+  const email = g('l-email'), pwd = g('l-pwd');
+  setLoginErr('');
+  try {
+    await auth.signInWithEmailAndPassword(email, pwd);
+  } catch(e) {
+    const map = {
+      'auth/user-not-found':'Aucun compte avec cet email.',
+      'auth/wrong-password':'Mot de passe incorrect.',
+      'auth/invalid-email':'Email invalide.',
+      'auth/too-many-requests':'Trop de tentatives. Réessayez plus tard.',
+    };
+    setLoginErr(map[e.code] || 'Erreur : ' + e.code);
+  }
+}
+
+function setLoginErr(msg) { const el=g2('login-err'); el.textContent=msg; el.style.display=msg?'block':'none'; }
+
+async function doLogout() {
+  listeners.forEach(u=>u()); listeners=[];
+  await auth.signOut();
+  cache = { clients:[], prospects:[], commandes:[], activite:[] };
+  document.getElementById('app-shell').classList.add('hidden');
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  const shell = document.getElementById('app-shell');
+  shell.classList.remove('hidden');
+  shell.style.display = 'flex';
+  const nom = currentUser.displayName || currentUser.email.split('@')[0];
+  const ini = nom.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  s2('avatar-initials', ini); s2('sb-avatar', ini); s2('sb-name', nom); s2('menu-email', currentUser.email);
+  startListeners();
+  buildTable();
+}
+
+function showAppDemo() {
+  // Mode sans Firebase (pour tests)
+  document.getElementById('login-screen').style.display = 'none';
+  const shell = document.getElementById('app-shell');
+  shell.classList.remove('hidden');
+  shell.style.display = 'flex';
+  buildTable();
+  refreshDashboard();
+}
+
+// ══════════════════════════════════════════════════
+//  FIRESTORE LISTENERS
+// ══════════════════════════════════════════════════
+function startListeners() {
+  if (!db) return;
+  setSyncing(true);
+  let loaded = 0;
+  const onLoad = () => { loaded++; if(loaded>=3){ setSyncing(false); refreshDashboard(); updateBadges(); } };
+  const listen = (col, key, cb) => {
+    const u = db.collection(col).orderBy('createdAt','desc').onSnapshot(snap => {
+      cache[key] = snap.docs.map(d=>({id:d.id,...d.data()}));
+      cb && cb(); onLoad(); updateBadges(); refreshDashboard();
+    }, ()=>onLoad());
+    listeners.push(u);
+  };
+  listen('clients','clients', renderClients);
+  listen('prospects','prospects', renderProspects);
+  listen('commandes','commandes', renderCommandes);
+  const uAct = db.collection('activite').orderBy('createdAt','desc').limit(15).onSnapshot(snap=>{
+    cache.activite = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderActivite(); onLoad();
+  }, ()=>onLoad());
+  listeners.push(uAct);
+}
+
+function setSyncing(on) {
+  g2('sync-dot').className = 'sync-dot'+(on?' loading':'');
+  s2('sync-label', on?'Sync…':'Connecté');
+}
+
+function logActivite(msg, color) {
+  if (!db||!currentUser) return;
+  db.collection('activite').add({ msg, color:color||'teal', user:currentUser.email, createdAt:firebase.firestore.FieldValue.serverTimestamp() }).catch(()=>{});
+}
+
+// ══════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════
+function showSection(id, btn) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.add('hidden'));
+  document.querySelectorAll('.t-tab,.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.remove('hidden');
+  if (btn) btn.classList.add('active');
+}
+
+function updateBadges() {
+  s2('badge-prospects', cache.prospects.length);
+  s2('nb-clients', cache.clients.length);
+  s2('nb-commandes', cache.commandes.length);
+  s2('nb-prospects', cache.prospects.length);
+}
+
+function toggleAvatarMenu() {
+  document.getElementById('avatar-menu').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#avatar-btn')) document.getElementById('avatar-menu').classList.remove('open');
+});
+
+// ══════════════════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════════════════
+function refreshDashboard() {
+  s2('stat-clients', cache.clients.length);
+  s2('stat-prospects', cache.prospects.length);
+  s2('stat-commandes', cache.commandes.length);
+  const caTotal = cache.commandes.reduce((s,o)=>s+(o.montant||0),0);
+  s2('stat-ca', bdcFmt(caTotal));
+
+  // Dernières commandes
+  const lastEl = document.getElementById('dash-last-commandes');
+  const last5 = cache.commandes.slice(0,5);
+  if (!last5.length) { lastEl.innerHTML='<div style="padding:1rem;text-align:center;color:var(--g400);font-size:.8rem;">Aucune commande</div>'; }
+  else {
+    lastEl.innerHTML = last5.map(o=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.55rem .75rem;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-size:.83rem;font-weight:600;color:var(--g900);">${esc(o.clientNom||'—')}</div>
+          <div style="font-size:.7rem;color:var(--g500);">${fmtDate(o.createdAt)} · ${o.nbRefs||0} réf. · ${o.nbColis||0} colis</div>
+        </div>
+        <div style="font-size:.85rem;font-weight:700;color:var(--bnt);">${bdcFmt(o.montant||0)}</div>
+      </div>`).join('');
+  }
+  renderActivite();
+}
+
+function renderActivite() {
+  const el = document.getElementById('dash-activite');
+  const colors = {teal:'#2BB5A0',blue:'var(--blue-p500)',amber:'var(--amber)',red:'var(--red)'};
+  if (!cache.activite.length) { el.innerHTML='<div style="padding:1rem;text-align:center;color:var(--g400);font-size:.8rem;">Aucune activité</div>'; return; }
+  el.innerHTML = cache.activite.slice(0,8).map(a=>`
+    <div style="display:flex;align-items:flex-start;gap:.7rem;padding:.55rem .75rem;border-bottom:1px solid var(--border);">
+      <div class="act-dot" style="background:${colors[a.color]||colors.teal};margin-top:5px;"></div>
+      <div><div style="font-size:.8rem;color:var(--g800);">${esc(a.msg||'')}</div><div style="font-size:.68rem;color:var(--g500);margin-top:2px;">${fmtDate(a.createdAt)}</div></div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════
+//  BDC — BON DE COMMANDE
+// ══════════════════════════════════════════════════
+function bdcPrixNet(p) {
+  const rl = bdcRemiseLigne[p.code];
+  const rem = (rl!==undefined&&rl!==null&&rl!=='') ? parseFloat(rl)||0 : bdcRemise;
+  return parseFloat((p.pu_ht*(1-rem/100)).toFixed(4));
+}
+function bdcFmt(v) { return (parseFloat(v)||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+'€'; }
+function bdcEsc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function buildTable() {
+  let rows = '';
+  for (let i=0; i<PRODUCTS.length; i++) {
+    const p = PRODUCTS[i];
+    const qty = bdcQtys[p.code]||0;
+    const pcb = parseFloat(p.pcb)||1;
+    const pNet = bdcPrixNet(p);
+    const pCarton = pNet * pcb;
+    const total = qty ? pNet * qty * pcb : 0;
+    const hasQty = qty>0 ? ' bdc-tr-has-qty' : '';
+    const dCode = bdcEsc(p.code);
+    const dLib = bdcEsc((p.libelle||'').toLowerCase());
+    const dEan = bdcEsc((p.ean||'').toLowerCase());
+    const rl = bdcRemiseLigne[p.code]!==undefined ? bdcRemiseLigne[p.code] : '';
+
+    let prixCell = '';
+    if (p.surDemande) {
+      prixCell = '<span style="font-size:.7rem;color:var(--amber);font-style:italic;">Prix sur demande</span>';
+    } else {
+      prixCell = bdcFmt(pCarton);
+      if (bdcRemise > 0 || (rl!==''&&parseFloat(rl)>0)) {
+        const pBrut = p.pu_ht * pcb;
+        prixCell = `<strong style="color:var(--bnt)">${bdcFmt(pCarton)}</strong> <span style="text-decoration:line-through;color:var(--g500);font-size:10px;">${bdcFmt(pBrut)}</span>`;
+      }
+    }
+
+    const newBadge = p.new ? '<span style="font-size:.6rem;font-weight:700;background:#dcfce7;color:#15803d;border-radius:3px;padding:1px 5px;margin-left:4px;">NOUVEAU</span>' : '';
+    const certif = p.certif ? `<span style="font-size:.62rem;padding:1px 5px;border-radius:3px;background:rgba(43,181,160,.15);color:var(--bnt2);">${p.certif}</span>` : '';
+
+    rows += `<tr class="${hasQty}" data-code="${dCode}" data-lib="${dLib}" data-ean="${dEan}" style="border-bottom:1px solid var(--border);">`;
+    rows += `<td style="padding:.4rem .55rem;color:var(--g500);font-family:monospace;font-size:.66rem;white-space:nowrap;">${bdcEsc(p.ean||'—')}</td>`;
+    rows += `<td style="padding:.4rem .55rem;max-width:280px;"><span style="font-size:.8rem;color:var(--g800);">${bdcEsc(p.libelle)}</span>${newBadge}</td>`;
+    rows += `<td style="padding:.4rem .55rem;color:var(--g500);font-size:.72rem;">${bdcEsc(p.poids||'—')}</td>`;
+    rows += `<td style="padding:.4rem .55rem;color:var(--g600);text-align:center;">${p.pcb}</td>`;
+    rows += `<td style="padding:.4rem .55rem;color:var(--g500);">${p.tva}%</td>`;
+    rows += `<td style="padding:.4rem .55rem;white-space:nowrap;font-weight:500;">${prixCell}</td>`;
+
+    if (p.surDemande) {
+      rows += `<td colspan="4" style="padding:.4rem .55rem;font-size:.72rem;color:var(--amber);font-style:italic;">Contactez Pierre BAUDIN · 06 99 19 58 65</td>`;
+    } else {
+      rows += `<td class="bdc-td-qty" style="padding:.25rem .45rem;">
+        <div style="display:flex;align-items:center;gap:3px;">
+          <button onclick="bdcStepQty('${dCode}',${pcb},-1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border-med);background:var(--bg2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--g700);flex-shrink:0;">−</button>
+          <input type="number" min="0" step="1" value="${qty||''}" placeholder="0" data-code="${dCode}" data-pcb="${pcb}" oninput="bdcOnQty(this)" onchange="bdcOnQty(this)" style="width:42px;text-align:center;background:var(--surface2);border:1.5px solid var(--border-med);border-radius:6px;padding:3px;font-family:var(--fd);font-size:.82rem;outline:none;color:var(--g800);">
+          <button onclick="bdcStepQty('${dCode}',${pcb},1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border-med);background:var(--bg2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--g700);flex-shrink:0;">+</button>
+        </div>
+      </td>`;
+      rows += `<td style="padding:.35rem .45rem;"><input type="number" min="0" max="100" step="0.5" value="${rl}" placeholder="—" data-code="${dCode}" oninput="bdcOnRemiseLigne(this)" style="width:50px;text-align:right;font-size:.75rem;padding:.25rem .4rem;background:var(--surface2);border:1px solid var(--border-med);border-radius:5px;outline:none;font-family:var(--fd);" title="Remise % spécifique"></td>`;
+      rows += `<td id="bdc-uvc-${dCode}" style="padding:.4rem .55rem;font-size:.72rem;color:var(--g500);text-align:center;">${qty>0?qty*pcb:'—'}</td>`;
+      rows += `<td id="bdc-t-${dCode}" style="padding:.4rem .55rem;font-weight:600;color:var(--bnt);white-space:nowrap;">${qty?bdcFmt(total):''}</td>`;
+    }
+    rows += '</tr>';
+  }
+  document.getElementById('bdc-tbody').innerHTML = rows;
+  bdcUpdateTotals();
+}
+
+function bdcOnQty(input) {
+  const code = input.dataset.code;
+  const val  = parseInt(input.value)||0;
+  const pcb  = parseFloat(input.dataset.pcb)||1;
+  if (val>0) bdcQtys[code]=val; else delete bdcQtys[code];
+  const uvcEl = document.getElementById('bdc-uvc-'+code);
+  if (uvcEl) uvcEl.textContent = val>0?(val*pcb):'—';
+  const tr = input.closest('tr');
+  if (tr) { tr.className = tr.className.replace(' bdc-tr-has-qty','')+(val>0?' bdc-tr-has-qty':''); }
+  const p = PRODUCTS.find(x=>x.code===code);
+  if (!p) return;
+  const cell = document.getElementById('bdc-t-'+code);
+  if (cell) cell.textContent = val ? bdcFmt(bdcPrixNet(p)*val*pcb) : '';
+  bdcUpdateTotals();
+}
+
+function bdcStepQty(code, pcb, dir) {
+  const cur = parseInt(bdcQtys[code])||0;
+  const nv  = Math.max(0, cur+dir);
+  bdcQtys[code] = nv;
+  if (!nv) delete bdcQtys[code];
+  const input = document.querySelector(`input[data-code="${CSS.escape(code)}"]`);
+  if (input) { input.value=nv||''; bdcOnQty(input); }
+  else buildTable();
+}
+
+function bdcOnRemiseLigne(input) {
+  const code = input.dataset.code;
+  const val  = input.value.trim();
+  if (val===''||val===null) delete bdcRemiseLigne[code];
+  else bdcRemiseLigne[code] = parseFloat(val)||0;
+  buildTable();
+}
+
+function bdcSetRemise(val, btn) {
+  bdcRemise = val;
+  document.querySelectorAll('.bdc-rem-btn').forEach(b=>b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  buildTable();
+}
+
+function bdcSetMode(btn) {
+  bdcSearchMode = btn.dataset.mode;
+  document.querySelectorAll('.bdc-mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  bdcDoSearch();
+}
+
+function bdcDoSearch() {
+  const q = (document.getElementById('bdc-search').value||'').toLowerCase().trim();
+  const rows = document.querySelectorAll('#bdc-tbody tr');
+  let vis = 0;
+  rows.forEach(tr => {
+    let show = !q;
+    if (q) {
+      if (bdcSearchMode==='all') show = (tr.dataset.lib||'').includes(q)||(tr.dataset.ean||'').includes(q);
+      else if (bdcSearchMode==='libelle') show = (tr.dataset.lib||'').includes(q);
+      else if (bdcSearchMode==='ean') show = (tr.dataset.ean||'').includes(q);
+    }
+    tr.classList.toggle('bdc-tr-hidden', !show);
+    if (show) vis++;
+  });
+  s2('bdc-search-count', q?(vis+'/'+PRODUCTS.length+' produits'):'');
+}
+
+function bdcClearSearch() {
+  document.getElementById('bdc-search').value='';
+  bdcDoSearch();
+}
+
+function bdcUpdateTotals() {
+  let nbR=0,nbC=0,nbU=0,tB=0,tN=0,tTVA=0;
+  const recapItems=[];
+  PRODUCTS.forEach(p=>{
+    const q=bdcQtys[p.code]||0; if(!q||p.surDemande) return;
+    const pcb=parseFloat(p.pcb)||1;
+    nbR++; nbC+=q; nbU+=q*pcb;
+    tB+=p.pu_ht*q*pcb;
+    const net=bdcPrixNet(p)*q*pcb;
+    tN+=net; tTVA+=net*TVA_TAUX/100;
+    recapItems.push(q+'× '+p.libelle.slice(0,30));
+  });
+  s2('bdc-nb-refs',nbR); s2('bdc-nb-colis',nbC); s2('bdc-nb-uvc',nbU);
+  s2('bdc-total-brut',bdcFmt(tB));
+  s2('bdc-total-remise',bdcFmt(tB-tN));
+  s2('bdc-total-tva',bdcFmt(tTVA));
+  s2('bdc-total-net',bdcFmt(tN));
+  // Franco
+  const francoOk = nbC>=FRANCO_COLIS || tN>=FRANCO_HT;
+  const fb=document.getElementById('bdc-franco-box');
+  if (nbC>0) {
+    if (francoOk) { fb.style.background='rgba(5,150,105,.12)'; fb.style.borderColor='rgba(5,150,105,.25)'; fb.style.color='var(--green)'; fb.innerHTML='✅ Franco de port atteint !'; }
+    else { fb.style.background='rgba(201,124,26,.1)'; fb.style.borderColor='rgba(201,124,26,.2)'; fb.style.color='var(--amber)'; const mc=Math.max(0,FRANCO_COLIS-nbC), mht=Math.max(0,FRANCO_HT-tN); fb.innerHTML='🚚 Franco : encore '+mc+' colis ou '+bdcFmt(mht); }
+  } else { fb.style.background='rgba(201,124,26,.1)'; fb.style.color='var(--amber)'; fb.innerHTML='🚚 Franco : 5 colis ou 450€ HT'; }
+  // Recap bar
+  const bar=document.getElementById('bdc-recap-bar');
+  if (nbR>0) { bar.style.display='block'; s2('bdc-recap-items',recapItems.join(' · ')); s2('bdc-recap-total','→ '+bdcFmt(tN)+' HT'); }
+  else bar.style.display='none';
+}
+
+function resetBDC() {
+  if (Object.keys(bdcQtys).length && !confirm('Effacer toutes les quantités ?')) return;
+  bdcQtys={}; bdcRemiseLigne={}; bdcRemise=0;
+  document.querySelectorAll('.bdc-rem-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.bdc-rem-btn').classList.add('active');
+  buildTable();
+}
+
+function bdcBuildText() {
+  const mag=g('bdc-magasin'),mail=g('bdc-email'),nc=g('bdc-numclient');
+  const ct=g('bdc-contact'),tel=g('bdc-tel'),dl=g('bdc-datelivraison'),com=g('bdc-comment');
+  const today=new Date().toLocaleDateString('fr-FR');
+  let lines=['BON DE COMMANDE — BIO N TRUFFE','Tarif V15 — 01/03/2026','===================================','Magasin : '+mag];
+  if(nc) lines.push('N° Client : '+nc);
+  if(ct) lines.push('Contact : '+ct);
+  lines.push('Email : '+mail);
+  if(tel) lines.push('Tél : '+tel);
+  if(dl) lines.push('Livraison souhaitée : '+new Date(dl).toLocaleDateString('fr-FR'));
+  if(bdcRemise>0) lines.push('Remise globale : '+bdcRemise+'%');
+  if(com) lines.push('Commentaire : '+com);
+  lines.push('Date : '+today,'','---------- ARTICLES ----------','');
+  let tB=0,tN=0,nbC=0,nbR=0,nbU=0;
+  PRODUCTS.forEach(p=>{
+    const q=bdcQtys[p.code]||0; if(!q||p.surDemande) return;
+    const pcb=parseFloat(p.pcb)||1,pN=bdcPrixNet(p),tot=parseFloat((pN*q*pcb).toFixed(2));
+    tB+=p.pu_ht*q*pcb; tN+=tot; nbC+=q; nbR++; nbU+=q*pcb;
+    const remEff = (bdcRemiseLigne[p.code]!==undefined&&bdcRemiseLigne[p.code]!=='') ? parseFloat(bdcRemiseLigne[p.code])||0 : bdcRemise;
+    lines.push(p.code+' — '+p.libelle+' ('+p.poids+')');
+    lines.push('  EAN : '+p.ean+' | PCB : '+pcb+' | Qté : '+q+' colis = '+(q*pcb)+' UVC | Prix HT/u : '+bdcFmt(pN)+(remEff>0?' (remise '+remEff+'%)':'')+' | Total HT : '+bdcFmt(tot));
+  });
+  const tva = tN*TVA_TAUX/100;
+  lines.push('','---------- TOTAUX ----------','Références : '+nbR+' | Colis : '+nbC+' | UVC : '+nbU,'Total HT brut : '+bdcFmt(tB),'Remise : '+bdcFmt(tB-tN),'Total HT net : '+bdcFmt(tN),'TVA 5,5% : '+bdcFmt(tva),'Total TTC : '+bdcFmt(tN+tva));
+  const francoOk=nbC>=FRANCO_COLIS||tN>=FRANCO_HT;
+  lines.push('Franco de port : '+(francoOk?'OUI (atteint)':'NON — minimum 5 colis ou 450€ HT'));
+  lines.push('','📄 Tarif BIO N TRUFFE V15 joint en pièce jointe PDF');
+  lines.push('','---','ERIDAN BNT SARL | Christophe SPOTO | Pierre BAUDIN','contact@biontruffe.fr | 06 99 19 58 65');
+  return lines.join('\n');
+}
+
+function bdcShowAlert(msg,type) {
+  const el=document.getElementById('bdc-alert');
+  el.textContent=msg; el.style.display='block';
+  el.style.background=type==='ok'?'rgba(43,181,160,.12)':'rgba(239,68,68,.1)';
+  el.style.border=type==='ok'?'1px solid rgba(43,181,160,.3)':'1px solid rgba(239,68,68,.2)';
+  el.style.color=type==='ok'?'var(--bnt2)':'#fca5a5';
+  setTimeout(()=>el.style.display='none',7000);
+}
+
+async function bdcSendOrder() {
+  const mag=g('bdc-magasin'),mail=g('bdc-email');
+  if(!mag||!mail){bdcShowAlert('Veuillez renseigner le magasin et votre email.','err');return;}
+  const hasOrder=Object.keys(bdcQtys).some(k=>bdcQtys[k]>0);
+  if(!hasOrder){bdcShowAlert('Aucun article commandé.','err');return;}
+
+  const btn=document.getElementById('bdc-btn-send');
+  const spinner=document.getElementById('bdc-spinner');
+  btn.disabled=true; spinner.style.display='inline-block';
+  s2('bdc-send-label','Envoi…');
+
+  // Calculer les totaux
+  let tN=0,nbRefs=0,nbColis=0,nbUVC=0,lignes=[];
+  PRODUCTS.forEach(p=>{
+    const q=bdcQtys[p.code]||0; if(!q||p.surDemande) return;
+    const pcb=parseFloat(p.pcb)||1;
+    const montantLigne=parseFloat((bdcPrixNet(p)*q*pcb).toFixed(2));
+    tN+=montantLigne; nbRefs++; nbColis+=q; nbUVC+=q*pcb;
+    const remEff=(bdcRemiseLigne[p.code]!==undefined&&bdcRemiseLigne[p.code]!=='')?parseFloat(bdcRemiseLigne[p.code])||0:bdcRemise;
+    lignes.push({code:p.code,ean:p.ean||'',libelle:p.libelle,poids:p.poids||'',qty:q,pcb,pu_ht:bdcPrixNet(p),remise:remEff,total_ht:montantLigne});
+  });
+  tN=parseFloat(tN.toFixed(2));
+
+  const today=new Date().toLocaleDateString('fr-FR');
+  const nc=g('bdc-numclient'),ct=g('bdc-contact'),tel=g('bdc-tel'),dl=g('bdc-datelivraison'),com=g('bdc-comment');
+
+  // Sauvegarder dans Firestore
+  if(db&&currentUser){
+    try {
+      await db.collection('commandes').add({
+        clientNom:mag,numClient:nc||'',contact:ct||'',tel:tel||'',
+        email:mail,datelivraison:dl||'',commentaire:com||'',
+        statut:'Envoyée',montant:tN,nbRefs,nbColis,nbUVC,
+        remise:bdcRemise,lignes,
+        createdBy:currentUser.uid,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      logActivite('BDC envoyé — '+mag+' — '+bdcFmt(tN)+' ('+nbRefs+' réf., '+nbColis+' colis)','teal');
+    } catch(e){ console.warn('Firestore save error',e); }
+  }
+
+  // Envoi email via Web3Forms avec PDF joint (URL publique GitHub Pages)
+  const pdfUrl = 'https://loac1118.github.io/BIONTRUFFE/2026-03-01_TG_MBS_BIONTRUFFE_2026_Pi_v15.pdf';
+  const payload = {
+    access_key: 'c25bd306-bfaf-4a71-ac6d-36658c0df2ed', // ⚠️ REMPLACER par votre clé Web3Forms BNT
+    from_name: 'BIO N TRUFFE CRM',
+    subject: 'Bon de commande BIO N TRUFFE — '+mag+' — '+today,
+    email: ['contact','biontruffe.fr'].join('@'),
+    _replyto: mail,
+    _captcha: 'false',
+    _template: 'table',
+    Magasin: mag,
+    'N_Client': nc||'—',
+    Contact: ct||'—',
+    Email_client: mail,
+    Telephone: tel||'—',
+    Livraison: dl ? new Date(dl).toLocaleDateString('fr-FR') : 'Sur accord',
+    Remise: bdcRemise>0?bdcRemise+'%':'Aucune',
+    Nb_refs: nbRefs,
+    Nb_colis: nbColis,
+    Nb_UVC: nbUVC,
+    Total_HT_net: bdcFmt(tN),
+    TVA_5_5: bdcFmt(tN*TVA_TAUX/100),
+    Total_TTC: bdcFmt(tN*(1+TVA_TAUX/100)),
+    Commentaire: com||'—',
+    Commande_detail: bdcBuildText(),
+    Tarif_PDF: pdfUrl
+  };
+
+  try {
+    const res = await fetch('https://api.web3forms.com/submit',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(data.success===true||data.success==='true'){
+      bdcShowAlert('✅ Commande envoyée ! Email avec le tarif PDF envoyé à contact@biontruffe.fr','ok');
+      toast('✅ BDC envoyé — '+mag+' — '+bdcFmt(tN));
+      setTimeout(()=>{
+        if(confirm('Réinitialiser le bon de commande ?')){
+          bdcQtys={}; bdcRemiseLigne={}; bdcRemise=0; buildTable();
+        }
+      },1500);
+    } else { throw new Error('Réponse invalide'); }
+  } catch(e){
+    bdcShowAlert('⚠️ Erreur envoi email. La commande a été sauvegardée dans le CRM.','err');
+  } finally {
+    btn.disabled=false; spinner.style.display='none';
+    s2('bdc-send-label','📄 Envoyer + PDF joint');
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  BASE CLIENTS
+// ══════════════════════════════════════════════════
+function renderClients() {
+  const q=(document.getElementById('cdb-search')?.value||'').toLowerCase();
+  const fp=(document.getElementById('cdb-filter-profil')?.value||'');
+  let list = cache.clients.filter(c=>{
+    const match=(!q||(c.raison||'').toLowerCase().includes(q)||(c.numClient||'').toLowerCase().includes(q)||(c.ville||'').toLowerCase().includes(q));
+    const matchP=(!fp||(c.profil||'')===fp);
+    return match&&matchP;
+  });
+  s2('cdb-total',cache.clients.length+' clients');
+  s2('cdb-count-filtered',list.length+' affiché(s)');
+  const tb=document.getElementById('cdb-tbody');
+  if(!tb) return;
+  if(!list.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--g400);">Aucun client — cliquez "+ Nouveau client" pour commencer</td></tr>';return;}
+  const ca = c => cache.commandes.filter(o=>o.numClient===c.numClient).reduce((s,o)=>s+(o.montant||0),0);
+  tb.innerHTML=list.map(c=>`
+    <tr style="cursor:pointer;" onclick="openClientModal('${c.id}')">
+      <td><span style="font-size:.72rem;font-family:monospace;color:var(--blue-p700);">${esc(c.numClient||'—')}</span></td>
+      <td><strong>${esc(c.raison||'—')}</strong>${c.statut==='prospect'?'<span class="tag tag-blue" style="margin-left:6px;font-size:.62rem;">Prospect</span>':''}</td>
+      <td><span class="tag tag-green">${esc(c.profil||'—')}</span></td>
+      <td style="color:var(--g600);">${esc(c.ville||'—')}${c.cp?' ('+c.cp+')':''}</td>
+      <td style="color:var(--g500);font-size:.78rem;">${esc(c.email||'—')}</td>
+      <td style="color:var(--g500);font-size:.78rem;">${esc(c.tel||'—')}</td>
+      <td style="font-weight:600;color:var(--bnt);">${bdcFmt(ca(c))}</td>
+      <td><div style="display:flex;gap:4px;">
+        <button class="btn btn-ghost" style="font-size:.72rem;padding:.25rem .55rem;" onclick="event.stopPropagation();bdcFromClient('${c.id}')">📋 BDC</button>
+        <button class="btn btn-ghost" style="font-size:.72rem;padding:.25rem .55rem;" onclick="event.stopPropagation();openClientModal('${c.id}')">✏️</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function bdcFromClient(id) {
+  const c = cache.clients.find(x=>x.id===id);
+  if(!c) return;
+  showSection('bdc',null);
+  setTimeout(()=>{
+    if(g('bdc-magasin')) document.getElementById('bdc-magasin').value=c.raison||'';
+    if(g('bdc-numclient')) document.getElementById('bdc-numclient').value=c.numClient||'';
+    if(g('bdc-email')) document.getElementById('bdc-email').value=c.email||'';
+    if(g('bdc-contact')) document.getElementById('bdc-contact').value=c.contact||'';
+    if(g('bdc-tel')) document.getElementById('bdc-tel').value=c.tel||'';
+    if(c.remise>0) bdcSetRemise(c.remise,null);
+  },100);
+}
+
+function openClientModal(id) {
+  const isNew = !id;
+  s2('modal-client-title', isNew?'Nouveau client':'Fiche client');
+  document.getElementById('c-delete-btn').style.display = isNew?'none':'block';
+  if(isNew) {
+    ['c-edit-id','c-numClient','c-raison','c-contact','c-tel','c-email','c-adresse','c-cp','c-ville','c-siret','c-tva-intra','c-notes'].forEach(i=>sv(i,''));
+    sv('c-statut','client'); sv('c-profil','Indépendant'); sv('c-remise','0');
+  } else {
+    const c=cache.clients.find(x=>x.id===id); if(!c) return;
+    sv('c-edit-id',c.id); sv('c-numClient',c.numClient||''); sv('c-raison',c.raison||'');
+    sv('c-contact',c.contact||''); sv('c-tel',c.tel||''); sv('c-email',c.email||'');
+    sv('c-adresse',c.adresse||''); sv('c-cp',c.cp||''); sv('c-ville',c.ville||'');
+    sv('c-siret',c.siret||''); sv('c-tva-intra',c.tvaIntra||''); sv('c-notes',c.notes||'');
+    sv('c-statut',c.statut||'client'); sv('c-profil',c.profil||'Indépendant'); sv('c-remise',c.remise||0);
+  }
+  openModal('client');
+}
+
+async function saveClient() {
+  const raison=g('c-raison'); if(!raison){toast('Raison sociale obligatoire','err');return;}
+  const data={
+    raison,numClient:g('c-numClient'),contact:g('c-contact'),tel:g('c-tel'),email:g('c-email'),
+    adresse:g('c-adresse'),cp:g('c-cp'),ville:g('c-ville'),siret:g('c-siret'),
+    tvaIntra:g('c-tva-intra'),notes:g('c-notes'),
+    statut:g2('c-statut')?.value||'client',profil:g2('c-profil')?.value||'',
+    remise:parseFloat(g('c-remise'))||0
+  };
+  const id=g('c-edit-id');
+  try {
+    if(id) {
+      await db.collection('clients').doc(id).update(data);
+      logActivite('Client modifié — '+raison,'blue');
+    } else {
+      data.createdAt=firebase.firestore.FieldValue.serverTimestamp();
+      await db.collection('clients').add(data);
+      logActivite('Nouveau client — '+raison,'teal');
+    }
+    closeModal('client'); toast('✅ Client enregistré');
+  } catch(e){ toast('Erreur Firestore : '+e.message,'err'); }
+}
+
+async function deleteClient() {
+  const id=g('c-edit-id'); if(!id) return;
+  const c=cache.clients.find(x=>x.id===id);
+  if(!confirm('Supprimer "'+( c?.raison||'ce client' )+'" ?')) return;
+  try { await db.collection('clients').doc(id).delete(); closeModal('client'); toast('Client supprimé'); } catch(e){ toast('Erreur','err'); }
+}
+
+function exportClientsCSV() {
+  if(!cache.clients.length){toast('Aucun client à exporter','err');return;}
+  const hd=['Code','Raison sociale','Statut','Profil','Email','Téléphone','Adresse','CP','Ville','SIRET','Remise%','Notes'];
+  const rows=cache.clients.map(c=>[c.numClient||'',c.raison||'',c.statut||'',c.profil||'',c.email||'',c.tel||'',c.adresse||'',c.cp||'',c.ville||'',c.siret||'',c.remise||0,c.notes||''].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';'));
+  const csv='\uFEFF'+[hd.join(';'),...rows].join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='clients_bnt_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+  toast('Export CSV téléchargé');
+}
+
+// ══════════════════════════════════════════════════
+//  COMMANDES
+// ══════════════════════════════════════════════════
+function renderCommandes() {
+  const tb=document.getElementById('cmd-tbody'); if(!tb) return;
+  if(!cache.commandes.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--g400);">Aucune commande</td></tr>';return;}
+  tb.innerHTML=cache.commandes.map(o=>`
+    <tr>
+      <td style="font-size:.75rem;color:var(--g500);">${fmtDate(o.createdAt)}</td>
+      <td><strong>${esc(o.clientNom||'—')}</strong></td>
+      <td style="font-family:monospace;font-size:.72rem;color:var(--blue-p700);">${esc(o.numClient||'—')}</td>
+      <td style="text-align:center;">${o.nbRefs||0}</td>
+      <td style="text-align:center;">${o.nbColis||0}</td>
+      <td style="font-weight:600;color:var(--bnt);">${bdcFmt(o.montant||0)}</td>
+      <td><span class="tag ${o.statut==='Envoyée'?'tag-green':'tag-amber'}">${esc(o.statut||'—')}</span></td>
+      <td><button class="btn btn-danger" style="font-size:.7rem;padding:.2rem .55rem;" onclick="deleteCommande('${o.id}')">🗑</button></td>
+    </tr>`).join('');
+}
+
+async function deleteCommande(id) {
+  if(!confirm('Supprimer cette commande ?')) return;
+  try { await db.collection('commandes').doc(id).delete(); toast('Commande supprimée'); } catch(e){ toast('Erreur','err'); }
+}
+
+// ══════════════════════════════════════════════════
+//  PROSPECTS
+// ══════════════════════════════════════════════════
+function renderProspects() {
+  const tb=document.getElementById('prsp-tbody'); if(!tb) return;
+  if(!cache.prospects.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--g400);">Aucun prospect</td></tr>';return;}
+  tb.innerHTML=cache.prospects.map(p=>`
+    <tr style="cursor:pointer;" onclick="openProspectModal('${p.id}')">
+      <td><strong>${esc(p.raison||'—')}</strong></td>
+      <td style="font-size:.78rem;">${esc(p.contact||'—')}<br><span style="color:var(--g500);font-size:.7rem;">${esc(p.email||'')}</span></td>
+      <td style="color:var(--g600);">${esc(p.ville||'—')} ${esc(p.cp||'')}</td>
+      <td><span class="tag tag-blue">${esc(p.profil||'—')}</span></td>
+      <td><span class="tag ${p.statut==='Qualifié'?'tag-green':p.statut==='Contacté'?'tag-amber':'tag-blue'}">${esc(p.statut||'—')}</span></td>
+      <td><div style="display:flex;gap:4px;">
+        <button class="btn btn-ghost" style="font-size:.72rem;padding:.25rem .55rem;" onclick="event.stopPropagation();convertProspect('${p.id}')">→ Client</button>
+        <button class="btn btn-danger" style="font-size:.72rem;padding:.25rem .55rem;" onclick="event.stopPropagation();deleteProspect('${p.id}')">🗑</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function openProspectModal(id) {
+  const isNew=!id;
+  s2('modal-prospect-title',isNew?'Nouveau prospect':'Fiche prospect');
+  document.getElementById('p-delete-btn').style.display=isNew?'none':'block';
+  if(isNew){['p-edit-id','p-raison','p-contact','p-tel','p-email','p-ville','p-cp','p-notes'].forEach(i=>sv(i,''));sv('p-statut','Nouveau');}
+  else{
+    const p=cache.prospects.find(x=>x.id===id);if(!p)return;
+    sv('p-edit-id',p.id);sv('p-raison',p.raison||'');sv('p-contact',p.contact||'');
+    sv('p-tel',p.tel||'');sv('p-email',p.email||'');sv('p-ville',p.ville||'');
+    sv('p-cp',p.cp||'');sv('p-notes',p.notes||'');sv('p-statut',p.statut||'Nouveau');
+    sv('p-profil',p.profil||'Indépendant');
+  }
+  openModal('prospect');
+}
+
+async function saveProspect() {
+  const raison=g('p-raison');if(!raison){toast('Raison sociale obligatoire','err');return;}
+  const data={
+    raison,contact:g('p-contact'),tel:g('p-tel'),email:g('p-email'),
+    ville:g('p-ville'),cp:g('p-cp'),notes:g('p-notes'),
+    statut:g2('p-statut')?.value||'Nouveau',profil:g2('p-profil')?.value||'Indépendant'
+  };
+  const id=g('p-edit-id');
+  try{
+    if(id){await db.collection('prospects').doc(id).update(data);logActivite('Prospect modifié — '+raison,'blue');}
+    else{data.createdAt=firebase.firestore.FieldValue.serverTimestamp();await db.collection('prospects').add(data);logActivite('Nouveau prospect — '+raison,'teal');}
+    closeModal('prospect');toast('✅ Prospect enregistré');
+  }catch(e){toast('Erreur : '+e.message,'err');}
+}
+
+async function deleteProspect(id) {
+  const p=cache.prospects.find(x=>x.id===id);
+  if(!confirm('Supprimer "'+( p?.raison||'ce prospect' )+'" ?'))return;
+  try{await db.collection('prospects').doc(id).delete();closeModal('prospect');toast('Prospect supprimé');}catch(e){toast('Erreur','err');}
+}
+
+async function convertProspect(id) {
+  const p=cache.prospects.find(x=>x.id===id);if(!p)return;
+  if(!confirm('Convertir "'+p.raison+'" en client ?'))return;
+  try{
+    const nc='BNT-'+String(cache.clients.length+1).padStart(4,'0');
+    await db.collection('clients').add({
+      raison:p.raison,contact:p.contact||'',tel:p.tel||'',email:p.email||'',
+      ville:p.ville||'',cp:p.cp||'',notes:p.notes||'',profil:p.profil||'',
+      numClient:nc,statut:'client',remise:0,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await db.collection('prospects').doc(id).delete();
+    logActivite('Prospect converti → Client — '+p.raison+' ('+nc+')','teal');
+    toast('✅ '+p.raison+' converti en client ('+nc+')');
+  }catch(e){toast('Erreur','err');}
+}
+
+// ══════════════════════════════════════════════════
+//  MAILING
+// ══════════════════════════════════════════════════
+function mlUpdateRecipients() {
+  const txt=document.getElementById('ml-recipients')?.value||'';
+  const mails=txt.split(/[\n,;]+/).map(m=>m.trim()).filter(m=>m.includes('@'));
+  s2('ml-recipients-count',mails.length+' destinataire(s)');
+  document.getElementById('ml-send-btn').disabled=mails.length===0;
+  s2('ml-send-summary',mails.length?mails.length+' destinataire(s) — PDF tarif joint':'Aucun destinataire');
+}
+
+function mlUpdatePreview() {
+  const subj=g('ml-subject');
+  s2('ml-preview-subject',subj||'(à saisir)');
+  const body=document.getElementById('ml-editor')?.innerHTML||'';
+  document.getElementById('ml-preview-body').innerHTML=body||'<em style="color:var(--g400);">Le contenu apparaîtra ici…</em>';
+}
+
+async function mlSendAll() {
+  const txt=document.getElementById('ml-recipients')?.value||'';
+  const mails=txt.split(/[\n,;]+/).map(m=>m.trim()).filter(m=>m.includes('@'));
+  if(!mails.length){toast('Aucun destinataire','err');return;}
+  const subj=g('ml-subject');if(!subj){toast('Objet manquant','err');return;}
+  const body=document.getElementById('ml-editor')?.innerText||'';if(!body.trim()){toast('Contenu manquant','err');return;}
+
+  const btn=document.getElementById('ml-send-btn');
+  btn.disabled=true;btn.textContent='Envoi…';
+  const pdfUrl='https://loac1118.github.io/BIONTRUFFE/2026-03-01_TG_MBS_BIONTRUFFE_2026_Pi_v15.pdf';
+  let sent=0,errors=0;
+  for(const mail of mails){
+    try{
+      const res=await fetch('https://api.web3forms.com/submit',{
+        method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body:JSON.stringify({
+          access_key:'c25bd306-bfaf-4a71-ac6d-36658c0df2ed',
+          from_name:'BIO N TRUFFE',subject:subj,
+          email:mail,_captcha:'false',_template:'basic',
+          message:body+'\n\n📄 Tarif BIO N TRUFFE V15 : '+pdfUrl
+        })
+      });
+      const d=await res.json();
+      if(d.success===true||d.success==='true')sent++;else errors++;
+    }catch{errors++;}
+    await new Promise(r=>setTimeout(r,350));
+  }
+  btn.disabled=false;btn.textContent='🚀 Envoyer';
+  toast('✅ '+sent+' email(s) envoyé(s)'+(errors?' — '+errors+' erreur(s)':''));
+  if(sent>0)logActivite('Mailing envoyé — '+sent+' destinataires','blue');
+}
+
+// ══════════════════════════════════════════════════
+//  MODALS
+// ══════════════════════════════════════════════════
+function openModal(id){ document.getElementById('modal-'+id).classList.remove('hidden'); }
+function closeModal(id){ document.getElementById('modal-'+id).classList.add('hidden'); }
+document.querySelectorAll('.modal-bg').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m){const id=m.id.replace('modal-','');closeModal(id);}});
+});
+
+// ══════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════
+function toast(msg,type) {
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.style.background=type==='err'?'var(--red)':'var(--blue-p900)';
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+// ══════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════
+function g(id){ const el=document.getElementById(id);return el?el.value.trim():''; }
+function g2(id){ return document.getElementById(id); }
+function s2(id,v){ const el=document.getElementById(id);if(el)el.textContent=v; }
+function sv(id,v){ const el=document.getElementById(id);if(el)el.value=v; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(ts) {
+  if(!ts)return'—';
+  let d;
+  try{d=ts.toDate?ts.toDate():new Date(ts);}catch{return'—';}
+  return d.toLocaleDateString('fr-FR');
+}
+</script>
+</body>
+</html>
