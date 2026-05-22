@@ -595,12 +595,12 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
 // ══════════════════════════════════════════════════
 // ⚠️ REMPLACER par votre projet Firebase BNT
 const BNT_FIREBASE_CONFIG = {
-  apiKey:            "VOTRE_API_KEY",
-  authDomain:        "VOTRE_PROJECT.firebaseapp.com",
-  projectId:         "VOTRE_PROJECT",
-  storageBucket:     "VOTRE_PROJECT.appspot.com",
-  messagingSenderId: "VOTRE_SENDER_ID",
-  appId:             "VOTRE_APP_ID"
+  apiKey:            "AIzaSyBzJqYmivZ-dJxLDfPgujaTdPa4FsuRO4c",
+  authDomain:        "bio-n-truffe.firebaseapp.com",
+  projectId:         "bio-n-truffe",
+  storageBucket:     "bio-n-truffe.firebasestorage.app",
+  messagingSenderId: "129941520406",
+  appId:             "1:129941520406:web:bd70f730d72856e68a7537"
 };
 
 // ══════════════════════════════════════════════════
@@ -1060,10 +1060,10 @@ async function bdcSendOrder() {
   // Envoi email via Web3Forms avec PDF joint (URL publique GitHub Pages)
   const pdfUrl = 'https://loac1118.github.io/BIONTRUFFE/2026-03-01_TG_MBS_BIONTRUFFE_2026_Pi_v15.pdf';
   const payload = {
-    access_key: 'c25bd306-bfaf-4a71-ac6d-36658c0df2ed', // ⚠️ REMPLACER par votre clé Web3Forms BNT
+    access_key: 'c9dce17b-a7cb-4190-a3d0-10fa4bf105e9',
     from_name: 'BIO N TRUFFE CRM',
     subject: 'Bon de commande BIO N TRUFFE — '+mag+' — '+today,
-    email: ['contact','biontruffe.fr'].join('@'),
+    email: ['loacdev','outlook.fr'].join('@'),
     _replyto: mail,
     _captcha: 'false',
     _template: 'table',
@@ -1345,9 +1345,9 @@ async function mlSendAll() {
       const res=await fetch('https://api.web3forms.com/submit',{
         method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
         body:JSON.stringify({
-          access_key:'c25bd306-bfaf-4a71-ac6d-36658c0df2ed',
+          access_key:'c9dce17b-a7cb-4190-a3d0-10fa4bf105e9',
           from_name:'BIO N TRUFFE',subject:subj,
-          email:mail,_captcha:'false',_template:'basic',
+          email:mail,to:'loacdev@outlook.fr',_captcha:'false',_template:'basic',
           message:body+'\n\n📄 Tarif BIO N TRUFFE V15 : '+pdfUrl
         })
       });
