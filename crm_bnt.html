@@ -390,7 +390,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
         <table id="bdc-table" style="width:100%;border-collapse:collapse;font-size:.73rem;">
           <thead style="position:sticky;top:0;z-index:10;">
             <tr>
-              <th>EAN</th><th style="min-width:220px;">Désignation</th><th>Poids</th><th>PCB</th><th>TVA</th><th>Prix HT/colis</th><th>Qté (colis)</th><th>Rem.%</th><th>UVC</th><th>Total HT</th>
+              <th>EAN</th><th style="min-width:220px;">Désignation</th><th>Poids</th><th>PCB</th><th>TVA</th><th>Prix HT/colis</th><th id="th-qty">Qté (colis)</th><th>Rem.%</th><th id="th-uvc">UVC</th><th>Total HT</th>
             </tr>
           </thead>
           <tbody id="bdc-tbody"></tbody>
@@ -426,7 +426,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
     <div class="tbl-wrap">
       <table>
         <thead><tr>
-          <th>Code</th><th>Raison sociale</th><th>Profil</th><th>Ville</th><th>Email</th><th>Téléphone</th><th>CA HT</th><th>Actions</th>
+          <th>Code</th><th>Raison sociale</th><th>Profil / Remise</th><th>Email</th><th>Téléphone</th><th>CA HT</th><th>Dernière commande</th><th>Actions</th>
         </tr></thead>
         <tbody id="cdb-tbody"></tbody>
       </table>
@@ -642,7 +642,7 @@ const TVA_TAUX     = 5.5;
 let db = null, auth = null, currentUser = null;
 let cache = { clients:[], prospects:[], commandes:[], activite:[] };
 let listeners = [];
-let bdcQtys = {}, bdcRemiseLigne = {}, bdcRemise = 0, bdcSearchMode = 'all';
+let bdcQtys = {}, bdcRemiseLigne = {}, bdcRemise = 0, bdcSearchMode = 'all', bdcSaisieMode = 'colis';
 
 document.addEventListener('DOMContentLoaded', function() {
   try {
@@ -856,15 +856,21 @@ function buildTable() {
     if (p.surDemande) {
       rows += `<td colspan="4" style="padding:.4rem .55rem;font-size:.72rem;color:var(--amber);font-style:italic;">Contactez Pierre BAUDIN · 06 99 19 58 65</td>`;
     } else {
+      // Saisie : colis ou UVC selon le mode
+      const isUVC = bdcSaisieMode === 'uvc';
+      const saisieVal = isUVC ? (qty>0?qty*pcb:'') : (qty||'');
+      const saisieStep = isUVC ? 1 : 1;
+      const saisiePlaceholder = isUVC ? 'UVC' : 'Colis';
+      const uvcAffiche = isUVC ? '<span style="color:var(--sub);font-size:.7rem;">= '+(qty>0?qty+' col.':'—')+'</span>' : (qty>0?qty*pcb:'—');
       rows += `<td class="bdc-td-qty" style="padding:.25rem .45rem;">
         <div style="display:flex;align-items:center;gap:3px;">
-          <button onclick="bdcStepQty('${dCode}',${pcb},-1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border-med);background:var(--bg2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--g700);flex-shrink:0;">−</button>
-          <input type="number" min="0" step="1" value="${qty||''}" placeholder="0" data-code="${dCode}" data-pcb="${pcb}" oninput="bdcOnQty(this)" onchange="bdcOnQty(this)" style="width:42px;text-align:center;background:var(--surface2);border:1.5px solid var(--border-med);border-radius:6px;padding:3px;font-family:var(--fd);font-size:.82rem;outline:none;color:var(--g800);">
-          <button onclick="bdcStepQty('${dCode}',${pcb},1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border-med);background:var(--bg2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--g700);flex-shrink:0;">+</button>
+          <button onclick="bdcStepQty('${dCode}',${pcb},-1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border-med);background:#f0f4ff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--navy);flex-shrink:0;">−</button>
+          <input type="number" min="0" step="${saisieStep}" value="${saisieVal}" placeholder="${saisiePlaceholder}" data-code="${dCode}" data-pcb="${pcb}" data-mode="${bdcSaisieMode}" oninput="bdcOnQty(this)" onchange="bdcOnQty(this)" style="width:48px;text-align:center;background:#f8faff;border:1.5px solid var(--border-med);border-radius:6px;padding:3px;font-family:var(--inter);font-size:.82rem;outline:none;color:var(--navy);">
+          <button onclick="bdcStepQty('${dCode}',${pcb},1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border-med);background:#f0f4ff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--navy);flex-shrink:0;">+</button>
         </div>
       </td>`;
-      rows += `<td style="padding:.35rem .45rem;"><input type="number" min="0" max="100" step="0.5" value="${rl}" placeholder="—" data-code="${dCode}" oninput="bdcOnRemiseLigne(this)" style="width:50px;text-align:right;font-size:.75rem;padding:.25rem .4rem;background:var(--surface2);border:1px solid var(--border-med);border-radius:5px;outline:none;font-family:var(--fd);" title="Remise % spécifique"></td>`;
-      rows += `<td id="bdc-uvc-${dCode}" style="padding:.4rem .55rem;font-size:.72rem;color:var(--g500);text-align:center;">${qty>0?qty*pcb:'—'}</td>`;
+      rows += `<td style="padding:.35rem .45rem;"><input type="number" min="0" max="100" step="0.5" value="${rl}" placeholder="—" data-code="${dCode}" oninput="bdcOnRemiseLigne(this)" style="width:50px;text-align:right;font-size:.75rem;padding:.25rem .4rem;background:#f8faff;border:1px solid var(--border-med);border-radius:5px;outline:none;font-family:var(--inter);" title="Remise % spécifique"></td>`;
+      rows += `<td id="bdc-uvc-${dCode}" style="padding:.4rem .55rem;font-size:.72rem;text-align:center;">${uvcAffiche}</td>`;
       rows += `<td id="bdc-t-${dCode}" style="padding:.4rem .55rem;font-weight:600;color:var(--mid);white-space:nowrap;">${qty?bdcFmt(total):''}</td>`;
     }
     rows += '</tr>';
@@ -874,29 +880,68 @@ function buildTable() {
 }
 
 function bdcOnQty(input) {
-  const code = input.dataset.code;
-  const val  = parseInt(input.value)||0;
-  const pcb  = parseFloat(input.dataset.pcb)||1;
-  if (val>0) bdcQtys[code]=val; else delete bdcQtys[code];
-  const uvcEl = document.getElementById('bdc-uvc-'+code);
-  if (uvcEl) uvcEl.textContent = val>0?(val*pcb):'—';
+  const code   = input.dataset.code;
+  const pcb    = parseFloat(input.dataset.pcb)||1;
+  const mode   = input.dataset.mode || bdcSaisieMode;
+  const rawVal = parseInt(input.value)||0;
+  // Convertir en colis selon le mode
+  let colis = 0;
+  if (mode === 'uvc') {
+    // Arrondir à l'unité PCB supérieure
+    colis = rawVal > 0 ? Math.max(1, Math.ceil(rawVal / pcb)) : 0;
+  } else {
+    colis = rawVal;
+  }
+  if (colis > 0) bdcQtys[code] = colis; else delete bdcQtys[code];
   const tr = input.closest('tr');
-  if (tr) { tr.className = tr.className.replace(' bdc-tr-has-qty','')+(val>0?' bdc-tr-has-qty':''); }
+  if (tr) { tr.className = tr.className.replace(' bdc-tr-has-qty','')+(colis>0?' bdc-tr-has-qty':''); }
   const p = PRODUCTS.find(x=>x.code===code);
   if (!p) return;
+  // Mettre à jour l'affichage UVC / colis selon le mode
+  const uvcEl = document.getElementById('bdc-uvc-'+code);
+  if (uvcEl) {
+    if (mode === 'uvc') {
+      uvcEl.innerHTML = colis>0 ? '<span style="color:var(--sub);font-size:.7rem;">= '+colis+' col.</span>' : '—';
+    } else {
+      uvcEl.textContent = colis>0 ? colis*pcb : '—';
+    }
+  }
   const cell = document.getElementById('bdc-t-'+code);
-  if (cell) cell.textContent = val ? bdcFmt(bdcPrixNet(p)*val*pcb) : '';
+  if (cell) cell.textContent = colis ? bdcFmt(bdcPrixNet(p)*colis*pcb) : '';
   bdcUpdateTotals();
 }
 
 function bdcStepQty(code, pcb, dir) {
-  const cur = parseInt(bdcQtys[code])||0;
-  const nv  = Math.max(0, cur+dir);
-  bdcQtys[code] = nv;
-  if (!nv) delete bdcQtys[code];
+  const curColis = parseInt(bdcQtys[code])||0;
+  const nv = Math.max(0, curColis + dir);
+  if (nv > 0) bdcQtys[code] = nv; else delete bdcQtys[code];
   const input = document.querySelector(`input[data-code="${CSS.escape(code)}"]`);
-  if (input) { input.value=nv||''; bdcOnQty(input); }
-  else buildTable();
+  if (input) {
+    // Afficher en UVC ou colis selon le mode
+    input.value = nv > 0 ? (bdcSaisieMode==='uvc' ? nv*pcb : nv) : '';
+    bdcOnQty(input);
+  } else buildTable();
+}
+
+function bdcSetSaisieMode(mode) {
+  bdcSaisieMode = mode;
+  const bC = document.getElementById('btn-mode-colis');
+  const bU = document.getElementById('btn-mode-uvc');
+  if (bC && bU) {
+    if (mode === 'colis') {
+      bC.style.background = 'var(--navy)'; bC.style.color = '#fff';
+      bU.style.background = 'transparent'; bU.style.color = 'var(--sub)';
+    } else {
+      bU.style.background = 'var(--navy)'; bU.style.color = '#fff';
+      bC.style.background = 'transparent'; bC.style.color = 'var(--sub)';
+    }
+  }
+  // Mettre à jour l'en-tête colonnes
+  const thQty = document.getElementById('th-qty');
+  const thUvc = document.getElementById('th-uvc');
+  if (thQty) thQty.textContent = mode === 'uvc' ? 'Qté (UVC)' : 'Qté (colis)';
+  if (thUvc) thUvc.textContent = mode === 'uvc' ? '→ Colis' : 'UVC';
+  buildTable();
 }
 
 function bdcOnRemiseLigne(input) {
@@ -1131,18 +1176,31 @@ function renderClients() {
   if(!tb) return;
   if(!list.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--g400);">Aucun client — cliquez "+ Nouveau client" pour commencer</td></tr>';return;}
   const ca = c => cache.commandes.filter(o=>o.numClient===c.numClient).reduce((s,o)=>s+(o.montant||0),0);
+  const nbCmds = c => cache.commandes.filter(o=>o.numClient===c.numClient).length;
+  const lastCmd = c => {
+    const cmds = cache.commandes.filter(o=>o.numClient===c.numClient);
+    if (!cmds.length) return '—';
+    const last = cmds[0];
+    return fmtDate(last.createdAt) + ' · ' + bdcFmt(last.montant||0);
+  };
   tb.innerHTML=list.map(c=>`
     <tr style="cursor:pointer;" onclick="openClientModal('${c.id}')">
-      <td><span style="font-size:.72rem;font-family:monospace;color:var(--blue-p700);">${esc(c.numClient||'—')}</span></td>
-      <td><strong>${esc(c.raison||'—')}</strong>${c.statut==='prospect'?'<span class="tag tag-blue" style="margin-left:6px;font-size:.62rem;">Prospect</span>':''}</td>
-      <td><span class="tag tag-green">${esc(c.profil||'—')}</span></td>
-      <td style="color:var(--g600);">${esc(c.ville||'—')}${c.cp?' ('+c.cp+')':''}</td>
-      <td style="color:var(--g500);font-size:.78rem;">${esc(c.email||'—')}</td>
-      <td style="color:var(--g500);font-size:.78rem;">${esc(c.tel||'—')}</td>
-      <td style="font-weight:600;color:var(--mid);">${bdcFmt(ca(c))}</td>
+      <td><span style="font-size:.72rem;font-family:monospace;color:var(--mid);font-weight:600;">${esc(c.numClient||'—')}</span></td>
+      <td>
+        <div style="font-weight:600;color:var(--navy);">${esc(c.raison||'—')}</div>
+        <div style="font-size:.7rem;color:var(--sub);margin-top:1px;">${esc(c.ville||'')}${c.cp?' · '+c.cp:''}</div>
+      </td>
+      <td><span class="tag tag-blue">${esc(c.profil||'—')}</span>${c.remise>0?'<span style="font-size:.65rem;color:var(--mid);margin-left:5px;font-weight:600;">−'+c.remise+'%</span>':''}</td>
+      <td style="color:var(--sub);font-size:.78rem;">${esc(c.email||'—')}</td>
+      <td style="color:var(--sub);font-size:.78rem;">${esc(c.tel||'—')}</td>
+      <td>
+        <div style="font-weight:700;color:var(--mid);font-size:.92rem;">${bdcFmt(ca(c))}</div>
+        <div style="font-size:.67rem;color:var(--sub);margin-top:1px;">${nbCmds(c)} commande${nbCmds(c)>1?'s':''}</div>
+      </td>
+      <td style="font-size:.72rem;color:var(--sub);">${lastCmd(c)}</td>
       <td><div style="display:flex;gap:4px;">
-        <button class="btn btn-ghost" style="font-size:.72rem;padding:.25rem .55rem;" onclick="event.stopPropagation();bdcFromClient('${c.id}')">📋 BDC</button>
-        <button class="btn btn-ghost" style="font-size:.72rem;padding:.25rem .55rem;" onclick="event.stopPropagation();openClientModal('${c.id}')">✏️</button>
+        <button class="btn btn-primary" style="font-size:.72rem;padding:.3rem .65rem;" onclick="event.stopPropagation();bdcFromClient('${c.id}')">📋 BDC</button>
+        <button class="btn btn-ghost" style="font-size:.72rem;padding:.3rem .55rem;" onclick="event.stopPropagation();openClientModal('${c.id}')">✏️</button>
       </div></td>
     </tr>`).join('');
 }
@@ -1150,15 +1208,39 @@ function renderClients() {
 function bdcFromClient(id) {
   const c = cache.clients.find(x=>x.id===id);
   if(!c) return;
-  showSection('bdc',null);
+  // Réinitialiser le BDC et naviguer vers l'onglet
+  bdcQtys = {}; bdcRemiseLigne = {};
+  showSection('bdc', null);
   setTimeout(()=>{
-    if(g('bdc-magasin')) document.getElementById('bdc-magasin').value=c.raison||'';
-    if(g('bdc-numclient')) document.getElementById('bdc-numclient').value=c.numClient||'';
-    if(g('bdc-email')) document.getElementById('bdc-email').value=c.email||'';
-    if(g('bdc-contact')) document.getElementById('bdc-contact').value=c.contact||'';
-    if(g('bdc-tel')) document.getElementById('bdc-tel').value=c.tel||'';
-    if(c.remise>0) bdcSetRemise(c.remise,null);
-  },100);
+    // Pré-remplir toutes les infos client
+    ['bdc-magasin','bdc-numclient','bdc-email','bdc-contact','bdc-tel'].forEach(fid => {
+      const el = document.getElementById(fid);
+      if (!el) return;
+      if (fid==='bdc-magasin')   el.value = c.raison    || '';
+      if (fid==='bdc-numclient') el.value = c.numClient || '';
+      if (fid==='bdc-email')     el.value = c.email     || '';
+      if (fid==='bdc-contact')   el.value = c.contact   || '';
+      if (fid==='bdc-tel')       el.value = c.tel       || '';
+    });
+    // Appliquer la remise client
+    if (c.remise > 0) {
+      bdcRemise = c.remise;
+      // Cocher le bon bouton si disponible
+      const btns = document.querySelectorAll('.bdc-rem-btn');
+      let found = false;
+      btns.forEach(b => {
+        b.classList.remove('active');
+        if (parseFloat(b.textContent) === c.remise) { b.classList.add('active'); found = true; }
+      });
+      if (!found) {
+        const custom = document.getElementById('bdc-remise-custom');
+        if (custom) custom.value = c.remise;
+      }
+    }
+    buildTable();
+    // Toast de confirmation
+    toast('📋 BDC pré-rempli — ' + (c.raison||'client') + (c.remise>0?' · Remise '+c.remise+'%':''));
+  }, 150);
 }
 
 function openClientModal(id) {
