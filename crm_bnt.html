@@ -863,7 +863,7 @@ function buildTable() {
     rows += `<td style="padding:.4rem .55rem;white-space:nowrap;font-weight:500;">${prixCell}</td>`;
 
     if (p.surDemande) {
-      rows += `<td colspan="4" style="padding:.4rem .55rem;font-size:.72rem;color:var(--amber);font-style:italic;">Contactez Pierre BAUDIN · 06 99 19 58 65</td>`;
+      rows += `<td colspan="4" style="padding:.4rem .55rem;font-size:.72rem;color:var(--amber);font-style:italic;">Contactez SPOTO Christophe · 06 78 37 89 06</td>`;
     } else {
       // Saisie : colis ou UVC selon le mode
       const isUVC = bdcSaisieMode === 'uvc';
@@ -1062,7 +1062,7 @@ function bdcBuildText() {
   const francoOk=nbC>=FRANCO_COLIS||tN>=FRANCO_HT;
   lines.push('Franco de port : '+(francoOk?'OUI (atteint)':'NON — minimum 5 colis ou 450€ HT'));
   lines.push('','📄 Tarif BIO N TRUFFE V15 joint en pièce jointe PDF');
-  lines.push('','---','ERIDAN BNT SARL | Christophe SPOTO | Pierre BAUDIN','contact@biontruffe.fr | 06 99 19 58 65');
+  lines.push('','---','ERIDAN BNT SARL | Christophe SPOTO | SPOTO Christophe','SPOTO.christophe@gmail.com | 06 78 37 89 06');
   return lines.join('\n');
 }
 
@@ -1122,7 +1122,7 @@ async function bdcSendOrder() {
     access_key: 'c9dce17b-a7cb-4190-a3d0-10fa4bf105e9',
     from_name: 'BIO N TRUFFE CRM',
     subject: 'Bon de commande BIO N TRUFFE — '+mag+' — '+today,
-    email: ['loacdev','outlook.fr'].join('@'),
+    email: ['SPOTO.christophe','gmail.com'].join('@'),
     _replyto: mail,
     _captcha: 'false',
     _template: 'table',
@@ -1152,7 +1152,7 @@ async function bdcSendOrder() {
     });
     const data = await res.json();
     if(data.success===true||data.success==='true'){
-      bdcShowAlert('✅ Commande envoyée ! Email avec le tarif PDF envoyé à contact@biontruffe.fr','ok');
+      bdcShowAlert('✅ Commande envoyée ! Email avec le tarif PDF envoyé à SPOTO.christophe@gmail.com','ok');
       toast('✅ BDC envoyé — '+mag+' — '+bdcFmt(tN));
       setTimeout(()=>{
         if(confirm('Réinitialiser le bon de commande ?')){
@@ -1699,7 +1699,7 @@ async function mlSendAll() {
         body:JSON.stringify({
           access_key:'c9dce17b-a7cb-4190-a3d0-10fa4bf105e9',
           from_name:'BIO N TRUFFE',subject:subj,
-          email:mail,to:'loacdev@outlook.fr',_captcha:'false',_template:'basic',
+          email:mail,to:'SPOTO.christophe@gmail.com',_captcha:'false',_template:'basic',
           message:body+'\n\n📄 Tarif BIO N TRUFFE V15 : '+pdfUrl+'\n📖 Catalogue 2026 : https://loac1118.github.io/BIONTRUFFE/catalogue_biontruffe.pdf'
         })
       });
