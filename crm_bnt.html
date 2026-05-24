@@ -322,14 +322,19 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
 <div id="sec-bdc" class="section hidden" style="padding:0;overflow:hidden;">
   <div style="background:var(--white);border-bottom:1px solid var(--border);padding:.55rem 1rem;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
     <div style="font-family:var(--fdisp);font-size:.9rem;color:var(--g900);flex:1;min-width:140px;">🌿 Bon de Commande BIO N TRUFFE — Tarif V15 2026</div>
+    <!-- Toggle mode saisie -->
+    <div style="display:flex;align-items:center;gap:3px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:3px;">
+      <button id="btn-mode-colis" onclick="bdcSetSaisieMode('colis')" style="padding:.28rem .75rem;border-radius:6px;border:none;font-family:var(--f);font-size:.72rem;font-weight:600;cursor:pointer;background:var(--ink);color:#fff;transition:all .15s;">Colis</button>
+      <button id="btn-mode-uvc" onclick="bdcSetSaisieMode('uvc')" style="padding:.28rem .75rem;border-radius:6px;border:none;font-family:var(--f);font-size:.72rem;font-weight:600;cursor:pointer;background:transparent;color:var(--sub);transition:all .15s;">UVC</button>
+    </div>
     <div style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--amber);">
       <span>📄 PDF tarif joint automatiquement</span>
     </div>
     <button class="btn btn-ghost" style="font-size:.72rem;padding:.3rem .7rem;" onclick="resetBDC()">🗑 Effacer</button>
-    <button class="btn btn-primary" style="font-size:.72rem;padding:.3rem .7rem;" onclick="bdcSendOrder()">Envoyer la commande</button>
+    <button class="btn btn-primary" style="font-size:.72rem;padding:.3rem .7rem;" onclick="bdcSendOrder()">Envoyer la commande</button>ton>
   </div>
   <!-- Bandeau recap sticky -->
-  <div id="bdc-recap-bar" style="display:none;background:var(--navy);border-bottom:2px solid var(--mid);padding:.4rem .8rem;overflow-x:auto;white-space:nowrap;flex-shrink:0;">
+  <div id="bdc-recap-bar" style="display:none;background:var(--ink);border-bottom:2px solid var(--brand);padding:.4rem .8rem;overflow-x:auto;white-space:nowrap;flex-shrink:0;">
     <span style="font-size:.65rem;font-weight:700;color:#93c5fd;text-transform:uppercase;letter-spacing:.08em;margin-right:.6rem;">📋 En cours :</span>
     <span id="bdc-recap-items" style="font-size:.72rem;color:#e2e8f0;"></span>
     <span id="bdc-recap-total" style="font-size:.75rem;font-weight:700;color:#4ade80;margin-left:1rem;"></span>
@@ -856,9 +861,9 @@ function buildTable() {
       const uvcAffiche = isUVC ? '<span style="color:var(--sub);font-size:.7rem;">= '+(qty>0?qty+' col.':'—')+'</span>' : (qty>0?qty*pcb:'—');
       rows += `<td class="bdc-td-qty" style="padding:.25rem .45rem;">
         <div style="display:flex;align-items:center;gap:3px;">
-          <button onclick="bdcStepQty('${dCode}',${pcb},-1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border-med);background:#f0f4ff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--navy);flex-shrink:0;">−</button>
-          <input type="number" min="0" step="${saisieStep}" value="${saisieVal}" placeholder="${saisiePlaceholder}" data-code="${dCode}" data-pcb="${pcb}" data-mode="${bdcSaisieMode}" oninput="bdcOnQty(this)" onchange="bdcOnQty(this)" style="width:48px;text-align:center;background:#f8faff;border:1.5px solid var(--border-med);border-radius:6px;padding:3px;font-family:var(--inter);font-size:.82rem;outline:none;color:var(--navy);">
-          <button onclick="bdcStepQty('${dCode}',${pcb},1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border-med);background:#f0f4ff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--navy);flex-shrink:0;">+</button>
+          <button onclick="bdcStepQty('${dCode}',${pcb},-1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border-med);background:var(--bg);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--ink);flex-shrink:0;">−</button>
+          <input type="number" min="0" step="${saisieStep}" value="${saisieVal}" placeholder="${saisiePlaceholder}" data-code="${dCode}" data-pcb="${pcb}" data-mode="${bdcSaisieMode}" oninput="bdcOnQty(this)" onchange="bdcOnQty(this)" style="width:48px;text-align:center;background:var(--bg);border:1.5px solid var(--border);border-radius:6px;padding:3px;font-family:var(--f);font-size:.82rem;outline:none;color:var(--ink);">
+          <button onclick="bdcStepQty('${dCode}',${pcb},1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border-med);background:var(--bg);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--ink);flex-shrink:0;">+</button>
         </div>
       </td>`;
       rows += `<td style="padding:.35rem .45rem;"><input type="number" min="0" max="100" step="0.5" value="${rl}" placeholder="—" data-code="${dCode}" oninput="bdcOnRemiseLigne(this)" style="width:50px;text-align:right;font-size:.75rem;padding:.25rem .4rem;background:#f8faff;border:1px solid var(--border-med);border-radius:5px;outline:none;font-family:var(--inter);" title="Remise % spécifique"></td>`;
@@ -921,10 +926,10 @@ function bdcSetSaisieMode(mode) {
   const bU = document.getElementById('btn-mode-uvc');
   if (bC && bU) {
     if (mode === 'colis') {
-      bC.style.background = 'var(--navy)'; bC.style.color = '#fff';
+      bC.style.background = 'var(--ink)'; bC.style.color = '#fff';
       bU.style.background = 'transparent'; bU.style.color = 'var(--sub)';
     } else {
-      bU.style.background = 'var(--navy)'; bU.style.color = '#fff';
+      bU.style.background = 'var(--brand)'; bU.style.color = '#fff';
       bC.style.background = 'transparent'; bC.style.color = 'var(--sub)';
     }
   }
