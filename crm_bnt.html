@@ -281,9 +281,20 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
     <div class="nav-item" onclick="showSection('mailing',this)">📧 Mailing</div>
   </div>
   <div class="sidebar-footer">
+    <div style="margin-bottom:.6rem;">
+      <a href="https://loac1118.github.io/BIONTRUFFE/catalogue_biontruffe.pdf" target="_blank"
+         style="display:flex;align-items:center;gap:7px;padding:.4rem .6rem;background:var(--brand-bg);border:1px solid #bbf7d0;border-radius:8px;text-decoration:none;transition:background .15s;"
+         onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='var(--brand-bg)'">
+        <span style="font-size:1rem;">📄</span>
+        <div>
+          <div style="font-size:.74rem;font-weight:700;color:var(--brand2);">Catalogue 2026</div>
+          <div style="font-size:.62rem;color:var(--sub);">Ouvrir le PDF</div>
+        </div>
+      </a>
+    </div>
     <div style="display:flex;align-items:center;gap:9px;">
       <div class="sf-avatar" id="sb-avatar">CS</div>
-      <div><div class="sf-name" id="sb-name">Christophe SPOTO</div><div style="font-size:.65rem;color:var(--blue-p400);">Administrateur</div></div>
+      <div><div class="sf-name" id="sb-name">Christophe SPOTO</div><div style="font-size:.65rem;color:var(--sub);">Administrateur</div></div>
     </div>
   </div>
 </nav>
@@ -299,6 +310,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
       <div class="page-sub">BIO N TRUFFE · Eridan BNT SARL · Tarif V15 — 01/03/2026</div>
     </div>
     <button class="btn btn-primary" onclick="showSection('bdc',null)">📋 Nouveau BDC</button>
+    <a href="https://loac1118.github.io/BIONTRUFFE/catalogue_biontruffe.pdf" target="_blank" class="btn btn-ghost" style="font-size:.82rem;text-decoration:none;">📄 Catalogue PDF</a>
   </div>
   <div class="stats-grid">
     <div class="stat-card"><div class="stat-label">Clients</div><div class="stat-val" id="stat-clients">—</div><div class="stat-delta">base clients</div></div>
@@ -328,7 +340,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
       <button id="btn-mode-uvc" onclick="bdcSetSaisieMode('uvc')" style="padding:.28rem .75rem;border-radius:6px;border:none;font-family:var(--f);font-size:.72rem;font-weight:600;cursor:pointer;background:transparent;color:var(--sub);transition:all .15s;">UVC</button>
     </div>
     <div style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--amber);">
-      <span>📄 PDF tarif joint automatiquement</span>
+      <a href="https://loac1118.github.io/BIONTRUFFE/catalogue_biontruffe.pdf" target="_blank" style="color:var(--amber);text-decoration:none;font-size:.72rem;" title="Ouvrir le catalogue PDF">📄 Catalogue + Tarif joints</a>
     </div>
     <button class="btn btn-ghost" style="font-size:.72rem;padding:.3rem .7rem;" onclick="resetBDC()">🗑 Effacer</button>
     <button class="btn btn-primary" style="font-size:.72rem;padding:.3rem .7rem;" onclick="bdcSendOrder()">Envoyer la commande</button>ton>
@@ -1659,7 +1671,7 @@ function mlUpdateRecipients() {
   const mails=txt.split(/[\n,;]+/).map(m=>m.trim()).filter(m=>m.includes('@'));
   s2('ml-recipients-count',mails.length+' destinataire(s)');
   document.getElementById('ml-send-btn').disabled=mails.length===0;
-  s2('ml-send-summary',mails.length?mails.length+' destinataire(s) — PDF tarif joint':'Aucun destinataire');
+  s2('ml-send-summary',mails.length?mails.length+' destinataire(s) — Tarif + Catalogue joints':'Aucun destinataire');
 }
 
 function mlUpdatePreview() {
@@ -1688,7 +1700,7 @@ async function mlSendAll() {
           access_key:'c9dce17b-a7cb-4190-a3d0-10fa4bf105e9',
           from_name:'BIO N TRUFFE',subject:subj,
           email:mail,to:'loacdev@outlook.fr',_captcha:'false',_template:'basic',
-          message:body+'\n\n📄 Tarif BIO N TRUFFE V15 : '+pdfUrl
+          message:body+'\n\n📄 Tarif BIO N TRUFFE V15 : '+pdfUrl+'\n📖 Catalogue 2026 : https://loac1118.github.io/BIONTRUFFE/catalogue_biontruffe.pdf'
         })
       });
       const d=await res.json();
