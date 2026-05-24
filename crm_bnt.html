@@ -720,7 +720,7 @@ function startListeners() {
     }, ()=>onLoad());
     listeners.push(u);
   };
-  listen('clients','clients', ()=>{ renderClients && renderClients(); });
+  listen('clients','clients', ()=>{ cdbContacts = cache.clients.map(x=>({...x, nom:x.nom||x.raison||x.raisonSociale||'', telephone:x.tel||x.telephone||'', numClient:x.numClient||x.num_client||''})); try{localStorage.setItem(CDB_CACHE_KEY,JSON.stringify(cdbContacts));}catch(e){} cdbRender(); });
   listen('prospects','prospects', renderProspects);
   listen('commandes','commandes', renderCommandes);
   const uAct = db.collection('activite').orderBy('createdAt','desc').limit(15).onSnapshot(snap=>{
@@ -1159,7 +1159,7 @@ async function bdcSendOrder() {
 // ══════════════════════════════════════════════════
 //  BASE CLIENTS — style MDM V3
 // ══════════════════════════════════════════════════
-const CDB_CACHE_KEY = 'bnt_cdb_contacts';
+const CDB_CACHE_KEY = 'bnt_cdb_clients';
 var cdbContacts  = [];
 var cdbFiltered  = [];
 var cdbSelection = {};
@@ -1495,7 +1495,7 @@ function cdbSave() {
   contact.prospect=parseInt(document.getElementById('cdb-edit-prospect').value)||0;
   if (!contact.nom) { toast('Raison sociale requise','err'); return; }
   if (db&&currentUser) {
-    db.collection('contacts').doc(contact.id).set(contact).then(()=>{
+    db.collection('clients').doc(contact.id).set(contact).then(()=>{
       if(!existing) cdbContacts.push(contact);
       else { var idx=cdbContacts.findIndex(x=>x.id===contact.id); if(idx>=0) cdbContacts[idx]=contact; }
       try { localStorage.setItem(CDB_CACHE_KEY,JSON.stringify(cdbContacts)); } catch(e){}
@@ -1516,7 +1516,7 @@ function cdbDelete() {
   var id=document.getElementById('cdb-edit-id').value; if(!id) return;
   if (!confirm('Supprimer ce contact définitivement ?')) return;
   if (db) {
-    db.collection('contacts').doc(id).delete().then(()=>{
+    db.collection('clients').doc(id).delete().then(()=>{
       cdbContacts=cdbContacts.filter(x=>x.id!==id);
       try { localStorage.setItem(CDB_CACHE_KEY,JSON.stringify(cdbContacts)); } catch(e){}
       cdbRender(); document.getElementById('cdb-modal-edit').classList.add('hidden');
@@ -1539,14 +1539,19 @@ function cdbExportCsv() {
 
 // Listener Firestore contacts (complète la collection existante)
 function startContactsListener() {
-  if (!db) return;
-  db.collection('contacts').onSnapshot(snap=>{
-    cdbContacts=snap.docs.map(d=>({id:d.id,...d.data()}));
-    try { localStorage.setItem(CDB_CACHE_KEY,JSON.stringify(cdbContacts)); } catch(e){}
+  // Les clients sont déjà chargés par startListeners() → listen('clients',...)
+  // On s'assure juste que cdbContacts est synchronisé depuis cache.clients
+  // Le listener ci-dessus alimente déjà cdbContacts — cette fonction est un alias de sécurité
+  if (cache.clients && cache.clients.length) {
+    cdbContacts = cache.clients.map(x=>({
+      ...x,
+      nom:       x.nom       || x.raison       || x.raisonSociale || '',
+      telephone: x.telephone || x.tel           || '',
+      numClient: x.numClient || x.num_client    || ''
+    }));
+    try{localStorage.setItem(CDB_CACHE_KEY,JSON.stringify(cdbContacts));}catch(e){}
     cdbRender();
-    // Mettre à jour le badge nb prospects
-    s2('badge-prospects', cdbContacts.filter(c=>c.prospect).length||cache.prospects.length);
-  },e=>console.warn('contacts listener err',e));
+  }
 }
 
 // ══════════════════════════════════════════════════
