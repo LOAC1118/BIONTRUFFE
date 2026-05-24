@@ -1324,8 +1324,7 @@ function cdbSendToMailing() {
   var emails = Object.keys(cdbSelection).map(id=>{ var c=cdbContacts.find(x=>x.id===id); return c&&c.email?c.email.toLowerCase().trim():null; }).filter(Boolean);
   if (!emails.length) { toast('Aucun email dans la sélection','err'); return; }
   showSection('mailing',null);
-  setTimeout(()=>{ var ta=document.getElementById('ml-recipients'); if(ta){ ta.value=emails.join('
-'); mlUpdateRecipients&&mlUpdateRecipients(); } },100);
+  setTimeout(()=>{ var ta=document.getElementById('ml-recipients'); if(ta){ ta.value=emails.join('\n'); mlUpdateRecipients&&mlUpdateRecipients(); } },100);
   toast('✅ '+emails.length+' email(s) ajoutés au mailing');
   cdbClearSel();
 }
@@ -1388,7 +1387,7 @@ function cdbOpenBDCFromModal() {
   var id=document.getElementById('cdb-edit-id').value;
   var c=cdbContacts.find(x=>x.id===id);
   if(c) cdbNewOrderFromClient(c);
-  else toast('Enregistrez le contact d'abord','err');
+  else toast('Enregistrez le contact d\'abord','err');
 }
 
 function cdbBuildCATab(c) {
@@ -1435,7 +1434,7 @@ function cdbShowMenu(anchor, id) {
     {icon:'✏️',label:'Modifier la fiche',fn:()=>cdbOpenEdit(id)},
     {icon:'🛒',label:'Nouveau BDC',fn:()=>{ if(c) cdbNewOrderFromClient(c); }},
     {icon:'📊',label:'CA & Historique',fn:()=>{ cdbOpenEdit(id); setTimeout(()=>cdbSwitchTab('ca'),60); }},
-    {icon:'📋',label:"Copier l'email",fn:()=>{ if(c&&c.email) navigator.clipboard.writeText(c.email).then(()=>toast('Email copié')); else toast('Pas d'email','err'); }},
+    {icon:'📋',label:"Copier l'email",fn:()=>{ if(c&&c.email) navigator.clipboard.writeText(c.email).then(()=>toast('Email copié')); else toast('Pas d\'email','err'); }},
     {icon:'🗑',label:'Supprimer',fn:()=>{ if(confirm('Supprimer ce contact ?')){ document.getElementById('cdb-edit-id').value=id; cdbDelete(); } },danger:true}
   ];
   menu.innerHTML=actions.map((a,i)=>'<button type="button" data-idx="'+i+'" style="display:block;width:100%;text-align:left;padding:.5rem .8rem;border:none;background:none;cursor:pointer;font-size:.82rem;color:'+(a.danger?'var(--red)':'var(--ink)')+';border-radius:7px;font-family:var(--f);"><span style="margin-right:6px;">'+a.icon+'</span>'+a.label+'</button>').join('');
@@ -1526,11 +1525,8 @@ function cdbExportCsv() {
   if (!cdbContacts.length) { toast('Base vide','err'); return; }
   var cols=['numClient','nom','email','telephone','adresse','cp','ville','groupe','contact','remise','siret','prospect','dateDerniereCmd','notes'];
   var hd=cols.join(';');
-  var lines=cdbContacts.map(c=>cols.map(k=>{ var v=c[k]==null?'':String(c[k]); if(v.includes(';')||v.includes('"')||v.includes('
-')) v='"'+v.replace(/"/g,'""')+'"'; return v; }).join(';'));
-  var csv='﻿'+hd+'
-'+lines.join('
-');
+  var lines=cdbContacts.map(c=>cols.map(k=>{ var v=c[k]==null?'':String(c[k]); if(v.includes(';')||v.includes('"')||v.includes('\n')) v='"'+v.replace(/"/g,'""')+'"'; return v; }).join(';'));
+  var csv='\uFEFF'+hd+'\n'+lines.join('\n');
   var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
   a.download='contacts_bnt_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
   toast('Export CSV : '+cdbContacts.length+' contacts');
