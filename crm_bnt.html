@@ -198,13 +198,169 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
 .act-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px;}
 
 /* ── RESPONSIVE ── */
-@media(max-width:768px){
-  .sidebar{display:none;}
-  .stats-grid{grid-template-columns:1fr 1fr;}
-  .topbar-center{display:none;}
-  .section{padding:1rem;}
-  .form-row-2,.form-grid{grid-template-columns:1fr;}
+/* ══ RESPONSIVE TABLETTE (768–1024px) ══════════════════ */
+@media(max-width:1024px) and (min-width:769px) {
+  .sidebar{width:180px;}
+  .topbar-center .t-tab{padding:.35rem .65rem;font-size:.78rem;}
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+  .section{padding:1.25rem 1.5rem;}
 }
+
+/* ══ RESPONSIVE MOBILE (≤768px) ════════════════════════ */
+@media(max-width:768px){
+  /* Masquer sidebar et topbar-center */
+  .sidebar{display:none!important;}
+  .topbar-center{display:none!important;}
+  .brand-sub{display:none;}
+  .topbar{padding:0 1rem;height:52px;}
+
+  /* App height avec bottom nav */
+  .app{height:calc(100vh - 52px - 58px);overflow:hidden;}
+  .main{overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+  /* Sections */
+  .section{padding:.85rem;animation:none;}
+  .page-header{flex-direction:column;gap:.6rem;padding-bottom:.75rem;margin-bottom:.75rem;}
+  .page-header .btn{width:100%;justify-content:center;}
+  .page-title{font-size:1.1rem;}
+
+  /* Stats */
+  .stats-grid{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem;}
+  .stat-card{padding:.75rem .85rem;}
+  .stat-val{font-size:1.4rem;}
+
+  /* Tableaux : scroll horizontal */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:none;}
+  table{min-width:520px;font-size:.75rem;}
+  th,td{padding:.4rem .5rem;}
+
+  /* Formulaires */
+  .form-row-2,.form-grid{grid-template-columns:1fr;}
+
+  /* Cards */
+  .card{border-radius:10px;}
+
+  /* Dashboard grid */
+  #sec-dashboard .card{margin-bottom:.75rem;}
+  #sec-dashboard > div[style*="grid"]{display:flex;flex-direction:column;gap:.75rem;}
+
+  /* BDC mobile */
+  #sec-bdc{overflow:auto;}
+  #sec-bdc > div[style*="flex:1;display:flex"]{flex-direction:column!important;}
+  #sec-bdc > div[style*="width:255px"]{
+    width:100%!important;border-right:none!important;
+    border-bottom:1px solid var(--border);padding:.75rem!important;
+  }
+  .bdc-sidebar-collapsed{display:none;}
+  #bdc-toggle-info{display:flex!important;}
+
+  /* Modals plein écran */
+  .modal-bg{align-items:flex-end;padding:0;}
+  .modal,.modal-wide{max-width:100%;width:100%;border-radius:18px 18px 0 0;max-height:92vh;}
+  .modal-head{border-radius:18px 18px 0 0;}
+  .modal-body{padding:1rem;}
+  .modal-foot{padding:.75rem 1rem;padding-bottom:calc(.75rem + env(safe-area-inset-bottom));}
+
+  /* Sync indicator masqué */
+  .sync-indicator{display:none;}
+
+  /* Sidebar footer catalogue */
+  .sidebar-footer{display:none;}
+}
+
+/* ══ BOTTOM NAV (mobile uniquement) ════════════════════ */
+#bottom-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  height:58px;
+  background:var(--white);
+  border-top:1px solid var(--border);
+  box-shadow:0 -2px 12px rgba(0,0,0,.08);
+  z-index:150;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+#bottom-nav nav{
+  display:flex;align-items:center;justify-content:space-around;
+  height:58px;
+}
+.bn-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;flex:1;height:100%;cursor:pointer;
+  color:var(--sub);font-size:.6rem;font-weight:500;
+  border:none;background:transparent;font-family:var(--f);
+  transition:color .15s;padding:0;
+  -webkit-tap-highlight-color:transparent;
+}
+.bn-item .bn-icon{font-size:1.25rem;line-height:1;}
+.bn-item.active{color:var(--brand);}
+.bn-item.active .bn-icon{transform:scale(1.1);}
+.bn-badge{
+  position:absolute;top:6px;right:calc(50% - 18px);
+  min-width:16px;height:16px;
+  background:var(--brand);color:#fff;
+  border-radius:99px;font-size:.6rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 3px;
+}
+
+/* ══ DRAWER SIDEBAR (tablette paysage) ═════════════════ */
+#sidebar-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.4);z-index:299;
+}
+#sidebar-overlay.open{display:block;}
+.sidebar.drawer-open{
+  display:flex!important;position:fixed;left:0;top:0;bottom:0;
+  z-index:300;width:240px;box-shadow:4px 0 20px rgba(0,0,0,.15);
+}
+
+/* Menu hamburger */
+.hamburger{
+  display:none;width:36px;height:36px;border-radius:8px;
+  border:1px solid var(--border);background:var(--bg);
+  align-items:center;justify-content:center;cursor:pointer;
+  flex-direction:column;gap:4px;padding:8px;
+  -webkit-tap-highlight-color:transparent;
+}
+.hamburger span{
+  display:block;width:16px;height:1.5px;
+  background:var(--ink);border-radius:2px;transition:all .2s;
+}
+@media(max-width:768px){
+  #bottom-nav{display:block;}
+  .hamburger{display:none;}
+  body{padding-bottom:0;}
+}
+@media(min-width:769px) and (max-width:1024px){
+  .sidebar{display:none;}
+  .hamburger{display:flex;margin-right:6px;}
+}
+
+/* ══ BDC SIDEBAR toggle mobile ══════════════════════════ */
+#bdc-toggle-info{
+  display:none;width:100%;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;padding:.5rem .85rem;
+  align-items:center;justify-content:space-between;
+  cursor:pointer;font-family:var(--f);font-size:.82rem;
+  font-weight:500;color:var(--ink);margin-bottom:.5rem;
+}
+
+/* ══ TOUCH : inputs plus grands sur mobile ═════════════ */
+@media(max-width:768px){
+  input,select,textarea{
+    font-size:16px!important; /* évite le zoom iOS */
+    min-height:40px;
+  }
+  .btn{min-height:40px;font-size:.85rem;}
+  .bdc-rem-btn,.bdc-mode-btn{
+    min-height:34px;padding:.35rem .7rem;font-size:.75rem;
+  }
+  /* Inputs BDC quantités plus larges */
+  #bdc-tbody input[type=number]{width:52px!important;min-height:32px!important;font-size:14px!important;}
+  #bdc-tbody button{width:28px!important;height:28px!important;}
+}
+
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
@@ -231,11 +387,16 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <div class="brand">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="hamburger" id="hamburger-btn" onclick="toggleDrawer()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="brand">
     <div class="brand-ico">🌿</div>
-    <div>
-      <div class="brand-name">BIO N TRUFFE</div>
-      <div class="brand-sub">CRM Commercial · Eridan BNT</div>
+      <div>
+        <div class="brand-name">BIO N TRUFFE</div>
+        <div class="brand-sub">CRM Commercial · Eridan BNT</div>
+      </div>
     </div>
   </div>
   <div class="topbar-center">
@@ -354,6 +515,11 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
   <div style="display:flex;flex:1;overflow:hidden;">
     <!-- Sidebar BDC -->
     <div style="width:255px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;padding:.9rem;">
+      <button id="bdc-toggle-info" onclick="toggleBDCInfo()">
+        <span>ℹ️ Infos client & totaux</span>
+        <span>▼ Voir infos client</span>
+      </button>
+      <div id="bdc-sidebar-content">
       <div style="font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:.5rem;">Informations client</div>
       <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Magasin *</label><input type="text" id="bdc-magasin" placeholder="Nom du magasin" style="width:100%;background:#f8faff;border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--ink);font-family:var(--inter);font-size:.78rem;outline:none;"></div>
       <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">N° Client</label><input type="text" id="bdc-numclient" placeholder="BNT-0001" style="width:100%;background:#f8faff;border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--ink);font-family:var(--inter);font-size:.78rem;outline:none;"></div>
@@ -390,6 +556,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
         <div id="bdc-spinner" style="display:none;width:11px;height:11px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:5px;"></div>
         <span id="bdc-send-label">📄 Envoyer + PDF joint</span>
       </button>
+      </div><!-- /bdc-sidebar-content -->
     </div>
     <!-- Catalogue -->
     <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
@@ -594,8 +761,76 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
   </div>
 </div>
 
+<!-- SIDEBAR OVERLAY (tablette) -->
+<div id="sidebar-overlay" onclick="closeDrawer()"></div>
+
+<!-- BOTTOM NAV (mobile) -->
+<div id="bottom-nav">
+  <nav>
+    <button class="bn-item active" data-sec="dashboard" onclick="mobileNav('dashboard',this)">
+      <span class="bn-icon">📊</span>Dashboard
+    </button>
+    <button class="bn-item" data-sec="bdc" onclick="mobileNav('bdc',this)">
+      <span class="bn-icon">📋</span>BDC
+    </button>
+    <button class="bn-item" data-sec="clients" onclick="mobileNav('clients',this)" style="position:relative;">
+      <span class="bn-icon">👥</span>Clients
+    </button>
+    <button class="bn-item" data-sec="commandes" onclick="mobileNav('commandes',this)">
+      <span class="bn-icon">📦</span>Cmdes
+    </button>
+    <button class="bn-item" data-sec="prospects" onclick="mobileNav('prospects',this)">
+      <span class="bn-icon">🔵</span>Prospects
+    </button>
+  </nav>
+</div>
+
 <!-- TOAST -->
 <div id="toast"></div>
+
+<script>
+// ── MOBILE NAV ────────────────────────────────────────
+function mobileNav(sec, btn) {
+  showSection(sec, null);
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+// ── DRAWER (tablette) ─────────────────────────────────
+function toggleDrawer() {
+  var sb = document.querySelector('.sidebar');
+  var ov = document.getElementById('sidebar-overlay');
+  if (!sb || !ov) return;
+  var open = sb.classList.contains('drawer-open');
+  if (open) { sb.classList.remove('drawer-open'); ov.classList.remove('open'); }
+  else       { sb.classList.add('drawer-open');    ov.classList.add('open'); }
+}
+function closeDrawer() {
+  var sb = document.querySelector('.sidebar');
+  var ov = document.getElementById('sidebar-overlay');
+  if (sb) sb.classList.remove('drawer-open');
+  if (ov) ov.classList.remove('open');
+}
+
+// Fermer drawer quand on clique un nav-item sur tablette
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      if (window.innerWidth <= 1024) closeDrawer();
+    });
+  });
+});
+
+// ── BDC INFO TOGGLE mobile ────────────────────────────
+function toggleBDCInfo() {
+  var sb = document.getElementById('bdc-sidebar-content');
+  var btn = document.getElementById('bdc-toggle-info');
+  if (!sb) return;
+  var visible = sb.style.display !== 'none';
+  sb.style.display = visible ? 'none' : 'block';
+  if (btn) btn.querySelector('span:last-child').textContent = visible ? '▼ Voir infos client' : '▲ Masquer';
+}
+</script>
 
 <!-- SCRIPTS -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
