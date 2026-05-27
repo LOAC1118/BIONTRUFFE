@@ -1826,66 +1826,56 @@ async function factExtractText(file) {
 
 // ── Détection montant HT ──────────────────────────
 function factDetectMontantHT(text) {
-  // Normaliser : supprimer les sauts de ligne qui séparent parfois le label du montant
-  // On travaille sur le texte brut en conservant les espaces
   var t = text;
 
-  // Convertir virgule décimale → point pour la détection
-  // Pattern robuste aux espaces multiples entre le label et le montant
-  // Priorité : Total HT Net > Total HT > Base HT > Montant HT > Net à payer HT
+  // ── STRATÉGIE 1 : "Total HT Net" — priorité absolue ──
+  // C'est le label le plus fiable sur les factures EBP/Sage/Cegid
+  var m = t.match(/Total\s+HT\s+Net\b\s*([\d]+[,.][\d]{2})/i);
+  if (m) {
+    var val = parseFloat(m[1].replace(',','.'));
+    if (val > 0) { console.log('[BNT] Total HT Net:', val); return val; }
+  }
 
-  var patterns = [
-    // --- Patterns les plus fiables (factures françaises EBP/Sage/Cegid) ---
-    // "Total HT Net" ou "Total HT" suivi d'un montant (dans les 40 chars, insensible aux espaces/sauts)
-    [/Total\s+HT\s+Net\b[\s\S]{0,30}?([\d ]+[,.][\d]{1,2})/i,              'Total HT Net'],
-    [/Total\s+HT\b(?!\s+(?:TVA|TTC|Net|Montant))[\s\S]{0,30}?([\d ]+[,.][\d]{1,2})/i, 'Total HT'],
-    // "Montant HT" seul (entête colonne → chercher dans le texte après)
-    [/Montant\s+HT\b[\s\S]{0,200}?(?:Taux|5[,.]5|Total)[^0-9][\s\S]{0,50}?([\d ]+[,.][\d]{2})/i, 'Montant HT récap'],
-    // "Base HT" dans le tableau récapitulatif TVA (très fiable sur EBP)
-    [/(?:Taux\s+Base\s+HT|Base\s+HT)[\s\S]{0,30}?([\d ]+[,.][\d]{2})/i,   'Base HT tableau TVA'],
-    // "Total HT" ou "Sous-total HT"
-    [/(?:sous[-\s]total\s+ht|net\s+ht|ht\s+net)\b[\s\S]{0,30}?([\d ]+[,.][\d]{1,2})/i, 'Sous-total/Net HT'],
-    // Montant avant TVA
-    [/total\s+avant\s+tva[\s\S]{0,30}?([\d ]+[,.][\d]{1,2})/i,             'Total avant TVA'],
-    // Dernier recours : "Net à payer" HT (attention : c'est souvent TTC)
-    // Ne l'utiliser que si TVA = 5,5% et qu'on peut la déduire
-    [/net\s+[aà]\s+payer[\s\S]{0,20}?([\d ]+[,.][\d]{2})\s*€/i,            'Net à payer (TTC approx)'],
-  ];
-
-  for (var i = 0; i < patterns.length; i++) {
-    var pat = patterns[i][0], label = patterns[i][1];
-    var m = t.match(pat);
-    if (m && m[1]) {
-      var raw = m[1].replace(/\s/g,'').replace(',','.');
-      var val = parseFloat(raw);
-      // Valider : montant raisonnable (> 0, < 1 million)
-      // Si c'est "Net à payer" on divise par 1.055 pour estimer le HT
-      if (!isNaN(val) && val > 0 && val < 1000000) {
-        if (label === 'Net à payer (TTC approx)') {
-          // Approximation HT depuis TTC à 5,5%
-          val = Math.round(val / 1.055 * 100) / 100;
-        }
-        console.log('[BNT] Montant HT détecté via "' + label + '" :', val);
-        return val;
-      }
+  // ── STRATÉGIE 2 : "Total HT" seul, ligne par ligne ──
+  // On cherche ligne par ligne pour éviter de capter le montant TVA sur la ligne suivante
+  var lines = t.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    // Ligne qui contient "Total HT" mais PAS "TVA" ni "TTC" ni "Net" après
+    var m2 = line.match(/Total\s+HT\b(?!\s*(?:TVA|TTC|Net))[^0-9]{0,20}?([\d]+[,.][\d]{2})/i);
+    if (m2) {
+      var v2 = parseFloat(m2[1].replace(',','.'));
+      if (v2 > 0) { console.log('[BNT] Total HT (ligne):', v2, '←', line.slice(0,60)); return v2; }
     }
   }
 
-  // Fallback : chercher le plus grand montant associé à "HT" dans tout le texte
-  var htMatches = [];
-  var re = /(\d[\d ]*[,.]?\d{0,2})\s*(?=\s*(?:€|EUR)?[\s\S]{0,10}?(?:H\.?T\.?|hors\s+taxe))/gi;
-  var m2;
-  while ((m2 = re.exec(t)) !== null) {
-    var v = parseFloat(m2[1].replace(/\s/g,'').replace(',','.'));
-    if (!isNaN(v) && v > 10 && v < 999999) htMatches.push(v);
-  }
-  if (htMatches.length) {
-    // Prendre le plus grand (généralement le total)
-    var best = Math.max.apply(null, htMatches);
-    console.log('[BNT] Montant HT fallback (max proche HT) :', best);
-    return best;
+  // ── STRATÉGIE 3 : Tableau récap TVA format EBP ──
+  // Format : "5,50  BASE_HT  MONTANT_TVA" — prendre le 1er nombre après le taux
+  var m3 = t.match(/5[,.]5\d?\s+([\d]+[,.][\d]{2})\s+[\d]+[,.][\d]{2}/);
+  if (m3) {
+    var v3 = parseFloat(m3[1].replace(',','.'));
+    if (v3 > 0) { console.log('[BNT] Tableau TVA EBP (taux 5.5%):', v3); return v3; }
   }
 
+  // ── STRATÉGIE 4 : "Montant HT", "Sous-total HT", "Net HT" ──
+  var m4 = t.match(/(?:montant\s+ht|sous[-\s]total\s+ht|net\s+ht|ht\s+net|total\s+avant\s+tva)\b[^0-9]{0,30}?([\d]+[,.][\d]{2})/i);
+  if (m4) {
+    var v4 = parseFloat(m4[1].replace(',','.'));
+    if (v4 > 0) { console.log('[BNT] Montant/Sous-total HT:', v4); return v4; }
+  }
+
+  // ── STRATÉGIE 5 : Fallback — "Base HT" tableau (sans erreur TVA) ──
+  // On cherche "Base HT" suivi du montant SUR LA MÊME LIGNE uniquement
+  for (var j = 0; j < lines.length; j++) {
+    var m5 = lines[j].match(/Base\s+HT\b.*?([\d]+[,.][\d]{2})/i);
+    if (m5) {
+      var v5 = parseFloat(m5[1].replace(',','.'));
+      // Valider : si ce montant est proche du Total TTC / 1.055, c'est bien le HT
+      if (v5 > 0 && v5 < 999999) { console.log('[BNT] Base HT (même ligne):', v5); return v5; }
+    }
+  }
+
+  console.log('[BNT] Montant HT non détecté automatiquement');
   return null;
 }
 
