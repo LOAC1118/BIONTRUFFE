@@ -1826,56 +1826,83 @@ async function factExtractText(file) {
 
 // ── Détection montant HT ──────────────────────────
 function factDetectMontantHT(text) {
+  // PRINCIPE CLÉ : sur les factures EBP/Sage, le Total HT est TOUJOURS en dernière page
+  // La page 1 contient les lignes de produits avec "Montant HT" en entête de colonne
+  // → on cherche d'abord dans la dernière moitié du texte
+
   var t = text;
 
-  // ── STRATÉGIE 1 : "Total HT Net" — priorité absolue ──
-  // C'est le label le plus fiable sur les factures EBP/Sage/Cegid
-  var m = t.match(/Total\s+HT\s+Net\b\s*([\d]+[,.][\d]{2})/i);
-  if (m) {
-    var val = parseFloat(m[1].replace(',','.'));
-    if (val > 0) { console.log('[BNT] Total HT Net:', val); return val; }
+  // Découper le texte en deux : première moitié (lignes produits) et seconde (récap)
+  var mid = Math.floor(t.length / 2);
+  var tEnd = t.slice(mid); // Dernière moitié = là où sont les totaux
+
+  // ── STRATÉGIE 1 : "Total HT Net" — priorité absolue, toujours bon ──
+  // Chercher dans tout le texte car ce label est unique
+  var m1 = t.match(/Total\s+HT\s+Net\b\s*([\d]+[,.][\d]{2})/i);
+  if (m1) {
+    var v1 = parseFloat(m1[1].replace(',','.'));
+    if (v1 > 0) { console.log('[BNT] ✅ Total HT Net:', v1); return v1; }
   }
 
-  // ── STRATÉGIE 2 : "Total HT" seul, ligne par ligne ──
-  // On cherche ligne par ligne pour éviter de capter le montant TVA sur la ligne suivante
-  var lines = t.split('\n');
-  for (var i = 0; i < lines.length; i++) {
-    var line = lines[i].trim();
-    // Ligne qui contient "Total HT" mais PAS "TVA" ni "TTC" ni "Net" après
-    var m2 = line.match(/Total\s+HT\b(?!\s*(?:TVA|TTC|Net))[^0-9]{0,20}?([\d]+[,.][\d]{2})/i);
-    if (m2) {
-      var v2 = parseFloat(m2[1].replace(',','.'));
-      if (v2 > 0) { console.log('[BNT] Total HT (ligne):', v2, '←', line.slice(0,60)); return v2; }
+  // ── STRATÉGIE 2 : "Total HT MONTANT" dans la seconde moitié du texte ──
+  // On cherche "Total HT" suivi d'un montant, en s'assurant qu'il n'est PAS
+  // précédé de "Montant" (= entête colonne) ou suivi de "TVA"/"TTC"
+  var m2 = tEnd.match(/(?<!Montant\s)Total\s+HT\b(?!\s*(?:TVA|TTC|Net))\s+([\d]+[,.][\d]{2})/i);
+  if (!m2) {
+    // Essai sans lookbehind (compatibilité)
+    var lines = tEnd.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      // Exclure les lignes d'entête de tableau
+      if (/Code\s+Description|Montant\s+HT\s+TVA/i.test(line)) continue;
+      var lm = line.match(/Total\s+HT\b(?!\s*(?:TVA|TTC|Net))\s+([\d]+[,.][\d]{2})/i);
+      if (lm) {
+        var v2 = parseFloat(lm[1].replace(',','.'));
+        if (v2 > 0) { console.log('[BNT] ✅ Total HT (fin doc):', v2, '←', line.slice(0,60)); return v2; }
+      }
     }
+  } else {
+    var v2b = parseFloat(m2[1].replace(',','.'));
+    if (v2b > 0) { console.log('[BNT] ✅ Total HT (fin doc):', v2b); return v2b; }
   }
 
-  // ── STRATÉGIE 3 : Tableau récap TVA format EBP ──
-  // Format : "5,50  BASE_HT  MONTANT_TVA" — prendre le 1er nombre après le taux
-  var m3 = t.match(/5[,.]5\d?\s+([\d]+[,.][\d]{2})\s+[\d]+[,.][\d]{2}/);
+  // ── STRATÉGIE 3 : Tableau TVA EBP — "5,50 BASE_HT MONTANT_TVA" ──
+  // Format EBP récapitulatif : ligne "5,50 925,80 50,92"
+  // Le 1er nombre après le taux = base HT, le 2ème = TVA
+  var m3 = tEnd.match(/\b5[,.]5\d?\s+([\d]+[,.][\d]{2})\s+([\d]+[,.][\d]{2})/);
   if (m3) {
-    var v3 = parseFloat(m3[1].replace(',','.'));
-    if (v3 > 0) { console.log('[BNT] Tableau TVA EBP (taux 5.5%):', v3); return v3; }
-  }
-
-  // ── STRATÉGIE 4 : "Montant HT", "Sous-total HT", "Net HT" ──
-  var m4 = t.match(/(?:montant\s+ht|sous[-\s]total\s+ht|net\s+ht|ht\s+net|total\s+avant\s+tva)\b[^0-9]{0,30}?([\d]+[,.][\d]{2})/i);
-  if (m4) {
-    var v4 = parseFloat(m4[1].replace(',','.'));
-    if (v4 > 0) { console.log('[BNT] Montant/Sous-total HT:', v4); return v4; }
-  }
-
-  // ── STRATÉGIE 5 : Fallback — "Base HT" tableau (sans erreur TVA) ──
-  // On cherche "Base HT" suivi du montant SUR LA MÊME LIGNE uniquement
-  for (var j = 0; j < lines.length; j++) {
-    var m5 = lines[j].match(/Base\s+HT\b.*?([\d]+[,.][\d]{2})/i);
-    if (m5) {
-      var v5 = parseFloat(m5[1].replace(',','.'));
-      // Valider : si ce montant est proche du Total TTC / 1.055, c'est bien le HT
-      if (v5 > 0 && v5 < 999999) { console.log('[BNT] Base HT (même ligne):', v5); return v5; }
+    var base = parseFloat(m3[1].replace(',','.'));
+    var tva  = parseFloat(m3[2].replace(',','.'));
+    // Vérifier cohérence : TVA ≈ base × 5.5%
+    if (Math.abs(tva - base * 0.055) < 1.0 && base > 0) {
+      console.log('[BNT] ✅ Tableau TVA EBP 5,5%:', base, '(TVA:', tva, ')');
+      return base;
     }
   }
 
-  console.log('[BNT] Montant HT non détecté automatiquement');
+  // ── STRATÉGIE 4 : Chercher dans tout le texte, dernière occurrence de "Total HT" ──
+  var allMatches = [];
+  var re4 = /Total\s+HT\b(?!\s*(?:TVA|TTC))\s+([\d]+[,.][\d]{2})/gi;
+  var m4;
+  while ((m4 = re4.exec(t)) !== null) {
+    var v4 = parseFloat(m4[1].replace(',','.'));
+    if (v4 > 0) allMatches.push(v4);
+  }
+  if (allMatches.length) {
+    // Prendre le max (= total global, pas une ligne de produit)
+    var best = Math.max.apply(null, allMatches);
+    console.log('[BNT] ✅ Total HT (max occurrences):', best, allMatches);
+    return best;
+  }
+
+  // ── STRATÉGIE 5 : Fallback montant/sous-total HT ──
+  var m5 = t.match(/(?:montant\s+ht\s+net|sous[-\s]total\s+ht|net\s+ht|total\s+avant\s+tva)\b\s*([\d]+[,.][\d]{2})/i);
+  if (m5) {
+    var v5 = parseFloat(m5[1].replace(',','.'));
+    if (v5 > 0) { console.log('[BNT] ✅ Montant/Sous-total HT:', v5); return v5; }
+  }
+
+  console.log('[BNT] ⚠️ Montant HT non détecté — saisie manuelle requise');
   return null;
 }
 
