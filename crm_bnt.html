@@ -1795,38 +1795,97 @@ async function factExtractText(file) {
   if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js non disponible');
   var ab = await file.arrayBuffer();
   var pdf = await pdfjsLib.getDocument({data: ab}).promise;
-  var text = '';
-  for (var i = 1; i <= Math.min(pdf.numPages, 5); i++) {
+  var fullText = '';
+  // Lire TOUTES les pages (le Total HT est souvent en dernière page)
+  for (var i = 1; i <= pdf.numPages; i++) {
     var page = await pdf.getPage(i);
     var content = await page.getTextContent();
-    text += content.items.map(s=>s.str).join(' ') + '\n';
+    // Reconstruire avec sauts de ligne selon la position Y des items
+    var items = content.items;
+    var lines = [];
+    var lastY = null;
+    var currentLine = '';
+    for (var j = 0; j < items.length; j++) {
+      var item = items[j];
+      var y = item.transform ? Math.round(item.transform[5]) : 0;
+      if (lastY !== null && Math.abs(y - lastY) > 3) {
+        // Nouveau ligne
+        if (currentLine.trim()) lines.push(currentLine.trim());
+        currentLine = item.str;
+      } else {
+        currentLine += (currentLine && item.str ? ' ' : '') + item.str;
+      }
+      lastY = y;
+    }
+    if (currentLine.trim()) lines.push(currentLine.trim());
+    fullText += lines.join('\n') + '\n';
   }
-  return text;
+  console.log('[BNT] Texte extrait (' + fullText.length + ' chars, ' + pdf.numPages + ' pages)');
+  return fullText;
 }
 
 // ── Détection montant HT ──────────────────────────
 function factDetectMontantHT(text) {
-  // Patterns courants sur les factures françaises, du plus précis au moins précis
+  // Normaliser : supprimer les sauts de ligne qui séparent parfois le label du montant
+  // On travaille sur le texte brut en conservant les espaces
+  var t = text;
+
+  // Convertir virgule décimale → point pour la détection
+  // Pattern robuste aux espaces multiples entre le label et le montant
+  // Priorité : Total HT Net > Total HT > Base HT > Montant HT > Net à payer HT
+
   var patterns = [
-    // "Total HT" ou "Montant HT" suivi d'un montant
-    /(?:total\s+ht|montant\s+ht|sous[-\s]total\s+ht|base\s+ht|net\s+ht|ht\s+net)[^\d\-]*?([\d\s.,]+)\s*€?/i,
-    // "HT" seul suivi d'un montant (parfois en tableau)
-    /(?:^|\s)HT[^\d\-]*([\d\s.,]+)\s*€?/m,
-    // Montant avant la TVA (ligne "Total avant TVA")
-    /total\s+avant\s+tva[^\d\-]*([\d\s.,]+)\s*€?/i,
-    // "Net à payer HT" 
-    /net\s+(?:à|a)\s+payer\s+ht[^\d\-]*([\d\s.,]+)\s*€?/i,
-    // Pattern générique : montant suivi de "HT" ou "H.T."
-    /([\d\s.,]+)\s*€?\s*H\.?T\.?(?!\w)/,
+    // --- Patterns les plus fiables (factures françaises EBP/Sage/Cegid) ---
+    // "Total HT Net" ou "Total HT" suivi d'un montant (dans les 40 chars, insensible aux espaces/sauts)
+    [/Total\s+HT\s+Net\b[\s\S]{0,30}?([\d ]+[,.][\d]{1,2})/i,              'Total HT Net'],
+    [/Total\s+HT\b(?!\s+(?:TVA|TTC|Net|Montant))[\s\S]{0,30}?([\d ]+[,.][\d]{1,2})/i, 'Total HT'],
+    // "Montant HT" seul (entête colonne → chercher dans le texte après)
+    [/Montant\s+HT\b[\s\S]{0,200}?(?:Taux|5[,.]5|Total)[^0-9][\s\S]{0,50}?([\d ]+[,.][\d]{2})/i, 'Montant HT récap'],
+    // "Base HT" dans le tableau récapitulatif TVA (très fiable sur EBP)
+    [/(?:Taux\s+Base\s+HT|Base\s+HT)[\s\S]{0,30}?([\d ]+[,.][\d]{2})/i,   'Base HT tableau TVA'],
+    // "Total HT" ou "Sous-total HT"
+    [/(?:sous[-\s]total\s+ht|net\s+ht|ht\s+net)\b[\s\S]{0,30}?([\d ]+[,.][\d]{1,2})/i, 'Sous-total/Net HT'],
+    // Montant avant TVA
+    [/total\s+avant\s+tva[\s\S]{0,30}?([\d ]+[,.][\d]{1,2})/i,             'Total avant TVA'],
+    // Dernier recours : "Net à payer" HT (attention : c'est souvent TTC)
+    // Ne l'utiliser que si TVA = 5,5% et qu'on peut la déduire
+    [/net\s+[aà]\s+payer[\s\S]{0,20}?([\d ]+[,.][\d]{2})\s*€/i,            'Net à payer (TTC approx)'],
   ];
-  for (var p of patterns) {
-    var m = text.match(p);
+
+  for (var i = 0; i < patterns.length; i++) {
+    var pat = patterns[i][0], label = patterns[i][1];
+    var m = t.match(pat);
     if (m && m[1]) {
       var raw = m[1].replace(/\s/g,'').replace(',','.');
       var val = parseFloat(raw);
-      if (!isNaN(val) && val > 0 && val < 1000000) return val;
+      // Valider : montant raisonnable (> 0, < 1 million)
+      // Si c'est "Net à payer" on divise par 1.055 pour estimer le HT
+      if (!isNaN(val) && val > 0 && val < 1000000) {
+        if (label === 'Net à payer (TTC approx)') {
+          // Approximation HT depuis TTC à 5,5%
+          val = Math.round(val / 1.055 * 100) / 100;
+        }
+        console.log('[BNT] Montant HT détecté via "' + label + '" :', val);
+        return val;
+      }
     }
   }
+
+  // Fallback : chercher le plus grand montant associé à "HT" dans tout le texte
+  var htMatches = [];
+  var re = /(\d[\d ]*[,.]?\d{0,2})\s*(?=\s*(?:€|EUR)?[\s\S]{0,10}?(?:H\.?T\.?|hors\s+taxe))/gi;
+  var m2;
+  while ((m2 = re.exec(t)) !== null) {
+    var v = parseFloat(m2[1].replace(/\s/g,'').replace(',','.'));
+    if (!isNaN(v) && v > 10 && v < 999999) htMatches.push(v);
+  }
+  if (htMatches.length) {
+    // Prendre le plus grand (généralement le total)
+    var best = Math.max.apply(null, htMatches);
+    console.log('[BNT] Montant HT fallback (max proche HT) :', best);
+    return best;
+  }
+
   return null;
 }
 
