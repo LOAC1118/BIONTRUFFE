@@ -1795,76 +1795,101 @@ async function factExtractText(file) {
   if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js non disponible');
   var ab = await file.arrayBuffer();
   var pdf = await pdfjsLib.getDocument({data: ab}).promise;
-  var fullText = '';
-  // Lire TOUTES les pages (le Total HT est souvent en dernière page)
+
+  var allLines = [];
+
   for (var i = 1; i <= pdf.numPages; i++) {
     var page = await pdf.getPage(i);
     var content = await page.getTextContent();
-    // Reconstruire avec sauts de ligne selon la position Y des items
-    var items = content.items;
-    var lines = [];
-    var lastY = null;
-    var currentLine = '';
-    for (var j = 0; j < items.length; j++) {
-      var item = items[j];
-      var y = item.transform ? Math.round(item.transform[5]) : 0;
-      if (lastY !== null && Math.abs(y - lastY) > 3) {
-        // Nouveau ligne
-        if (currentLine.trim()) lines.push(currentLine.trim());
-        currentLine = item.str;
-      } else {
-        currentLine += (currentLine && item.str ? ' ' : '') + item.str;
-      }
-      lastY = y;
-    }
-    if (currentLine.trim()) lines.push(currentLine.trim());
-    fullText += lines.join('\n') + '\n';
+
+    // Grouper les items par Y avec tolérance 2pt
+    // PDF.js donne Y depuis le bas (transform[5]) — on arrondit à 2pt
+    var groups = {};
+    content.items.forEach(function(it) {
+      if (!it.str) return;
+      var x = it.transform ? it.transform[4] : 0;
+      var y = it.transform ? Math.round(it.transform[5] / 2) * 2 : 0;
+      if (!groups[y]) groups[y] = [];
+      groups[y].push({x: x, s: it.str});
+    });
+
+    // Trier chaque groupe par X (gauche → droite) et joindre
+    var sortedYs = Object.keys(groups).map(Number).sort(function(a,b){return b-a;}); // Y décroissant = haut→bas
+    sortedYs.forEach(function(y) {
+      var lineItems = groups[y].sort(function(a,b){return a.x-b.x;});
+      var lineText = lineItems.map(function(it){return it.s;}).join('').trim();
+      if (lineText) allLines.push(lineText);
+    });
+    allLines.push('---'); // séparateur de page
   }
-  console.log('[BNT] Texte extrait (' + fullText.length + ' chars, ' + pdf.numPages + ' pages)');
+
+  var fullText = allLines.join('\n');
+  console.log('[BNT] Extrait ' + pdf.numPages + ' pages, ' + allLines.length + ' lignes');
+  // Log les lignes avec les totaux
+  var totalLines = allLines.filter(function(l){ return /Total|Net.payer/i.test(l); });
+  console.log('[BNT] Lignes totaux:', totalLines);
   return fullText;
 }
 
 // ── Détection montant HT ──────────────────────────
 function factDetectMontantHT(text) {
-  // IMPORTANT : PDF.js colle parfois les mots sans espace ("Total HT925,80")
-  // Toutes les regex utilisent \s* (0 ou plus) et non \s+ (1 ou plus)
-  var t = text;
-  var mid = Math.floor(t.length / 2);
-  var tEnd = t.slice(mid);
+  // Avec la reconstruction par Y, les lignes sont du type :
+  // "Total HT Net925,80" ou "Total HT Net 925,80"
+  // → chercher le label et le montant sur la même ligne reconstituée
 
-  function parse(s) { return parseFloat((s||'').replace(/\s/g,'').replace(',','.')); }
+  function parse(s){ return parseFloat((s||'').replace(/\s/g,'').replace(',','.')); }
 
-  // ── 1. "Total HT Net" — priorité absolue ──────────────────
-  var m1 = t.match(/Total\s*HT\s*Net\s*([\d]+[,.][\d]{2})/i);
-  if (m1) { var v1=parse(m1[1]); if(v1>0){console.log('[BNT] ✅ S1 Total HT Net:',v1);return v1;} }
+  var lines = text.split('\n');
 
-  // ── 2. "Total HT" seul — dans seconde moitié, sans TVA/TTC après ──
-  var m2 = tEnd.match(/Total\s*HT\s*(?!(?:TVA|TTC|Net))([\d]+[,.][\d]{2})/i);
-  if (m2) { var v2=parse(m2[1]); if(v2>0){console.log('[BNT] ✅ S2 Total HT:',v2);return v2;} }
-
-  // ── 3. Tableau récap TVA EBP : "5,50 BASE TVA" (avec ou sans espace) ──
-  // Format collé : "5,50925,8050,92" ou espacé : "5,50 925,80 50,92"
-  var m3 = tEnd.match(/5[,.]5\d?\s*([\d]+[,.][\d]{2})\s*([\d]+[,.][\d]{2})/);
-  if (m3) {
-    var base=parse(m3[1]), tva=parse(m3[2]);
-    if (Math.abs(tva - base*0.055) < 2.0 && base>0) {
-      console.log('[BNT] ✅ S3 Tableau TVA 5,5%:',base,'(TVA:',tva,')');
-      return base;
+  // ── P1 : "Total HT Net" sur une même ligne → montant immédiatement après ──
+  for (var i = 0; i < lines.length; i++) {
+    var l = lines[i];
+    if (/Total\s*HT\s*Net/i.test(l)) {
+      var m = l.match(/Total\s*HT\s*Net\s*([\d]+[,.]\d{2})/i);
+      if (m) { var v=parse(m[1]); if(v>0){console.log('[BNT] ✅ P1 Total HT Net:',v,'←',l.slice(0,40));return v;} }
     }
   }
 
-  // ── 4. "Total HT" dans tout le texte — prendre le max ──
-  var all=[]; var re4=/Total\s*HT\s*(?!(?:TVA|TTC))\s*([\d]+[,.][\d]{2})/gi; var m4;
-  while((m4=re4.exec(t))!==null){var v4=parse(m4[1]);if(v4>0)all.push(v4);}
-  if(all.length){var best=Math.max.apply(null,all);console.log('[BNT] ✅ S4 Total HT max:',best);return best;}
+  // ── P2 : "Total HT" seul (sans Net/TVA/TTC sur la même ligne) ──
+  for (var j = 0; j < lines.length; j++) {
+    var l2 = lines[j];
+    if (/Total\s*HT\b/i.test(l2) && !/Net|TVA|TTC/i.test(l2)) {
+      var m2 = l2.match(/Total\s*HT\s*([\d]+[,.]\d{2})/i);
+      if (m2) { var v2=parse(m2[1]); if(v2>0){console.log('[BNT] ✅ P2 Total HT:',v2,'←',l2.slice(0,40));return v2;} }
+    }
+  }
 
-  // ── 5. Montant/Sous-total HT, Total avant TVA ──
-  var m5=t.match(/(?:montant\s*ht\s*net|sous.total\s*ht|net\s*ht|total\s*avant\s*tva)\s*([\d]+[,.][\d]{2})/i);
-  if(m5){var v5=parse(m5[1]);if(v5>0){console.log('[BNT] ✅ S5 Sous-total:',v5);return v5;}}
+  // ── P3 : Tableau TVA "TauxBase HTMontant TVATotal HT 925,80" ou ligne "5,50 BASE TVA" ──
+  for (var k = 0; k < lines.length; k++) {
+    var l3 = lines[k];
+    // Ligne tableau récap TVA : commence par "5,50" ou "5.50"
+    if (/^5[,.]5/.test(l3.trim())) {
+      var nums = l3.match(/[\d]+[,.]\d{2}/g) || [];
+      if (nums.length >= 2) {
+        var base=parse(nums[0]), tva=parse(nums[1]);
+        if (base>0 && tva>0 && Math.abs(tva/base-0.055)<0.01) {
+          console.log('[BNT] ✅ P3 Tableau TVA 5,5%:',base);
+          return base;
+        }
+      }
+    }
+    // Ligne type "TauxBase HTMontant TVATotal HT925,80" → prendre le montant après Total HT
+    if (/Taux.*Base.*HT.*Total\s*HT/i.test(l3)) {
+      var m3b = l3.match(/Total\s*HT\s*([\d]+[,.]\d{2})/i);
+      if (m3b) { var v3b=parse(m3b[1]); if(v3b>0){console.log('[BNT] ✅ P3b ligne recap:',v3b);return v3b;} }
+    }
+  }
 
-  // ── 6. Net à payer ÷ 1.055 (fallback TTC→HT) ──
-  var m6=t.match(/Net\s*[àa]\s*payer\s*([\d]+[,.][\d]{2})/i);
-  if(m6){var v6=Math.round(parse(m6[1])/1.055*100)/100;if(v6>0){console.log('[BNT] ⚠️ S6 Net payer→HT:',v6);return v6;}}
+  // ── P4 : Fallback — Net à payer ÷ 1,055 ──
+  for (var n = 0; n < lines.length; n++) {
+    if (/Net\s*[àa]\s*payer/i.test(lines[n])) {
+      var m4 = lines[n].match(/([\d]+[,.]\d{2})/);
+      if (m4) {
+        var ttc=parse(m4[1]);
+        if (ttc>0) { var ht=Math.round(ttc/1.055*100)/100; console.log('[BNT] ⚠️ P4 TTC→HT:',ht); return ht; }
+      }
+    }
+  }
 
   console.log('[BNT] ⚠️ Non détecté — saisie manuelle');
   return null;
