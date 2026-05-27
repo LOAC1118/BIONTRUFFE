@@ -7,6 +7,13 @@
 <meta name="description" content="CRM BIO N TRUFFE — Bons de commande, base clients, suivi commercial">
 <meta name="robots" content="noindex, nofollow">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- PDF.js pour extraction texte des factures -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+</script>
 <style>
 :root {
   /* Palette simple et joviale */
@@ -661,6 +668,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
     <div style="display:flex;border-bottom:1px solid var(--border);padding:0 1.25rem;background:var(--bg);">
       <button class="cdb-tab" data-tab="infos" onclick="cdbSwitchTab('infos')" style="padding:.6rem 1rem;border:none;background:transparent;font-family:var(--f);font-size:.82rem;font-weight:600;cursor:pointer;color:var(--brand2);border-bottom:2px solid var(--brand);margin-bottom:-1px;">Informations</button>
       <button class="cdb-tab" data-tab="ca" onclick="cdbSwitchTab('ca')" style="padding:.6rem 1rem;border:none;background:transparent;font-family:var(--f);font-size:.82rem;font-weight:500;cursor:pointer;color:var(--sub);border-bottom:2px solid transparent;margin-bottom:-1px;">CA & Historique</button>
+      <button class="cdb-tab" data-tab="factures" onclick="cdbSwitchTab('factures')" style="padding:.6rem 1rem;border:none;background:transparent;font-family:var(--f);font-size:.82rem;font-weight:500;cursor:pointer;color:var(--sub);border-bottom:2px solid transparent;margin-bottom:-1px;">📄 Factures</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="cdb-edit-id">
@@ -687,6 +695,12 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
       <div id="cdb-tab-ca" style="display:none;">
         <div id="cdb-edit-ca-content">
           <div style="text-align:center;padding:2rem;color:var(--sub);font-size:.85rem;">Les commandes BDC envoyées via ce CRM apparaîtront ici automatiquement.</div>
+        </div>
+      </div>
+      <!-- Onglet Factures -->
+      <div id="cdb-tab-factures" style="display:none;">
+        <div id="cdb-factures-content">
+          <!-- Rempli dynamiquement par cdbBuildFacturesTab() -->
         </div>
       </div>
     </div>
@@ -1583,14 +1597,20 @@ function cdbSendToMailing() {
 
 // ── FICHE CLIENT ─────────────────────────────────
 function cdbSwitchTab(tab) {
-  document.getElementById('cdb-tab-infos').style.display = tab==='infos'?'':'none';
-  document.getElementById('cdb-tab-ca').style.display    = tab==='ca'?'':'none';
+  document.getElementById('cdb-tab-infos').style.display    = tab==='infos'    ? '' : 'none';
+  document.getElementById('cdb-tab-ca').style.display       = tab==='ca'       ? '' : 'none';
+  document.getElementById('cdb-tab-factures').style.display = tab==='factures' ? '' : 'none';
   document.querySelectorAll('.cdb-tab').forEach(btn=>{
     var active = btn.getAttribute('data-tab')===tab;
-    btn.style.color       = active?'var(--brand2)':'var(--sub)';
-    btn.style.borderBottom= active?'2px solid var(--brand)':'2px solid transparent';
-    btn.style.fontWeight  = active?'600':'500';
+    btn.style.color        = active ? 'var(--brand2)' : 'var(--sub)';
+    btn.style.borderBottom = active ? '2px solid var(--brand)' : '2px solid transparent';
+    btn.style.fontWeight   = active ? '600' : '500';
   });
+  // Construire l'onglet factures à la demande
+  if (tab === 'factures') {
+    var id = document.getElementById('cdb-edit-id').value;
+    cdbBuildFacturesTab(id ? cdbContacts.find(x=>x.id===id) : null);
+  }
 }
 
 function cdbOpenEdit(id) {
@@ -1647,33 +1667,314 @@ function cdbBuildCATab(c) {
   if (!c) { el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--sub);font-size:.85rem;">Nouveau contact — aucun historique disponible.</div>'; return; }
   var cmds = cache.commandes.filter(o=>o.numClient===c.numClient).sort((a,b)=>{ var da=a.createdAt?new Date(a.createdAt):new Date(0); var db2=b.createdAt?new Date(b.createdAt):new Date(0); return db2-da; });
   var caTotal = cmds.reduce((s,o)=>s+(o.montant||0),0);
-  if (!cmds.length && !c.cumul2026) {
-    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--sub);font-size:.85rem;">Aucune commande enregistrée dans ce CRM pour ce client.</div>'; return;
-  }
+  // Ajouter CA factures importées
+  var factTotal = (c.factures||[]).reduce((s,f)=>s+(f.montantHT||0),0);
+  var caTotalGlobal = caTotal + factTotal + (c.cumul2026||0);
   var html='';
   // KPIs
   html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem;">';
-  html+='<div style="padding:.65rem .75rem;background:var(--brand-bg);border-radius:9px;border-left:3px solid var(--brand);"><div style="font-size:.62rem;color:var(--brand2);font-weight:600;text-transform:uppercase;margin-bottom:.2rem;">CA Total BDC</div><div style="font-size:1.05rem;font-weight:700;color:var(--brand2);">'+cdbFmtCA(caTotal)+'</div></div>';
-  html+='<div style="padding:.65rem .75rem;background:var(--bg);border-radius:9px;border-left:3px solid var(--border);"><div style="font-size:.62rem;color:var(--sub);font-weight:600;text-transform:uppercase;margin-bottom:.2rem;">Commandes</div><div style="font-size:1.05rem;font-weight:700;color:var(--ink);">'+cmds.length+'</div></div>';
-  if (c.cumul2026) html+='<div style="padding:.65rem .75rem;background:var(--bg);border-radius:9px;border-left:3px solid var(--border);"><div style="font-size:.62rem;color:var(--sub);font-weight:600;text-transform:uppercase;margin-bottom:.2rem;">Cumul 2026 (base)</div><div style="font-size:1.05rem;font-weight:700;color:var(--ink);">'+cdbFmtCA(c.cumul2026)+'</div></div>';
+  html+='<div style="padding:.65rem .75rem;background:var(--brand-bg);border-radius:9px;border-left:3px solid var(--brand);"><div style="font-size:.62rem;color:var(--brand2);font-weight:600;text-transform:uppercase;margin-bottom:.2rem;">CA Total</div><div style="font-size:1.05rem;font-weight:700;color:var(--brand2);">'+cdbFmtCA(caTotalGlobal)+'</div></div>';
+  html+='<div style="padding:.65rem .75rem;background:var(--bg);border-radius:9px;border-left:3px solid var(--border);"><div style="font-size:.62rem;color:var(--sub);font-weight:600;text-transform:uppercase;margin-bottom:.2rem;">BDC CRM</div><div style="font-size:1.05rem;font-weight:700;color:var(--ink);">'+cdbFmtCA(caTotal)+'</div></div>';
+  html+='<div style="padding:.65rem .75rem;background:var(--bg);border-radius:9px;border-left:3px solid var(--border);"><div style="font-size:.62rem;color:var(--sub);font-weight:600;text-transform:uppercase;margin-bottom:.2rem;">Factures</div><div style="font-size:1.05rem;font-weight:700;color:var(--ink);">'+cdbFmtCA(factTotal)+'</div></div>';
   html+='</div>';
   // Liste commandes
   if (cmds.length) {
     html+='<div style="font-size:.7rem;font-weight:700;color:var(--sub);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em;">Commandes BDC ('+cmds.length+')</div>';
-    html+='<div style="max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:9px;">';
-    html+='<table style="width:100%;border-collapse:collapse;font-size:.78rem;"><thead style="position:sticky;top:0;background:var(--bg);"><tr><th style="padding:.35rem .65rem;text-align:left;color:var(--sub);font-size:.65rem;font-weight:600;text-transform:uppercase;">Date</th><th style="padding:.35rem .65rem;text-align:left;color:var(--sub);font-size:.65rem;font-weight:600;text-transform:uppercase;">Réf. / Magasin</th><th style="padding:.35rem .65rem;text-align:center;color:var(--sub);font-size:.65rem;font-weight:600;text-transform:uppercase;">Colis</th><th style="padding:.35rem .65rem;text-align:right;color:var(--sub);font-size:.65rem;font-weight:600;text-transform:uppercase;">CA HT</th></tr></thead><tbody>';
+    html+='<div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:9px;">';
+    html+='<table style="width:100%;border-collapse:collapse;font-size:.78rem;"><thead style="position:sticky;top:0;background:var(--bg);"><tr><th style="padding:.35rem .65rem;text-align:left;color:var(--sub);font-size:.65rem;font-weight:600;text-transform:uppercase;">Date</th><th style="padding:.35rem .65rem;text-align:left;color:var(--sub);font-size:.65rem;font-weight:600;text-transform:uppercase;">Magasin</th><th style="padding:.35rem .65rem;text-align:center;color:var(--sub);font-size:.65rem;font-weight:600;text-transform:uppercase;">Colis</th><th style="padding:.35rem .65rem;text-align:right;color:var(--sub);font-size:.65rem;font-weight:600;text-transform:uppercase;">CA HT</th></tr></thead><tbody>';
     cmds.forEach(o=>{
-      html+='<tr style="border-top:1px solid var(--border);">';
-      html+='<td style="padding:.35rem .65rem;color:var(--sub);">'+cdbFmtDate(o.createdAt)+'</td>';
+      html+='<tr style="border-top:1px solid var(--border);"><td style="padding:.35rem .65rem;color:var(--sub);">'+cdbFmtDate(o.createdAt)+'</td>';
       html+='<td style="padding:.35rem .65rem;font-weight:500;color:var(--ink);">'+(o.ref?cdbEsc(o.ref)+' · ':'')+cdbEsc(o.clientNom||'—')+'</td>';
       html+='<td style="padding:.35rem .65rem;text-align:center;color:var(--sub);">'+(o.nbColis||'—')+'</td>';
-      html+='<td style="padding:.35rem .65rem;text-align:right;font-weight:700;color:var(--brand2);">'+cdbFmtCA(o.montant||0)+'</td>';
-      html+='</tr>';
+      html+='<td style="padding:.35rem .65rem;text-align:right;font-weight:700;color:var(--brand2);">'+cdbFmtCA(o.montant||0)+'</td></tr>';
     });
     html+='</tbody></table></div>';
   }
   el.innerHTML=html;
 }
+
+// ══════════════════════════════════════════════════════
+//  MODULE IMPORT FACTURES
+// ══════════════════════════════════════════════════════
+
+function cdbSwitchTabFactures(id) {
+  cdbBuildFacturesTab(id ? cdbContacts.find(x=>x.id===id) : null);
+}
+
+function cdbBuildFacturesTab(c) {
+  var el = document.getElementById('cdb-factures-content');
+  if (!el) return;
+  var id = document.getElementById('cdb-edit-id').value;
+  var factures = (c && c.factures) ? [...c.factures].sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)) : [];
+  var total = factures.reduce((s,f)=>s+(f.montantHT||0),0);
+
+  var html = '';
+
+  // ── Zone de drop / import ──
+  html += `<div id="fact-drop-zone"
+    ondragover="event.preventDefault();this.style.borderColor='var(--brand)';this.style.background='var(--brand-bg)';"
+    ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--bg)';"
+    ondrop="factHandleDrop(event,'${cdbEsc(id)}')"
+    style="border:2px dashed var(--border);border-radius:12px;padding:1.5rem;text-align:center;background:var(--bg);cursor:pointer;transition:all .2s;margin-bottom:1rem;"
+    onclick="document.getElementById('fact-file-input-${cdbEsc(id)}').click()">
+    <div style="font-size:2rem;margin-bottom:.4rem;">📄</div>
+    <div style="font-size:.85rem;font-weight:600;color:var(--ink);margin-bottom:.2rem;">Importer une facture PDF</div>
+    <div style="font-size:.75rem;color:var(--sub);">Glissez un PDF ici ou cliquez pour sélectionner</div>
+    <div style="font-size:.7rem;color:var(--muted);margin-top:.3rem;">Détection automatique du montant HT · PDF texte uniquement</div>
+    <input type="file" id="fact-file-input-${cdbEsc(id)}" accept=".pdf" style="display:none;" onchange="factHandleFile(this,'${cdbEsc(id)}')">
+  </div>`;
+
+  // ── Spinner (masqué par défaut) ──
+  html += `<div id="fact-loading-${cdbEsc(id)}" style="display:none;text-align:center;padding:1rem;">
+    <div style="width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto .5rem;"></div>
+    <div style="font-size:.8rem;color:var(--sub);">Analyse du PDF en cours…</div>
+  </div>`;
+
+  // ── Zone de confirmation montant (masquée) ──
+  html += `<div id="fact-confirm-zone-${cdbEsc(id)}" style="display:none;background:var(--brand-bg);border:1.5px solid #bbf7d0;border-radius:10px;padding:1rem;margin-bottom:1rem;">
+    <div style="font-size:.78rem;font-weight:600;color:var(--brand2);margin-bottom:.5rem;">✅ Montant HT détecté — vérifiez avant d'enregistrer</div>
+    <div style="display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap;">
+      <div style="flex:1;min-width:130px;">
+        <label style="display:block;font-size:.68rem;font-weight:600;color:var(--ink);margin-bottom:.25rem;">Montant HT (€)</label>
+        <input type="number" id="fact-montant-input-${cdbEsc(id)}" min="0" step="0.01" placeholder="0.00"
+          style="width:100%;background:var(--white);border:1.5px solid var(--border);border-radius:8px;padding:.45rem .7rem;font-family:var(--f);font-size:.9rem;font-weight:700;color:var(--brand2);">
+      </div>
+      <div style="flex:1;min-width:130px;">
+        <label style="display:block;font-size:.68rem;font-weight:600;color:var(--ink);margin-bottom:.25rem;">N° facture</label>
+        <input type="text" id="fact-ref-input-${cdbEsc(id)}" placeholder="FA-2026-001"
+          style="width:100%;background:var(--white);border:1.5px solid var(--border);border-radius:8px;padding:.45rem .7rem;font-family:var(--f);font-size:.85rem;color:var(--ink);">
+      </div>
+      <div style="flex:1;min-width:120px;">
+        <label style="display:block;font-size:.68rem;font-weight:600;color:var(--ink);margin-bottom:.25rem;">Date facture</label>
+        <input type="date" id="fact-date-input-${cdbEsc(id)}"
+          style="width:100%;background:var(--white);border:1.5px solid var(--border);border-radius:8px;padding:.45rem .7rem;font-family:var(--f);font-size:.85rem;color:var(--ink);">
+      </div>
+    </div>
+    <div id="fact-raw-text-${cdbEsc(id)}" style="margin-top:.6rem;font-size:.7rem;color:var(--sub);max-height:60px;overflow-y:auto;background:var(--white);border-radius:6px;padding:.35rem .6rem;"></div>
+    <div style="display:flex;gap:.5rem;margin-top:.75rem;">
+      <button onclick="factSave('${cdbEsc(id)}')" class="btn btn-primary" style="flex:1;">💾 Enregistrer dans le CA</button>
+      <button onclick="factCancelConfirm('${cdbEsc(id)}')" class="btn btn-ghost">Annuler</button>
+    </div>
+  </div>`;
+
+  // ── Récap total factures ──
+  if (factures.length) {
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
+      <div style="font-size:.7rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;">Factures importées (${factures.length})</div>
+      <div style="font-size:.88rem;font-weight:700;color:var(--brand2);">Total : ${cdbFmtCA(total)}</div>
+    </div>`;
+
+    // ── Liste factures ──
+    html += '<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;">';
+    factures.forEach((f,i) => {
+      var bg = i%2===0?'var(--white)':'var(--bg)';
+      html += `<div style="display:flex;align-items:center;gap:.75rem;padding:.55rem .85rem;background:${bg};border-top:${i>0?'1px solid var(--border)':'none'};">
+        <div style="width:28px;height:28px;border-radius:7px;background:var(--brand-bg);display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;">📄</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.82rem;font-weight:600;color:var(--ink);">${cdbEsc(f.ref||'Facture')}</div>
+          <div style="font-size:.7rem;color:var(--sub);">${f.date||'—'} · ${cdbEsc(f.nomFichier||'')}</div>
+        </div>
+        <div style="font-weight:700;color:var(--brand2);font-size:.88rem;flex-shrink:0;">${cdbFmtCA(f.montantHT||0)}</div>
+        <button onclick="factDelete('${cdbEsc(id)}',${i})"
+          style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:0 .2rem;flex-shrink:0;"
+          title="Supprimer cette facture">✕</button>
+      </div>`;
+    });
+    html += '</div>';
+  } else {
+    html += `<div style="text-align:center;padding:1.5rem;color:var(--sub);font-size:.82rem;border:1px solid var(--border);border-radius:10px;background:var(--bg);">
+      Aucune facture importée.<br><span style="font-size:.75rem;color:var(--muted);">Les montants HT seront ajoutés au CA du client.</span>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ── Extraction texte PDF.js ────────────────────────
+async function factExtractText(file) {
+  if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js non disponible');
+  var ab = await file.arrayBuffer();
+  var pdf = await pdfjsLib.getDocument({data: ab}).promise;
+  var text = '';
+  for (var i = 1; i <= Math.min(pdf.numPages, 5); i++) {
+    var page = await pdf.getPage(i);
+    var content = await page.getTextContent();
+    text += content.items.map(s=>s.str).join(' ') + '\n';
+  }
+  return text;
+}
+
+// ── Détection montant HT ──────────────────────────
+function factDetectMontantHT(text) {
+  // Patterns courants sur les factures françaises, du plus précis au moins précis
+  var patterns = [
+    // "Total HT" ou "Montant HT" suivi d'un montant
+    /(?:total\s+ht|montant\s+ht|sous[-\s]total\s+ht|base\s+ht|net\s+ht|ht\s+net)[^\d\-]*?([\d\s.,]+)\s*€?/i,
+    // "HT" seul suivi d'un montant (parfois en tableau)
+    /(?:^|\s)HT[^\d\-]*([\d\s.,]+)\s*€?/m,
+    // Montant avant la TVA (ligne "Total avant TVA")
+    /total\s+avant\s+tva[^\d\-]*([\d\s.,]+)\s*€?/i,
+    // "Net à payer HT" 
+    /net\s+(?:à|a)\s+payer\s+ht[^\d\-]*([\d\s.,]+)\s*€?/i,
+    // Pattern générique : montant suivi de "HT" ou "H.T."
+    /([\d\s.,]+)\s*€?\s*H\.?T\.?(?!\w)/,
+  ];
+  for (var p of patterns) {
+    var m = text.match(p);
+    if (m && m[1]) {
+      var raw = m[1].replace(/\s/g,'').replace(',','.');
+      var val = parseFloat(raw);
+      if (!isNaN(val) && val > 0 && val < 1000000) return val;
+    }
+  }
+  return null;
+}
+
+// ── Handlers fichier ──────────────────────────────
+function factHandleDrop(event, clientId) {
+  event.preventDefault();
+  var dz = document.getElementById('fact-drop-zone');
+  if (dz) { dz.style.borderColor='var(--border)'; dz.style.background='var(--bg)'; }
+  var file = event.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') factProcess(file, clientId);
+  else toast('Format PDF uniquement','err');
+}
+
+function factHandleFile(input, clientId) {
+  if (input.files && input.files[0]) factProcess(input.files[0], clientId);
+}
+
+async function factProcess(file, clientId) {
+  var loading = document.getElementById('fact-loading-'+clientId);
+  var confirmZone = document.getElementById('fact-confirm-zone-'+clientId);
+  var dropZone = document.getElementById('fact-drop-zone');
+  if (loading) loading.style.display = 'block';
+  if (confirmZone) confirmZone.style.display = 'none';
+  if (dropZone) dropZone.style.display = 'none';
+
+  try {
+    var text = await factExtractText(file);
+    var montant = factDetectMontantHT(text);
+
+    if (loading) loading.style.display = 'none';
+    if (confirmZone) confirmZone.style.display = 'block';
+
+    // Pré-remplir les champs
+    var montInput = document.getElementById('fact-montant-input-'+clientId);
+    var refInput  = document.getElementById('fact-ref-input-'+clientId);
+    var dateInput = document.getElementById('fact-date-input-'+clientId);
+    var rawEl     = document.getElementById('fact-raw-text-'+clientId);
+
+    if (montInput) montInput.value = montant !== null ? montant.toFixed(2) : '';
+    // Détecter N° facture (patterns communs)
+    var refMatch = text.match(/(?:facture\s*n[°o.]?\s*[:.]?\s*)([A-Z0-9\-\/]+)/i) ||
+                   text.match(/(?:n[°o.]\s*[:.]?\s*facture\s*[:.]?\s*)([A-Z0-9\-\/]+)/i) ||
+                   text.match(/(?:FA|INV|FAC|BL)[.\-\/]?\s*(\d{4,})/i);
+    if (refInput && refMatch) refInput.value = refMatch[0].trim().slice(0,30);
+    // Détecter date
+    var dateMatch = text.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/);
+    if (dateInput && dateMatch) {
+      var y=dateMatch[3], m_=dateMatch[2].padStart(2,'0'), d_=dateMatch[1].padStart(2,'0');
+      dateInput.value = y+'-'+m_+'-'+d_;
+    } else if (dateInput) {
+      dateInput.value = new Date().toISOString().slice(0,10);
+    }
+    // Afficher extrait du texte
+    if (rawEl) rawEl.textContent = 'Extrait PDF : ' + text.slice(0,300).replace(/\n/g,' ').trim();
+
+    if (montant === null) {
+      toast('Montant HT non détecté — saisissez-le manuellement', 'err');
+    } else {
+      toast('✅ Montant HT détecté : ' + cdbFmtCA(montant));
+    }
+    // Stocker le nom du fichier
+    document.getElementById('fact-confirm-zone-'+clientId).dataset.fichier = file.name;
+
+  } catch(e) {
+    if (loading) loading.style.display = 'none';
+    if (dropZone) dropZone.style.display = 'block';
+    toast('Erreur lecture PDF : ' + (e.message||e), 'err');
+    console.error('factProcess error:', e);
+  }
+}
+
+function factCancelConfirm(clientId) {
+  var cz = document.getElementById('fact-confirm-zone-'+clientId);
+  var dz = document.getElementById('fact-drop-zone');
+  if (cz) cz.style.display = 'none';
+  if (dz) dz.style.display = 'block';
+  // Reset input file
+  var fi = document.getElementById('fact-file-input-'+clientId);
+  if (fi) fi.value = '';
+}
+
+async function factSave(clientId) {
+  var montInput = document.getElementById('fact-montant-input-'+clientId);
+  var refInput  = document.getElementById('fact-ref-input-'+clientId);
+  var dateInput = document.getElementById('fact-date-input-'+clientId);
+  var cz        = document.getElementById('fact-confirm-zone-'+clientId);
+
+  var montant = parseFloat(montInput?.value)||0;
+  if (!montant || montant <= 0) { toast('Montant HT invalide','err'); return; }
+
+  var c = cdbContacts.find(x=>x.id===clientId);
+  if (!c) { toast('Client introuvable','err'); return; }
+
+  var newFact = {
+    montantHT  : montant,
+    ref        : (refInput?.value||'').trim() || 'FA-'+Date.now(),
+    date       : dateInput?.value || new Date().toISOString().slice(0,10),
+    nomFichier : cz?.dataset.fichier || '',
+    importedAt : new Date().toISOString(),
+  };
+
+  // Ajouter dans le tableau factures du contact
+  if (!c.factures) c.factures = [];
+  c.factures.push(newFact);
+
+  // Mettre à jour Firestore
+  if (db) {
+    try {
+      await db.collection('clients').doc(clientId).update({ factures: c.factures });
+    } catch(e) { console.warn('Firestore factures update:', e); }
+  }
+  // Mettre à jour cache local
+  var idx = cdbContacts.findIndex(x=>x.id===clientId);
+  if (idx >= 0) cdbContacts[idx].factures = c.factures;
+  try { localStorage.setItem(CDB_CACHE_KEY, JSON.stringify(cdbContacts)); } catch(e){}
+
+  // Mettre à jour KPIs dans le header de la modale
+  var factTotal = c.factures.reduce((s,f)=>s+(f.montantHT||0),0);
+  var bdc = cache.commandes.filter(o=>o.numClient===c.numClient).reduce((s,o)=>s+(o.montant||0),0);
+  s2('cdb-stat-ca', cdbFmtCA(factTotal + bdc));
+
+  toast('✅ Facture enregistrée — CA mis à jour : +' + cdbFmtCA(montant));
+  logActivite('Facture importée — '+c.nom+' — '+cdbFmtCA(montant),'teal');
+
+  // Rafraîchir l'onglet
+  cdbBuildFacturesTab(c);
+  cdbBuildCATab(c);
+}
+
+async function factDelete(clientId, index) {
+  if (!confirm('Supprimer cette facture du CA ?')) return;
+  var c = cdbContacts.find(x=>x.id===clientId);
+  if (!c || !c.factures) return;
+  var deleted = c.factures.splice(index, 1);
+  if (db) {
+    try {
+      await db.collection('clients').doc(clientId).update({ factures: c.factures });
+    } catch(e) { console.warn(e); }
+  }
+  var idx = cdbContacts.findIndex(x=>x.id===clientId);
+  if (idx >= 0) cdbContacts[idx].factures = c.factures;
+  try { localStorage.setItem(CDB_CACHE_KEY, JSON.stringify(cdbContacts)); } catch(e){}
+  toast('Facture supprimée');
+  cdbBuildFacturesTab(c);
+  cdbBuildCATab(c);
+}
+
+
 
 // ── MENU CONTEXTUEL ─────────────────────────────
 function cdbShowMenu(anchor, id) {
@@ -1686,6 +1987,7 @@ function cdbShowMenu(anchor, id) {
     {icon:'✏️',label:'Modifier la fiche',fn:()=>cdbOpenEdit(id)},
     {icon:'🛒',label:'Nouveau BDC',fn:()=>{ if(c) cdbNewOrderFromClient(c); }},
     {icon:'📊',label:'CA & Historique',fn:()=>{ cdbOpenEdit(id); setTimeout(()=>cdbSwitchTab('ca'),60); }},
+    {icon:'📄',label:'Importer une facture',fn:()=>{ cdbOpenEdit(id); setTimeout(()=>cdbSwitchTab('factures'),60); }},
     {icon:'📋',label:"Copier l'email",fn:()=>{ if(c&&c.email) navigator.clipboard.writeText(c.email).then(()=>toast('Email copié')); else toast('Pas d\'email','err'); }},
     {icon:'🗑',label:'Supprimer',fn:()=>{ if(confirm('Supprimer ce contact ?')){ document.getElementById('cdb-edit-id').value=id; cdbDelete(); } },danger:true}
   ];
