@@ -626,7 +626,9 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
           <th>Code</th><th>Raison sociale</th><th>Groupe</th><th>Ville</th>
           <th>Email</th><th>Téléphone</th>
           <th style="text-align:right;">Dernière cmd</th>
-          <th style="text-align:right;">CA BDC</th>
+          <th style="text-align:right;">📋 CA BDC</th>
+          <th style="text-align:right;">📄 Facturé</th>
+          <th style="text-align:right;">Total CA</th>
           <th style="width:36px;"></th>
         </tr></thead>
         <tbody id="cdb-tbody"></tbody>
@@ -646,17 +648,25 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
           <div class="modal-title" id="cdb-edit-title" style="color:var(--ink);">Fiche contact</div>
           <div id="cdb-edit-subtitle" style="font-size:.7rem;color:var(--sub);margin-top:1px;">—</div>
         </div>
-        <div style="display:flex;gap:8px;flex-shrink:0;">
-          <div style="text-align:center;padding:.3rem .7rem;background:var(--brand-bg);border-radius:8px;border:1px solid #bbf7d0;">
-            <div style="font-size:.58rem;font-weight:600;color:var(--brand2);text-transform:uppercase;letter-spacing:.06em;">CA BDC</div>
+        <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;">
+          <div style="text-align:center;padding:.3rem .65rem;background:var(--brand-bg);border-radius:8px;border:1px solid #bbf7d0;">
+            <div style="font-size:.55rem;font-weight:600;color:var(--brand2);text-transform:uppercase;letter-spacing:.05em;">CA Total</div>
+            <div style="font-size:.9rem;font-weight:700;color:var(--brand2);" id="cdb-stat-ca-total">—</div>
+          </div>
+          <div style="text-align:center;padding:.3rem .65rem;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;">
+            <div style="font-size:.55rem;font-weight:600;color:var(--brand2);text-transform:uppercase;letter-spacing:.05em;">📋 BDC</div>
             <div style="font-size:.9rem;font-weight:700;color:var(--brand2);" id="cdb-stat-ca">—</div>
           </div>
-          <div style="text-align:center;padding:.3rem .7rem;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
-            <div style="font-size:.58rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;">Cmds</div>
+          <div style="text-align:center;padding:.3rem .65rem;background:#fffbeb;border-radius:8px;border:1px solid #fde68a;">
+            <div style="font-size:.55rem;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:.05em;">📄 Factures</div>
+            <div style="font-size:.9rem;font-weight:700;color:var(--amber);" id="cdb-stat-factures">—</div>
+          </div>
+          <div style="text-align:center;padding:.3rem .65rem;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
+            <div style="font-size:.55rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;">Cmds</div>
             <div style="font-size:.9rem;font-weight:700;color:var(--ink);" id="cdb-stat-cmds">—</div>
           </div>
-          <div style="text-align:center;padding:.3rem .7rem;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
-            <div style="font-size:.58rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;">Dernière</div>
+          <div style="text-align:center;padding:.3rem .65rem;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
+            <div style="font-size:.55rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;">Dernière</div>
             <div style="font-size:.8rem;font-weight:600;color:var(--ink);" id="cdb-stat-last">—</div>
           </div>
           <button onclick="cdbOpenBDCFromModal()" style="background:var(--brand);border:none;border-radius:8px;padding:.3rem .9rem;font-size:.75rem;font-weight:600;color:#fff;cursor:pointer;flex-shrink:0;">🛒 BDC</button>
@@ -1488,6 +1498,10 @@ function cdbApplyFilters() {
   s2('cdb-count-filtered', cdbFiltered.length + ' résultat' + (cdbFiltered.length>1?'s':''));
 }
 
+function factCA(contact) {
+  return ((contact||{}).factures||[]).reduce(function(s,f){ return s+(f.montantHT||0); }, 0);
+}
+
 function cdbRenderPage() {
   var tbody = document.getElementById('cdb-tbody');
   var paginEl = document.getElementById('cdb-pagination');
@@ -1531,7 +1545,9 @@ function cdbRenderPage() {
       '<td><a href="mailto:'+cdbEsc(c.email||'')+'" style="font-size:.78rem;color:var(--brand2);">'+cdbEsc(c.email||'')+'</a></td>' +
       '<td style="font-size:.78rem;color:var(--sub);">'+cdbEsc(c.telephone||'')+'</td>' +
       '<td style="text-align:right;font-size:.75rem;color:var(--sub);">'+lastCmd(c)+'</td>' +
-      '<td style="text-align:right;">'+(ca>0?('<strong style="color:var(--brand2);">'+cdbFmtCA(ca)+'</strong><div style="font-size:.62rem;color:var(--muted);">'+nb+' cmd'+(nb>1?'s':'')+'</div>'):cdbFmtCA(c.cumul2026||0))+'</td>' +
+      '<td style="text-align:right;">'+(ca>0?('<strong style="color:var(--brand2);">'+cdbFmtCA(ca)+'</strong><div style="font-size:.62rem;color:var(--muted);">'+nb+' cmd'+(nb>1?'s':'')+'</div>'):'<span style="color:var(--muted);">—</span>')+'</td>' +
+      '<td style="text-align:right;">'+(factCA(c)>0?('<strong style="color:var(--amber);">'+cdbFmtCA(factCA(c))+'</strong><div style="font-size:.62rem;color:var(--muted);">'+(c.factures||[]).length+' fact.</div>'):'<span style="color:var(--muted);">—</span>')+'</td>' +
+      '<td style="text-align:right;"><strong style="color:var(--ink);">'+cdbFmtCA(ca+factCA(c))+'</strong></td>' +
       '<td><button type="button" class="btn btn-ghost cdb-menu-btn" data-cdb-id="'+idA+'" style="font-size:.9rem;padding:.18rem .4rem;cursor:pointer;line-height:1;color:var(--sub);">⋮</button></td>' +
       '</tr>';
   }).join('');
@@ -1639,7 +1655,10 @@ function cdbOpenEdit(id) {
   var cmds = c ? cache.commandes.filter(o=>o.numClient===c.numClient) : [];
   var caTotal = cmds.reduce((s,o)=>s+(o.montant||0),0);
   var lastC = cmds.length ? cdbFmtDate(cmds[0].createdAt) : (c&&c.dateDerniereCmd?cdbFmtDate(c.dateDerniereCmd):'—');
+  var caFactH = (c ? (c.factures||[]) : []).reduce(function(s,f){return s+(f.montantHT||0);},0);
+  s2('cdb-stat-ca-total', cdbFmtCA(caTotal + caFactH));
   s2('cdb-stat-ca', caTotal>0?cdbFmtCA(caTotal):'—');
+  s2('cdb-stat-factures', caFactH>0?cdbFmtCA(caFactH):'—');
   s2('cdb-stat-cmds', cmds.length?(cmds.length+' cmd'+(cmds.length>1?'s':'')):'—');
   s2('cdb-stat-last', lastC);
 
@@ -1666,29 +1685,100 @@ function cdbBuildCATab(c) {
   var el=document.getElementById('cdb-edit-ca-content'); if(!el) return;
   if (!c) { el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--sub);font-size:.85rem;">Nouveau contact — aucun historique disponible.</div>'; return; }
   var cmds = cache.commandes.filter(o=>o.numClient===c.numClient).sort((a,b)=>{ var da=a.createdAt?new Date(a.createdAt):new Date(0); var db2=b.createdAt?new Date(b.createdAt):new Date(0); return db2-da; });
-  var caTotal = cmds.reduce((s,o)=>s+(o.montant||0),0);
-  // Ajouter CA factures importées
-  var factTotal = (c.factures||[]).reduce((s,f)=>s+(f.montantHT||0),0);
-  var caTotalGlobal = caTotal + factTotal + (c.cumul2026||0);
+  var caBDC   = cmds.reduce((s,o)=>s+(o.montant||0),0);
+  var factures = (c.factures||[]).sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
+  var caFact  = factures.reduce((s,f)=>s+(f.montantHT||0),0);
+  var caTotal = caBDC + caFact;
   var html='';
-  // KPIs
-  html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem;">';
-  html+='<div style="padding:.65rem .75rem;background:var(--brand-bg);border-radius:9px;border-left:3px solid var(--brand);"><div style="font-size:.62rem;color:var(--brand2);font-weight:600;text-transform:uppercase;margin-bottom:.2rem;">CA Total</div><div style="font-size:1.05rem;font-weight:700;color:var(--brand2);">'+cdbFmtCA(caTotalGlobal)+'</div></div>';
-  html+='<div style="padding:.65rem .75rem;background:var(--bg);border-radius:9px;border-left:3px solid var(--border);"><div style="font-size:.62rem;color:var(--sub);font-weight:600;text-transform:uppercase;margin-bottom:.2rem;">BDC CRM</div><div style="font-size:1.05rem;font-weight:700;color:var(--ink);">'+cdbFmtCA(caTotal)+'</div></div>';
-  html+='<div style="padding:.65rem .75rem;background:var(--bg);border-radius:9px;border-left:3px solid var(--border);"><div style="font-size:.62rem;color:var(--sub);font-weight:600;text-transform:uppercase;margin-bottom:.2rem;">Factures</div><div style="font-size:1.05rem;font-weight:700;color:var(--ink);">'+cdbFmtCA(factTotal)+'</div></div>';
+
+  // ── KPIs 3 blocs distincts ──────────────────────
+  html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.1rem;">';
+  // CA Total
+  html+='<div style="padding:.7rem .85rem;background:var(--brand-bg);border-radius:10px;border-left:3px solid var(--brand);">';
+  html+='<div style="font-size:.6rem;color:var(--brand2);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.25rem;">CA Total</div>';
+  html+='<div style="font-size:1.15rem;font-weight:700;color:var(--brand2);">'+cdbFmtCA(caTotal)+'</div>';
+  html+='<div style="font-size:.65rem;color:var(--brand);margin-top:2px;">BDC + Factures</div>';
   html+='</div>';
-  // Liste commandes
+  // CA BDC
+  html+='<div style="padding:.7rem .85rem;background:#f0fdf4;border-radius:10px;border-left:3px solid #4ade80;">';
+  html+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:.25rem;">';
+  html+='<span style="font-size:.7rem;">📋</span>';
+  html+='<span style="font-size:.6rem;color:var(--brand2);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">CA Bons de commande</span>';
+  html+='</div>';
+  html+='<div style="font-size:1.1rem;font-weight:700;color:var(--brand2);">'+cdbFmtCA(caBDC)+'</div>';
+  html+='<div style="font-size:.65rem;color:var(--sub);margin-top:2px;">'+cmds.length+' commande'+(cmds.length>1?'s':'')+' CRM</div>';
+  html+='</div>';
+  // CA Facturé
+  html+='<div style="padding:.7rem .85rem;background:#fffbeb;border-radius:10px;border-left:3px solid #f59e0b;">';
+  html+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:.25rem;">';
+  html+='<span style="font-size:.7rem;">📄</span>';
+  html+='<span style="font-size:.6rem;color:var(--amber);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">CA Facturé (importé)</span>';
+  html+='</div>';
+  html+='<div style="font-size:1.1rem;font-weight:700;color:var(--amber);">'+cdbFmtCA(caFact)+'</div>';
+  html+='<div style="font-size:.65rem;color:var(--sub);margin-top:2px;">'+factures.length+' facture'+(factures.length>1?'s':'')+' importée'+(factures.length>1?'s':'')+'</div>';
+  html+='</div>';
+  html+='</div>';
+
+  // ── Barre de répartition visuelle ──────────────
+  if (caTotal > 0) {
+    var pctBDC  = Math.round(caBDC  / caTotal * 100);
+    var pctFact = 100 - pctBDC;
+    html+='<div style="margin-bottom:1rem;">';
+    html+='<div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--sub);margin-bottom:.3rem;">';
+    html+='<span>Répartition CA</span><span>📋 BDC '+pctBDC+'% · 📄 Factures '+pctFact+'%</span>';
+    html+='</div>';
+    html+='<div style="height:7px;border-radius:99px;background:var(--border);overflow:hidden;display:flex;">';
+    if (pctBDC > 0) html+='<div style="width:'+pctBDC+'%;background:var(--brand);border-radius:99px 0 0 99px;transition:width .5s;"></div>';
+    if (pctFact > 0) html+='<div style="width:'+pctFact+'%;background:#f59e0b;border-radius:0 99px 99px 0;transition:width .5s;"></div>';
+    html+='</div></div>';
+  }
+
+  // ── Liste commandes BDC ──────────────────────────
   if (cmds.length) {
-    html+='<div style="font-size:.7rem;font-weight:700;color:var(--sub);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em;">Commandes BDC ('+cmds.length+')</div>';
-    html+='<div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:9px;">';
-    html+='<table style="width:100%;border-collapse:collapse;font-size:.78rem;"><thead style="position:sticky;top:0;background:var(--bg);"><tr><th style="padding:.35rem .65rem;text-align:left;color:var(--sub);font-size:.65rem;font-weight:600;text-transform:uppercase;">Date</th><th style="padding:.35rem .65rem;text-align:left;color:var(--sub);font-size:.65rem;font-weight:600;text-transform:uppercase;">Magasin</th><th style="padding:.35rem .65rem;text-align:center;color:var(--sub);font-size:.65rem;font-weight:600;text-transform:uppercase;">Colis</th><th style="padding:.35rem .65rem;text-align:right;color:var(--sub);font-size:.65rem;font-weight:600;text-transform:uppercase;">CA HT</th></tr></thead><tbody>';
+    html+='<div style="font-size:.68rem;font-weight:700;color:var(--brand2);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:5px;">📋 Commandes BDC <span style="font-size:.65rem;background:#f0fdf4;border-radius:99px;padding:1px 7px;border:1px solid #bbf7d0;">'+cmds.length+'</span></div>';
+    html+='<div style="max-height:180px;overflow-y:auto;border:1px solid #bbf7d0;border-radius:9px;margin-bottom:.9rem;">';
+    html+='<table style="width:100%;border-collapse:collapse;font-size:.78rem;">';
+    html+='<thead style="position:sticky;top:0;background:#f0fdf4;"><tr>';
+    html+='<th style="padding:.3rem .6rem;text-align:left;color:var(--brand2);font-size:.62rem;font-weight:700;text-transform:uppercase;">Date</th>';
+    html+='<th style="padding:.3rem .6rem;text-align:left;color:var(--brand2);font-size:.62rem;font-weight:700;text-transform:uppercase;">Magasin</th>';
+    html+='<th style="padding:.3rem .6rem;text-align:center;color:var(--brand2);font-size:.62rem;font-weight:700;text-transform:uppercase;">Colis</th>';
+    html+='<th style="padding:.3rem .6rem;text-align:right;color:var(--brand2);font-size:.62rem;font-weight:700;text-transform:uppercase;">CA HT</th>';
+    html+='</tr></thead><tbody>';
     cmds.forEach(o=>{
-      html+='<tr style="border-top:1px solid var(--border);"><td style="padding:.35rem .65rem;color:var(--sub);">'+cdbFmtDate(o.createdAt)+'</td>';
-      html+='<td style="padding:.35rem .65rem;font-weight:500;color:var(--ink);">'+(o.ref?cdbEsc(o.ref)+' · ':'')+cdbEsc(o.clientNom||'—')+'</td>';
-      html+='<td style="padding:.35rem .65rem;text-align:center;color:var(--sub);">'+(o.nbColis||'—')+'</td>';
-      html+='<td style="padding:.35rem .65rem;text-align:right;font-weight:700;color:var(--brand2);">'+cdbFmtCA(o.montant||0)+'</td></tr>';
+      html+='<tr style="border-top:1px solid #dcfce7;">';
+      html+='<td style="padding:.3rem .6rem;color:var(--sub);font-size:.75rem;">'+cdbFmtDate(o.createdAt)+'</td>';
+      html+='<td style="padding:.3rem .6rem;font-weight:500;color:var(--ink);">'+(o.ref?cdbEsc(o.ref)+' · ':'')+cdbEsc(o.clientNom||'—')+'</td>';
+      html+='<td style="padding:.3rem .6rem;text-align:center;color:var(--sub);">'+(o.nbColis||'—')+'</td>';
+      html+='<td style="padding:.3rem .6rem;text-align:right;font-weight:700;color:var(--brand2);">'+cdbFmtCA(o.montant||0)+'</td>';
+      html+='</tr>';
     });
     html+='</tbody></table></div>';
+  }
+
+  // ── Liste factures importées ──────────────────────
+  if (factures.length) {
+    html+='<div style="font-size:.68rem;font-weight:700;color:var(--amber);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:5px;">📄 Factures importées <span style="font-size:.65rem;background:#fef3c7;border-radius:99px;padding:1px 7px;border:1px solid #fde68a;">'+factures.length+'</span></div>';
+    html+='<div style="max-height:180px;overflow-y:auto;border:1px solid #fde68a;border-radius:9px;">';
+    html+='<table style="width:100%;border-collapse:collapse;font-size:.78rem;">';
+    html+='<thead style="position:sticky;top:0;background:#fffbeb;"><tr>';
+    html+='<th style="padding:.3rem .6rem;text-align:left;color:var(--amber);font-size:.62rem;font-weight:700;text-transform:uppercase;">Date</th>';
+    html+='<th style="padding:.3rem .6rem;text-align:left;color:var(--amber);font-size:.62rem;font-weight:700;text-transform:uppercase;">N° Facture</th>';
+    html+='<th style="padding:.3rem .6rem;text-align:left;color:var(--amber);font-size:.62rem;font-weight:700;text-transform:uppercase;">Fichier</th>';
+    html+='<th style="padding:.3rem .6rem;text-align:right;color:var(--amber);font-size:.62rem;font-weight:700;text-transform:uppercase;">Montant HT</th>';
+    html+='</tr></thead><tbody>';
+    factures.forEach(f=>{
+      html+='<tr style="border-top:1px solid #fef3c7;">';
+      html+='<td style="padding:.3rem .6rem;color:var(--sub);font-size:.75rem;">'+(f.date||'—')+'</td>';
+      html+='<td style="padding:.3rem .6rem;font-weight:600;color:var(--amber);">'+cdbEsc(f.ref||'—')+'</td>';
+      html+='<td style="padding:.3rem .6rem;color:var(--sub);font-size:.72rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+cdbEsc(f.nomFichier||'—')+'</td>';
+      html+='<td style="padding:.3rem .6rem;text-align:right;font-weight:700;color:var(--amber);">'+cdbFmtCA(f.montantHT||0)+'</td>';
+      html+='</tr>';
+    });
+    html+='</tbody></table></div>';
+  }
+
+  if (!cmds.length && !factures.length) {
+    html+='<div style="text-align:center;padding:2rem;color:var(--sub);font-size:.85rem;border:1px solid var(--border);border-radius:9px;">Aucun historique pour ce client.</div>';
   }
   el.innerHTML=html;
 }
@@ -2009,9 +2099,11 @@ async function factSave(clientId) {
   try { localStorage.setItem(CDB_CACHE_KEY, JSON.stringify(cdbContacts)); } catch(e){}
 
   // Mettre à jour KPIs dans le header de la modale
-  var factTotal = c.factures.reduce((s,f)=>s+(f.montantHT||0),0);
-  var bdc = cache.commandes.filter(o=>o.numClient===c.numClient).reduce((s,o)=>s+(o.montant||0),0);
-  s2('cdb-stat-ca', cdbFmtCA(factTotal + bdc));
+  var factTotalUpd = c.factures.reduce((s,f)=>s+(f.montantHT||0),0);
+  var bdcUpd = cache.commandes.filter(o=>o.numClient===c.numClient).reduce((s,o)=>s+(o.montant||0),0);
+  s2('cdb-stat-ca-total', cdbFmtCA(factTotalUpd + bdcUpd));
+  s2('cdb-stat-ca', cdbFmtCA(bdcUpd));
+  s2('cdb-stat-factures', factTotalUpd>0?cdbFmtCA(factTotalUpd):'—');
 
   toast('✅ Facture enregistrée — CA mis à jour : +' + cdbFmtCA(montant));
   logActivite('Facture importée — '+c.nom+' — '+cdbFmtCA(montant),'teal');
