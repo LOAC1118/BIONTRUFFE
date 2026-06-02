@@ -421,6 +421,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
     <button class="t-tab" onclick="showSection('clients',this)">👥 Base clients</button>
     <button class="t-tab" onclick="showSection('commandes',this)">📦 Commandes</button>
     <button class="t-tab" onclick="showSection('mailing',this)">📧 Mailing</button>
+    <button class="t-tab" onclick="showSection('commissions',this)">💶 Commissions</button>
   </div>
   <div class="topbar-right">
     <div class="sync-indicator"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Connexion…</span></div>
@@ -456,6 +457,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
   <div class="nav-section">
     <div class="nav-label">Outils</div>
     <div class="nav-item" onclick="showSection('mailing',this)">📧 Mailing</div>
+    <div class="nav-item" onclick="showSection('commissions',this)">💶 Commissions</div>
   </div>
   <div class="sidebar-footer">
     <div style="margin-bottom:.6rem;">
@@ -497,19 +499,102 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
       <div class="page-title">Tableau de bord</div>
       <div class="page-sub">BIO N TRUFFE · Eridan BNT SARL · Tarif V15 — 01/03/2026</div>
     </div>
-    <button class="btn btn-primary" onclick="showSection('bdc',null)">📋 Nouveau BDC</button>
-    <a href="https://loac1118.github.io/BIONTRUFFE/catalogue_biontruffe.pdf" target="_blank" class="btn btn-ghost" style="font-size:.82rem;text-decoration:none;">📄 Catalogue PDF</a>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" onclick="showSection('bdc',null)">📋 Nouveau BDC</button>
+      <a href="https://loac1118.github.io/BIONTRUFFE/catalogue_biontruffe.pdf" target="_blank" class="btn btn-ghost" style="font-size:.82rem;text-decoration:none;">📄 Catalogue PDF</a>
+    </div>
   </div>
-  <div class="stats-grid">
-    <div class="stat-card"><div class="stat-label">Clients</div><div class="stat-val" id="stat-clients">—</div><div class="stat-delta">base clients</div></div>
-    <div class="stat-card"><div class="stat-label">Prospects</div><div class="stat-val" id="stat-prospects">—</div><div class="stat-delta">en qualification</div></div>
-    <div class="stat-card"><div class="stat-label">Commandes</div><div class="stat-val" id="stat-commandes">—</div><div class="stat-delta">BDC envoyés</div></div>
-    <div class="stat-card"><div class="stat-label">CA Total HT</div><div class="stat-val" id="stat-ca">—</div><div class="stat-delta">toutes commandes</div></div>
+
+  <!-- ── LIGNE 1 : KPIs principaux ── -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem;">
+    <div class="stat-card">
+      <div class="stat-label">Clients actifs</div>
+      <div class="stat-val" id="stat-clients">—</div>
+      <div class="stat-delta">base clients</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Prospects</div>
+      <div class="stat-val" id="stat-prospects">—</div>
+      <div class="stat-delta">en qualification</div>
+    </div>
+    <div class="stat-card" style="border-top-color:#4ade80;">
+      <div class="stat-label" style="color:#16a34a;">📋 Commandes BDC</div>
+      <div class="stat-val" id="stat-commandes">—</div>
+      <div class="stat-delta" id="stat-commandes-sub">BDC envoyés via CRM</div>
+    </div>
+    <div class="stat-card" style="border-top-color:var(--amber);">
+      <div class="stat-label" style="color:var(--amber);">📄 Factures importées</div>
+      <div class="stat-val" id="stat-factures-nb">—</div>
+      <div class="stat-delta" id="stat-factures-sub">de tous les clients</div>
+    </div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+
+  <!-- ── LIGNE 2 : CA détaillé ── -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;">
+    <!-- CA Total -->
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;box-shadow:var(--shadow);">
+      <div style="font-size:.65rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;">💰 CA Total HT</div>
+      <div style="font-size:1.6rem;font-weight:700;color:var(--ink);" id="stat-ca-total">—</div>
+      <div style="font-size:.72rem;color:var(--sub);margin-top:3px;">BDC + Factures importées</div>
+      <!-- Barre répartition -->
+      <div style="margin-top:.6rem;height:5px;border-radius:99px;background:var(--border);overflow:hidden;display:flex;">
+        <div id="dash-bar-bdc"  style="background:var(--brand);border-radius:99px 0 0 99px;transition:width .5s;" ></div>
+        <div id="dash-bar-fact" style="background:var(--amber);border-radius:0 99px 99px 0;transition:width .5s;"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:.35rem;font-size:.65rem;color:var(--sub);">
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--brand);margin-right:3px;"></span>BDC <span id="dash-pct-bdc" style="font-weight:600;">—</span></span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-right:3px;"></span>Factures <span id="dash-pct-fact" style="font-weight:600;">—</span></span>
+      </div>
+    </div>
+    <!-- CA BDC -->
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:1rem 1.1rem;box-shadow:var(--shadow);">
+      <div style="font-size:.65rem;font-weight:700;color:var(--brand2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;">📋 CA Bons de commande</div>
+      <div style="font-size:1.6rem;font-weight:700;color:var(--brand2);" id="stat-ca-bdc">—</div>
+      <div style="font-size:.72rem;color:var(--brand);margin-top:3px;" id="stat-ca-bdc-sub">0 commande</div>
+      <div style="margin-top:.5rem;display:flex;gap:8px;">
+        <div style="flex:1;background:rgba(22,163,74,.1);border-radius:7px;padding:.3rem .5rem;text-align:center;">
+          <div style="font-size:.6rem;color:var(--brand2);font-weight:600;">Moy./cmd</div>
+          <div style="font-size:.82rem;font-weight:700;color:var(--brand2);" id="stat-ca-bdc-avg">—</div>
+        </div>
+        <div style="flex:1;background:rgba(22,163,74,.1);border-radius:7px;padding:.3rem .5rem;text-align:center;">
+          <div style="font-size:.6rem;color:var(--brand2);font-weight:600;">Ce mois</div>
+          <div style="font-size:.82rem;font-weight:700;color:var(--brand2);" id="stat-ca-bdc-month">—</div>
+        </div>
+      </div>
+    </div>
+    <!-- CA Factures -->
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1rem 1.1rem;box-shadow:var(--shadow);">
+      <div style="font-size:.65rem;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;">📄 CA Factures importées</div>
+      <div style="font-size:1.6rem;font-weight:700;color:var(--amber);" id="stat-ca-fact">—</div>
+      <div style="font-size:.72rem;color:var(--amber);margin-top:3px;" id="stat-ca-fact-sub">0 facture</div>
+      <div style="margin-top:.5rem;display:flex;gap:8px;">
+        <div style="flex:1;background:rgba(217,119,6,.1);border-radius:7px;padding:.3rem .5rem;text-align:center;">
+          <div style="font-size:.6rem;color:var(--amber);font-weight:600;">Moy./fact.</div>
+          <div style="font-size:.82rem;font-weight:700;color:var(--amber);" id="stat-ca-fact-avg">—</div>
+        </div>
+        <div style="flex:1;background:rgba(217,119,6,.1);border-radius:7px;padding:.3rem .5rem;text-align:center;">
+          <div style="font-size:.6rem;color:var(--amber);font-weight:600;">Clients facturés</div>
+          <div style="font-size:.82rem;font-weight:700;color:var(--amber);" id="stat-ca-fact-clients">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LIGNE 3 : Dernières commandes + Dernières factures + Activité ── -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
     <div class="card">
-      <div class="card-head"><span class="card-title">📦 Dernières commandes</span><button class="btn btn-ghost" style="font-size:.72rem" onclick="showSection('commandes',null)">Voir tout →</button></div>
-      <div style="padding:.5rem;" id="dash-last-commandes"><div style="padding:1rem;text-align:center;color:var(--g400);font-size:.8rem;">Aucune commande</div></div>
+      <div class="card-head">
+        <span class="card-title">📋 Derniers BDC</span>
+        <button class="btn btn-ghost" style="font-size:.72rem" onclick="showSection('commandes',null)">Voir tout →</button>
+      </div>
+      <div id="dash-last-commandes"><div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.8rem;">Aucune commande</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">📄 Dernières factures</span>
+        <button class="btn btn-ghost" style="font-size:.72rem" onclick="showSection('clients',null)">Base clients →</button>
+      </div>
+      <div id="dash-last-factures"><div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.8rem;">Aucune facture importée</div></div>
     </div>
     <div class="card">
       <div class="card-head"><span class="card-title">🕐 Activité récente</span></div>
@@ -655,6 +740,90 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
       </table>
     </div>
     <div id="cdb-pagination"></div>
+  </div>
+</div>
+
+<!-- ══ COMMISSIONS ══ -->
+<div id="sec-commissions" class="section hidden">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Commissions</div>
+      <div class="page-sub">Calcul automatique sur BDC et factures importées · Taux modifiables par client</div>
+    </div>
+    <button class="btn btn-primary" onclick="commSave()">💾 Enregistrer les taux</button>
+  </div>
+  <!-- KPIs commissions -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.25rem;">
+    <div class="stat-card" style="border-top-color:#7c3aed;">
+      <div class="stat-label" style="color:#7c3aed;">💶 Commission totale</div>
+      <div class="stat-val" id="comm-total" style="color:#7c3aed;">—</div>
+      <div class="stat-delta">BDC + Factures</div>
+    </div>
+    <div class="stat-card" style="border-top-color:var(--brand);">
+      <div class="stat-label" style="color:var(--brand);">📋 Sur BDC</div>
+      <div class="stat-val" id="comm-bdc">—</div>
+      <div class="stat-delta" id="comm-bdc-sub">taux global</div>
+    </div>
+    <div class="stat-card" style="border-top-color:var(--amber);">
+      <div class="stat-label" style="color:var(--amber);">📄 Sur Factures</div>
+      <div class="stat-val" id="comm-fact">—</div>
+      <div class="stat-delta" id="comm-fact-sub">taux global</div>
+    </div>
+  </div>
+  <!-- Taux global -->
+  <div class="card" style="margin-bottom:1rem;">
+    <div class="card-head">
+      <span class="card-title">⚙️ Taux de commission global (par défaut)</span>
+      <span style="font-size:.72rem;color:var(--sub);">Appliqué à tous les clients sans taux spécifique</span>
+    </div>
+    <div style="padding:1rem;display:flex;align-items:center;gap:2rem;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <div style="width:10px;height:10px;border-radius:50%;background:var(--brand);"></div>
+        <label style="font-size:.85rem;font-weight:600;color:var(--ink);">Taux BDC</label>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input type="number" id="comm-taux-global-bdc" min="0" max="100" step="0.1" value="5"
+            oninput="commRefresh()"
+            style="width:72px;padding:.5rem .6rem;border:1.5px solid var(--border);border-radius:8px;font-family:var(--f);font-size:1rem;font-weight:700;color:#7c3aed;text-align:center;outline:none;background:var(--bg);">
+          <span style="font-size:.9rem;font-weight:600;color:var(--sub);">%</span>
+        </div>
+      </div>
+      <div style="width:1px;height:36px;background:var(--border);"></div>
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <div style="width:10px;height:10px;border-radius:50%;background:var(--amber);"></div>
+        <label style="font-size:.85rem;font-weight:600;color:var(--ink);">Taux Factures</label>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input type="number" id="comm-taux-global-fact" min="0" max="100" step="0.1" value="5"
+            oninput="commRefresh()"
+            style="width:72px;padding:.5rem .6rem;border:1.5px solid var(--border);border-radius:8px;font-family:var(--f);font-size:1rem;font-weight:700;color:#7c3aed;text-align:center;outline:none;background:var(--bg);">
+          <span style="font-size:.9rem;font-weight:600;color:var(--sub);">%</span>
+        </div>
+      </div>
+      <button class="btn btn-ghost" onclick="commSetAll()" style="font-size:.8rem;margin-left:auto;">↕ Appliquer à tous les clients</button>
+    </div>
+  </div>
+  <!-- Tableau par client -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">👥 Détail par client</span>
+      <span style="font-size:.72rem;color:var(--sub);" id="comm-table-sub">—</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Client</th>
+          <th>Groupe</th>
+          <th style="text-align:right;">CA BDC</th>
+          <th style="text-align:center;width:88px;">% BDC</th>
+          <th style="text-align:right;color:var(--brand2);">Comm. BDC</th>
+          <th style="text-align:right;">CA Facturé</th>
+          <th style="text-align:center;width:88px;">% Fact.</th>
+          <th style="text-align:right;color:var(--amber);">Comm. Fact.</th>
+          <th style="text-align:right;color:#7c3aed;font-weight:700;">Total</th>
+        </tr></thead>
+        <tbody id="comm-tbody"></tbody>
+        <tfoot id="comm-tfoot"></tfoot>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -825,6 +994,9 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
     </button>
     <button class="bn-item" data-sec="prospects" onclick="mobileNav('prospects',this)">
       <span class="bn-icon">🔵</span>Prospects
+    </button>
+    <button class="bn-item" data-sec="commissions" onclick="mobileNav('commissions',this)">
+      <span class="bn-icon">💶</span>Commis.
     </button>
   </nav>
 </div>
@@ -1039,6 +1211,7 @@ function showSection(id, btn) {
   document.querySelectorAll('.t-tab,.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('sec-'+id).classList.remove('hidden');
   if (btn) btn.classList.add('active');
+  if (id === 'commissions') setTimeout(commInit, 50);
 }
 
 function updateBadges() {
@@ -1059,26 +1232,95 @@ document.addEventListener('click', e => {
 //  DASHBOARD
 // ══════════════════════════════════════════════════
 function refreshDashboard() {
-  s2('stat-clients', cache.clients.length);
-  s2('stat-prospects', cache.prospects.length);
+  // ── Comptes de base ─────────────────────────────
+  var nbClients   = cdbContacts.filter(function(c){return !c.prospect;}).length || cache.clients.length;
+  var nbProspects = cdbContacts.filter(function(c){return  c.prospect;}).length || cache.prospects.length;
+  s2('stat-clients',   nbClients);
+  s2('stat-prospects', nbProspects);
   s2('stat-commandes', cache.commandes.length);
-  const caTotal = cache.commandes.reduce((s,o)=>s+(o.montant||0),0);
-  s2('stat-ca', bdcFmt(caTotal));
 
-  // Dernières commandes
-  const lastEl = document.getElementById('dash-last-commandes');
-  const last5 = cache.commandes.slice(0,5);
-  if (!last5.length) { lastEl.innerHTML='<div style="padding:1rem;text-align:center;color:var(--g400);font-size:.8rem;">Aucune commande</div>'; }
-  else {
-    lastEl.innerHTML = last5.map(o=>`
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:.55rem .75rem;border-bottom:1px solid var(--border);">
-        <div>
-          <div style="font-size:.83rem;font-weight:600;color:var(--g900);">${esc(o.clientNom||'—')}</div>
-          <div style="font-size:.7rem;color:var(--g500);">${fmtDate(o.createdAt)} · ${o.nbRefs||0} réf. · ${o.nbColis||0} colis</div>
-        </div>
-        <div style="font-size:.85rem;font-weight:700;color:var(--mid);">${bdcFmt(o.montant||0)}</div>
-      </div>`).join('');
+  // ── CA Bons de commande ──────────────────────────
+  var caBDC  = cache.commandes.reduce(function(s,o){return s+(o.montant||0);}, 0);
+  var nbBDC  = cache.commandes.length;
+  var avgBDC = nbBDC ? caBDC / nbBDC : 0;
+  var now = new Date(); var mm = now.getMonth(); var yy = now.getFullYear();
+  var caBDCMonth = cache.commandes.filter(function(o){
+    if (!o.createdAt) return false;
+    var d = o.createdAt.toDate ? o.createdAt.toDate() : new Date(o.createdAt);
+    return d.getMonth()===mm && d.getFullYear()===yy;
+  }).reduce(function(s,o){return s+(o.montant||0);}, 0);
+
+  // ── CA Factures importées ────────────────────────
+  var allFactures = [];
+  var srcClients = cdbContacts.length ? cdbContacts : cache.clients;
+  srcClients.forEach(function(cl) {
+    (cl.factures||[]).forEach(function(f) {
+      allFactures.push(Object.assign({}, f, {
+        clientNom: cl.nom||cl.raison||'—',
+        clientId:  cl.id
+      }));
+    });
+  });
+  allFactures.sort(function(a,b){ return new Date(b.date||0)-new Date(a.date||0); });
+  var caFact  = allFactures.reduce(function(s,f){return s+(f.montantHT||0);}, 0);
+  var nbFact  = allFactures.length;
+  var avgFact = nbFact ? caFact / nbFact : 0;
+  var clientsAvecFact = new Set(allFactures.map(function(f){return f.clientId;})).size;
+
+  // ── CA Total + répartition ───────────────────────
+  var caTotal = caBDC + caFact;
+  var pctBDC  = caTotal > 0 ? Math.round(caBDC  / caTotal * 100) : 0;
+  var pctFact = caTotal > 0 ? 100 - pctBDC : 0;
+
+  // ── Mise à jour DOM ──────────────────────────────
+  s2('stat-factures-nb',      nbFact > 0 ? nbFact : '—');
+  s2('stat-factures-sub',     nbFact > 0 ? 'sur ' + clientsAvecFact + ' client'+(clientsAvecFact>1?'s':'') : 'aucune facture');
+  s2('stat-ca-total',         caTotal > 0 ? bdcFmt(caTotal) : '—');
+  s2('stat-ca-bdc',           caBDC   > 0 ? bdcFmt(caBDC)   : '—');
+  s2('stat-ca-bdc-sub',       nbBDC + ' commande'+(nbBDC>1?'s':''));
+  s2('stat-ca-bdc-avg',       avgBDC  > 0 ? bdcFmt(avgBDC)  : '—');
+  s2('stat-ca-bdc-month',     caBDCMonth > 0 ? bdcFmt(caBDCMonth) : '—');
+  s2('stat-ca-fact',          caFact  > 0 ? bdcFmt(caFact)  : '—');
+  s2('stat-ca-fact-sub',      nbFact + ' facture'+(nbFact>1?'s':''));
+  s2('stat-ca-fact-avg',      avgFact > 0 ? bdcFmt(avgFact) : '—');
+  s2('stat-ca-fact-clients',  clientsAvecFact > 0 ? clientsAvecFact : '—');
+  s2('dash-pct-bdc',          pctBDC + '%');
+  s2('dash-pct-fact',         pctFact + '%');
+
+  // Barre répartition
+  var bBDC  = document.getElementById('dash-bar-bdc');
+  var bFact = document.getElementById('dash-bar-fact');
+  if (bBDC)  bBDC.style.width  = pctBDC  + '%';
+  if (bFact) bFact.style.width = pctFact + '%';
+
+  // ── Derniers BDC ────────────────────────────────
+  var lastEl = document.getElementById('dash-last-commandes');
+  var last5  = cache.commandes.slice(0, 5);
+  if (!last5.length) {
+    lastEl.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.8rem;">Aucune commande</div>';
+  } else {
+    lastEl.innerHTML = last5.map(function(o){
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem .75rem;border-bottom:1px solid var(--border);">' +
+        '<div><div style="font-size:.82rem;font-weight:600;color:var(--ink);">' + esc(o.clientNom||'—') + '</div>' +
+        '<div style="font-size:.68rem;color:var(--sub);">' + fmtDate(o.createdAt) + ' · ' + (o.nbRefs||0) + ' réf. · ' + (o.nbColis||0) + ' colis</div></div>' +
+        '<div style="font-size:.85rem;font-weight:700;color:var(--brand);flex-shrink:0;">' + bdcFmt(o.montant||0) + '</div></div>';
+    }).join('');
   }
+
+  // ── Dernières factures ───────────────────────────
+  var factEl = document.getElementById('dash-last-factures');
+  var last5f = allFactures.slice(0, 5);
+  if (!last5f.length) {
+    factEl.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.8rem;">Aucune facture importée</div>';
+  } else {
+    factEl.innerHTML = last5f.map(function(f){
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem .75rem;border-bottom:1px solid var(--border);">' +
+        '<div style="min-width:0;flex:1;"><div style="font-size:.82rem;font-weight:600;color:var(--ink);">' + esc(f.clientNom) + '</div>' +
+        '<div style="font-size:.68rem;color:var(--sub);">' + (f.date||'—') + ' · ' + esc(f.ref||'—') + '</div></div>' +
+        '<div style="font-size:.85rem;font-weight:700;color:var(--amber);flex-shrink:0;">' + bdcFmt(f.montantHT||0) + '</div></div>';
+    }).join('');
+  }
+
   renderActivite();
 }
 
@@ -1401,7 +1643,7 @@ async function bdcSendOrder() {
     access_key: 'c9dce17b-a7cb-4190-a3d0-10fa4bf105e9',
     from_name: 'BIO N TRUFFE CRM',
     subject: 'Bon de commande BIO N TRUFFE — '+mag+' — '+today,
-    email: ['SPOTO.christophe','gmail.com'].join('@'),
+    email: ['spoto.christophe','gmail.com'].join('@'),
     _replyto: mail,
     _captcha: 'false',
     _template: 'table',
@@ -2413,7 +2655,7 @@ async function mlSendAll() {
         body:JSON.stringify({
           access_key:'c9dce17b-a7cb-4190-a3d0-10fa4bf105e9',
           from_name:'BIO N TRUFFE',subject:subj,
-          email:mail,to:'SPOTO.christophe@gmail.com',_captcha:'false',_template:'basic',
+          email:mail,to:'spoto.christophe@gmail.com',_captcha:'false',_template:'basic',
           message:body+'\n\n📄 Tarif BIO N TRUFFE V15 : '+pdfUrl+'\n📖 Catalogue 2026 : https://loac1118.github.io/BIONTRUFFE/catalogue_biontruffe.pdf'
         })
       });
@@ -2445,6 +2687,169 @@ function toast(msg,type) {
   el.style.background=type==='err'?'var(--red)':'var(--blue-p900)';
   el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+
+// ══════════════════════════════════════════════════
+//  COMMISSIONS
+// ══════════════════════════════════════════════════
+var COMM_KEY = 'bnt_commissions'; // localStorage
+
+function commLoad() {
+  try { return JSON.parse(localStorage.getItem(COMM_KEY) || '{}'); } catch(e) { return {}; }
+}
+function commSave() {
+  var data = commLoad();
+  // Lire les taux globaux
+  data._global_bdc  = parseFloat(document.getElementById('comm-taux-global-bdc').value)  || 0;
+  data._global_fact = parseFloat(document.getElementById('comm-taux-global-fact').value) || 0;
+  // Lire les taux par client depuis le tableau
+  document.querySelectorAll('[data-comm-id]').forEach(function(row) {
+    var id = row.getAttribute('data-comm-id');
+    var inputBDC  = document.getElementById('comm-bdc-'  + id);
+    var inputFact = document.getElementById('comm-fact-' + id);
+    if (!data[id]) data[id] = {};
+    if (inputBDC)  data[id].bdc  = parseFloat(inputBDC.value)  || 0;
+    if (inputFact) data[id].fact = parseFloat(inputFact.value) || 0;
+  });
+  localStorage.setItem(COMM_KEY, JSON.stringify(data));
+  // Mettre à jour Firestore si dispo
+  if (db && currentUser) {
+    db.collection('config').doc('commissions').set(data).catch(function(e){ console.warn('comm save:', e); });
+  }
+  commRefresh();
+  toast('✅ Taux de commission enregistrés');
+}
+
+function commSetAll() {
+  // Appliquer les taux globaux à tous les inputs clients
+  var gBDC  = parseFloat(document.getElementById('comm-taux-global-bdc').value)  || 0;
+  var gFact = parseFloat(document.getElementById('comm-taux-global-fact').value) || 0;
+  document.querySelectorAll('[id^="comm-bdc-"]').forEach(function(el) {
+    el.value = gBDC;
+  });
+  document.querySelectorAll('[id^="comm-fact-"]').forEach(function(el) {
+    el.value = gFact;
+  });
+  commRefresh();
+}
+
+function commGetTaux(data, clientId, type) {
+  // Retourner taux spécifique client ou taux global
+  if (data[clientId] && data[clientId][type] !== undefined) return data[clientId][type];
+  return type === 'bdc' ? (data._global_bdc || 5) : (data._global_fact || 5);
+}
+
+function commRefresh() {
+  var data = commLoad();
+  // Lire taux globaux depuis les inputs (en cours de saisie)
+  var gBDC  = parseFloat((document.getElementById('comm-taux-global-bdc')  || {}).value) || data._global_bdc  || 5;
+  var gFact = parseFloat((document.getElementById('comm-taux-global-fact') || {}).value) || data._global_fact || 5;
+
+  // Calculer les CA
+  var srcClients = cdbContacts.length ? cdbContacts : cache.clients;
+  var clients = srcClients.filter(function(cl) {
+    var caBDC = cache.commandes.filter(function(o){ return o.numClient===cl.numClient; }).reduce(function(s,o){ return s+(o.montant||0); }, 0);
+    var caFact = (cl.factures||[]).reduce(function(s,f){ return s+(f.montantHT||0); }, 0);
+    return caBDC > 0 || caFact > 0;
+  });
+
+  var totalCommBDC = 0, totalCommFact = 0;
+  var rows = '';
+
+  clients.forEach(function(cl) {
+    var caBDC  = cache.commandes.filter(function(o){ return o.numClient===cl.numClient; }).reduce(function(s,o){ return s+(o.montant||0); }, 0);
+    var caFact = (cl.factures||[]).reduce(function(s,f){ return s+(f.montantHT||0); }, 0);
+
+    // Lire le taux depuis l'input en cours (si déjà rendu) ou depuis data sauvegardé
+    var inputBDC  = document.getElementById('comm-bdc-'  + cl.id);
+    var inputFact = document.getElementById('comm-fact-' + cl.id);
+    var tBDC  = inputBDC  ? (parseFloat(inputBDC.value)  || 0) : commGetTaux(data, cl.id, 'bdc');
+    var tFact = inputFact ? (parseFloat(inputFact.value) || 0) : commGetTaux(data, cl.id, 'fact');
+
+    var commBDC  = Math.round(caBDC  * tBDC  / 100 * 100) / 100;
+    var commFact = Math.round(caFact * tFact / 100 * 100) / 100;
+    var commTotal = commBDC + commFact;
+    totalCommBDC  += commBDC;
+    totalCommFact += commFact;
+
+    var nom = esc(cl.nom || cl.raison || '—');
+    var groupe = cl.groupe ? '<span style="padding:1px 7px;background:var(--brand-bg);color:var(--brand2);border-radius:10px;font-size:.68rem;">'+esc(cl.groupe)+'</span>' : '—';
+
+    rows += '<tr data-comm-id="'+esc(cl.id)+'">';
+    rows += '<td><strong>'+nom+'</strong>'+(cl.numClient?'<div style="font-size:.68rem;color:var(--muted);">'+esc(cl.numClient)+'</div>':'')+'</td>';
+    rows += '<td>'+groupe+'</td>';
+    rows += '<td style="text-align:right;font-weight:500;">'+(caBDC>0?bdcFmt(caBDC):'<span style="color:var(--muted);">—</span>')+'</td>';
+    // Input taux BDC
+    rows += '<td style="text-align:center;">';
+    if (caBDC > 0) {
+      rows += '<div style="display:flex;align-items:center;justify-content:center;gap:2px;">';
+      rows += '<input type="number" id="comm-bdc-'+esc(cl.id)+'" min="0" max="100" step="0.1" value="'+tBDC+'" oninput="commRefresh()" style="width:48px;padding:3px 5px;border:1.5px solid var(--border);border-radius:6px;font-family:var(--f);font-size:.8rem;font-weight:600;color:#7c3aed;text-align:center;outline:none;background:var(--bg);">';
+      rows += '<span style="font-size:.75rem;color:var(--sub);">%</span></div>';
+    } else rows += '<span style="color:var(--muted);">—</span>';
+    rows += '</td>';
+    rows += '<td style="text-align:right;font-weight:700;color:var(--brand2);">'+(commBDC>0?bdcFmt(commBDC):'—')+'</td>';
+    rows += '<td style="text-align:right;font-weight:500;">'+(caFact>0?bdcFmt(caFact):'<span style="color:var(--muted);">—</span>')+'</td>';
+    // Input taux Fact
+    rows += '<td style="text-align:center;">';
+    if (caFact > 0) {
+      rows += '<div style="display:flex;align-items:center;justify-content:center;gap:2px;">';
+      rows += '<input type="number" id="comm-fact-'+esc(cl.id)+'" min="0" max="100" step="0.1" value="'+tFact+'" oninput="commRefresh()" style="width:48px;padding:3px 5px;border:1.5px solid var(--border);border-radius:6px;font-family:var(--f);font-size:.8rem;font-weight:600;color:#7c3aed;text-align:center;outline:none;background:var(--bg);">';
+      rows += '<span style="font-size:.75rem;color:var(--sub);">%</span></div>';
+    } else rows += '<span style="color:var(--muted);">—</span>';
+    rows += '</td>';
+    rows += '<td style="text-align:right;font-weight:700;color:var(--amber);">'+(commFact>0?bdcFmt(commFact):'—')+'</td>';
+    rows += '<td style="text-align:right;"><strong style="font-size:.9rem;color:#7c3aed;">'+bdcFmt(commTotal)+'</strong></td>';
+    rows += '</tr>';
+  });
+
+  var tbody = document.getElementById('comm-tbody');
+  if (tbody) tbody.innerHTML = rows || '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--sub);">Aucune donnée — ajoutez des commandes ou importez des factures</td></tr>';
+
+  // Pied de tableau totaux
+  var totalComm = totalCommBDC + totalCommFact;
+  var tfoot = document.getElementById('comm-tfoot');
+  if (tfoot) tfoot.innerHTML = '<tr style="font-weight:700;">' +
+    '<td colspan="2" style="padding:.6rem .75rem;color:var(--sub);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;">TOTAUX</td>' +
+    '<td></td><td></td>' +
+    '<td style="text-align:right;color:var(--brand2);font-size:.9rem;">'+bdcFmt(totalCommBDC)+'</td>' +
+    '<td></td><td></td>' +
+    '<td style="text-align:right;color:var(--amber);font-size:.9rem;">'+bdcFmt(totalCommFact)+'</td>' +
+    '<td style="text-align:right;color:#7c3aed;font-size:1rem;font-weight:800;">'+bdcFmt(totalComm)+'</td>' +
+    '</tr>';
+
+  // KPIs du haut
+  s2('comm-total', bdcFmt(totalComm));
+  s2('comm-bdc',  bdcFmt(totalCommBDC));
+  s2('comm-bdc-sub', 'taux global ' + gBDC + '%');
+  s2('comm-fact', bdcFmt(totalCommFact));
+  s2('comm-fact-sub', 'taux global ' + gFact + '%');
+  s2('comm-table-sub', clients.length + ' client'+(clients.length>1?'s':'')+' avec CA');
+}
+
+// Charger les taux sauvegardés au démarrage de la section
+function commInit() {
+  var data = commLoad();
+  // Charger depuis Firestore si dispo
+  if (db) {
+    db.collection('config').doc('commissions').get().then(function(doc) {
+      if (doc.exists) {
+        var d = doc.data();
+        localStorage.setItem(COMM_KEY, JSON.stringify(d));
+        var gBDC  = document.getElementById('comm-taux-global-bdc');
+        var gFact = document.getElementById('comm-taux-global-fact');
+        if (gBDC  && d._global_bdc  !== undefined) gBDC.value  = d._global_bdc;
+        if (gFact && d._global_fact !== undefined) gFact.value = d._global_fact;
+      }
+      commRefresh();
+    }).catch(function(){ commRefresh(); });
+  } else {
+    var gBDC  = document.getElementById('comm-taux-global-bdc');
+    var gFact = document.getElementById('comm-taux-global-fact');
+    if (gBDC  && data._global_bdc  !== undefined) gBDC.value  = data._global_bdc;
+    if (gFact && data._global_fact !== undefined) gFact.value = data._global_fact;
+    commRefresh();
+  }
 }
 
 // ══════════════════════════════════════════════════
