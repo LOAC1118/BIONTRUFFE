@@ -1881,7 +1881,7 @@ function cdbApplyFilters() {
     if (aF === 'has-email' && !c.email) return false;
     if (aF === 'no-email'  &&  c.email) return false;
     if (aF === 'with-orders') {
-      var nbO = cache.commandes.filter(o=>o.numClient===c.numClient).length;
+      var nbO = cmdsDuClient(c).length;
       if (!nbO) return false;
     }
     return true;
@@ -1889,6 +1889,21 @@ function cdbApplyFilters() {
   cdbFiltered.sort((a,b)=>(a.nom||'').localeCompare(b.nom||''));
   s2('cdb-total', cdbContacts.length + ' contact' + (cdbContacts.length>1?'s':''));
   s2('cdb-count-filtered', cdbFiltered.length + ' résultat' + (cdbFiltered.length>1?'s':''));
+}
+
+
+// ── Filtre commandes d'un client (clientId prioritaire, fallback numClient) ──
+function cmdsDuClient(client) {
+  if (!client) return [];
+  return cache.commandes.filter(function(o) {
+    // Priorité 1 : clientId direct (rattachement explicite)
+    if (o.clientId && client.id) return o.clientId === client.id;
+    // Priorité 2 : numClient si non vide des deux côtés
+    if (o.numClient && o.numClient.trim() && client.numClient && client.numClient.trim())
+      return o.numClient.trim() === client.numClient.trim();
+    // Aucun identifiant commun → pas de match
+    return false;
+  });
 }
 
 function factCA(contact) {
@@ -1912,13 +1927,13 @@ function cdbRenderPage() {
 
   // Calcul CA depuis commandes Firestore
   var caClient = function(c) {
-    return cache.commandes.filter(o=>o.numClient===c.numClient).reduce((s,o)=>s+(o.montant||0),0);
+    return cmdsDuClient(c).reduce(function(s,o){return s+(o.montant||0);},0);
   };
   var nbCmds = function(c) {
-    return cache.commandes.filter(o=>o.numClient===c.numClient).length;
+    return cmdsDuClient(c).length;
   };
   var lastCmd = function(c) {
-    var cmds = cache.commandes.filter(o=>o.numClient===c.numClient);
+    var cmds = cmdsDuClient(c);
     if (!cmds.length) return c.dateDerniereCmd ? cdbFmtDate(c.dateDerniereCmd) : '—';
     return cdbFmtDate(cmds[0].createdAt);
   };
@@ -2045,7 +2060,7 @@ function cdbOpenEdit(id) {
   }
 
   // KPIs depuis commandes Firestore
-  var cmds = c ? cache.commandes.filter(o=>o.numClient===c.numClient) : [];
+  var cmds = c ? cmdsDuClient(c) : [];
   var caTotal = cmds.reduce((s,o)=>s+(o.montant||0),0);
   var lastC = cmds.length ? cdbFmtDate(cmds[0].createdAt) : (c&&c.dateDerniereCmd?cdbFmtDate(c.dateDerniereCmd):'—');
   var caFactH = (c ? (c.factures||[]) : []).reduce(function(s,f){return s+(f.montantHT||0);},0);
@@ -2077,7 +2092,7 @@ function cdbOpenBDCFromModal() {
 function cdbBuildCATab(c) {
   var el=document.getElementById('cdb-edit-ca-content'); if(!el) return;
   if (!c) { el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--sub);font-size:.85rem;">Nouveau contact — aucun historique disponible.</div>'; return; }
-  var cmds = cache.commandes.filter(o=>o.numClient===c.numClient).sort((a,b)=>{ var da=a.createdAt?new Date(a.createdAt):new Date(0); var db2=b.createdAt?new Date(b.createdAt):new Date(0); return db2-da; });
+  var cmds = cmdsDuClient(c).sort(function(a,b){ var da=a.createdAt?new Date(a.createdAt):new Date(0); var db2=b.createdAt?new Date(b.createdAt):new Date(0); return db2-da; });
   var caBDC   = cmds.reduce((s,o)=>s+(o.montant||0),0);
   var factures = (c.factures||[]).sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
   var caFact  = factures.reduce((s,f)=>s+(f.montantHT||0),0);
@@ -2493,7 +2508,7 @@ async function factSave(clientId) {
 
   // Mettre à jour KPIs dans le header de la modale
   var factTotalUpd = c.factures.reduce((s,f)=>s+(f.montantHT||0),0);
-  var bdcUpd = cache.commandes.filter(o=>o.numClient===c.numClient).reduce((s,o)=>s+(o.montant||0),0);
+  var bdcUpd = cmdsDuClient(c).reduce((s,o)=>s+(o.montant||0),0);
   s2('cdb-stat-ca-total', cdbFmtCA(factTotalUpd + bdcUpd));
   s2('cdb-stat-ca', cdbFmtCA(bdcUpd));
   s2('cdb-stat-factures', factTotalUpd>0?cdbFmtCA(factTotalUpd):'—');
