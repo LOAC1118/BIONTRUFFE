@@ -1286,12 +1286,19 @@ function startListeners() {
   if (!db) return;
   setSyncing(true);
   let loaded = 0;
-  const onLoad = () => { loaded++; if(loaded>=3){ setSyncing(false); refreshDashboard(); updateBadges(); } };
+  const total = 4; // clients + prospects + commandes + activité
+  const onLoad = () => {
+    loaded++;
+    if (loaded >= total) {
+      setSyncing(false);
+      refreshDashboard();
+      updateBadges();
+    }
+  };
 
-  // Clients : PAS de orderBy (évite l'erreur si createdAt manquant sur certains docs)
+  // ── Clients (sans orderBy pour éviter erreur si createdAt manquant) ──
   const uClients = db.collection('clients').onSnapshot(snap => {
     cache.clients = snap.docs.map(d=>({id:d.id,...d.data()}));
-    // Reconstruire cdbContacts depuis Firestore (source de vérité)
     cdbContacts = cache.clients.map(x=>({
       ...x,
       nom:       x.nom       || x.raison       || x.raisonSociale || '',
@@ -1307,12 +1314,16 @@ function startListeners() {
   const listen = (col, key, cb) => {
     const u = db.collection(col).orderBy('createdAt','desc').onSnapshot(snap => {
       cache[key] = snap.docs.map(d=>({id:d.id,...d.data()}));
-      cb && cb(); onLoad(); updateBadges(); refreshDashboard();
+      // Après chargement des commandes → rafraîchir aussi le tableau clients
+      if (key === 'commandes') cdbRender();
+      cb && cb();
+      onLoad(); updateBadges(); refreshDashboard();
     }, ()=>onLoad());
     listeners.push(u);
   };
   listen('prospects','prospects', renderProspects);
   listen('commandes','commandes', renderCommandes);
+
   const uAct = db.collection('activite').orderBy('createdAt','desc').limit(15).onSnapshot(snap=>{
     cache.activite = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderActivite(); onLoad();
@@ -1896,12 +1907,17 @@ function cdbApplyFilters() {
 function cmdsDuClient(client) {
   if (!client) return [];
   return cache.commandes.filter(function(o) {
-    // Priorité 1 : clientId direct (rattachement explicite)
-    if (o.clientId && client.id) return o.clientId === client.id;
-    // Priorité 2 : numClient si non vide des deux côtés
-    if (o.numClient && o.numClient.trim() && client.numClient && client.numClient.trim())
-      return o.numClient.trim() === client.numClient.trim();
-    // Aucun identifiant commun → pas de match
+    // Priorité 1 : clientId explicite des deux côtés → match strict
+    if (o.clientId && o.clientId !== '' && client.id && client.id !== '') {
+      return o.clientId === client.id;
+    }
+    // Priorité 2 : pas de clientId sur la commande → fallback numClient
+    if (!o.clientId || o.clientId === '') {
+      if (o.numClient && o.numClient.trim() !== '' &&
+          client.numClient && client.numClient.trim() !== '') {
+        return o.numClient.trim() === client.numClient.trim();
+      }
+    }
     return false;
   });
 }
