@@ -1271,7 +1271,17 @@ function startListeners() {
     }, ()=>onLoad());
     listeners.push(u);
   };
-  listen('clients','clients', ()=>{ cdbContacts = cache.clients.map(x=>({...x, nom:x.nom||x.raison||x.raisonSociale||'', telephone:x.tel||x.telephone||'', numClient:x.numClient||x.num_client||''})); try{localStorage.setItem(CDB_CACHE_KEY,JSON.stringify(cdbContacts));}catch(e){} cdbRender(); });
+  listen('clients','clients', ()=>{
+    // Reconstruire cdbContacts depuis cache.clients (source de vérité Firestore)
+    cdbContacts = cache.clients.map(x=>({
+      ...x,
+      nom:       x.nom       || x.raison       || x.raisonSociale || '',
+      telephone: x.telephone || x.tel           || '',
+      numClient: x.numClient || x.num_client    || ''
+    }));
+    try{localStorage.setItem(CDB_CACHE_KEY,JSON.stringify(cdbContacts));}catch(e){}
+    cdbRender();
+  });
   listen('prospects','prospects', renderProspects);
   listen('commandes','commandes', renderCommandes);
   const uAct = db.collection('activite').orderBy('createdAt','desc').limit(15).onSnapshot(snap=>{
@@ -2541,29 +2551,54 @@ function cdbNewOrderFromClient(c) {
 
 // ── SAVE / DELETE ────────────────────────────────
 function cdbSave() {
-  var id=document.getElementById('cdb-edit-id').value;
-  var existing=id?cdbContacts.find(x=>x.id===id):null;
-  var contact=existing?{...existing}:{id:'c_'+Date.now()};
+  var id = document.getElementById('cdb-edit-id').value;
+  var existing = id ? cdbContacts.find(x=>x.id===id) : null;
+  var contact = existing ? {...existing} : {id: 'c_'+Date.now()};
+
   ['numClient','nom','email','telephone','adresse','cp','ville','groupe','contact','siret','tva','notes'].forEach(f=>{
     var el=document.getElementById('cdb-edit-'+f); if(el) contact[f]=el.value.trim();
   });
-  var remEl=document.getElementById('cdb-edit-remise'); if(remEl) contact.remise=parseFloat(remEl.value)||0;
+  var remEl=document.getElementById('cdb-edit-remise');
+  if(remEl) contact.remise=parseFloat(remEl.value)||0;
   contact.prospect=parseInt(document.getElementById('cdb-edit-prospect').value)||0;
+  // Champs compat ancienne structure (raison / tel)
+  contact.raison = contact.nom;
+  contact.tel    = contact.telephone;
+
   if (!contact.nom) { toast('Raison sociale requise','err'); return; }
-  if (db&&currentUser) {
+
+  if (db && currentUser) {
     db.collection('clients').doc(contact.id).set(contact).then(()=>{
-      if(!existing) cdbContacts.push(contact);
-      else { var idx=cdbContacts.findIndex(x=>x.id===contact.id); if(idx>=0) cdbContacts[idx]=contact; }
-      try { localStorage.setItem(CDB_CACHE_KEY,JSON.stringify(cdbContacts)); } catch(e){}
-      cdbRender(); document.getElementById('cdb-modal-edit').classList.add('hidden');
+      // Mettre à jour cache.clients (cohérence avec le listener)
+      if (!existing) {
+        cache.clients.unshift(contact);
+        cdbContacts.unshift(contact);
+      } else {
+        var ic = cache.clients.findIndex(x=>x.id===contact.id);
+        if(ic>=0) cache.clients[ic]=contact; else cache.clients.unshift(contact);
+        var icc = cdbContacts.findIndex(x=>x.id===contact.id);
+        if(icc>=0) cdbContacts[icc]=contact; else cdbContacts.unshift(contact);
+      }
+      try { localStorage.setItem(CDB_CACHE_KEY, JSON.stringify(cdbContacts)); } catch(e){}
+      cdbRender();
+      updateBadges();
+      document.getElementById('cdb-modal-edit').classList.add('hidden');
       toast('✅ Contact enregistré');
       logActivite((existing?'Contact modifié — ':'Nouveau contact — ')+contact.nom,'teal');
-    }).catch(e=>toast('Erreur : '+e.message,'err'));
+    }).catch(e=>toast('Erreur Firestore : '+e.message,'err'));
   } else {
-    if(!existing) cdbContacts.push(contact);
-    else { var idx=cdbContacts.findIndex(x=>x.id===contact.id); if(idx>=0) cdbContacts[idx]=contact; }
-    try { localStorage.setItem(CDB_CACHE_KEY,JSON.stringify(cdbContacts)); } catch(e){}
-    cdbRender(); document.getElementById('cdb-modal-edit').classList.add('hidden');
+    // Mode offline
+    if (!existing) { cache.clients.unshift(contact); cdbContacts.unshift(contact); }
+    else {
+      var ic2=cache.clients.findIndex(x=>x.id===contact.id);
+      if(ic2>=0) cache.clients[ic2]=contact; else cache.clients.unshift(contact);
+      var icc2=cdbContacts.findIndex(x=>x.id===contact.id);
+      if(icc2>=0) cdbContacts[icc2]=contact; else cdbContacts.unshift(contact);
+    }
+    try { localStorage.setItem(CDB_CACHE_KEY, JSON.stringify(cdbContacts)); } catch(e){}
+    cdbRender();
+    updateBadges();
+    document.getElementById('cdb-modal-edit').classList.add('hidden');
     toast('✅ Contact enregistré (local)');
   }
 }
@@ -2595,9 +2630,8 @@ function cdbExportCsv() {
 
 // Listener Firestore contacts (complète la collection existante)
 function startContactsListener() {
-  // Les clients sont déjà chargés par startListeners() → listen('clients',...)
-  // On s'assure juste que cdbContacts est synchronisé depuis cache.clients
-  // Le listener ci-dessus alimente déjà cdbContacts — cette fonction est un alias de sécurité
+  // Les clients sont chargés par startListeners() → listen('clients',...)
+  // Ce listener maintient cdbContacts synchronisé depuis cache.clients
   if (cache.clients && cache.clients.length) {
     cdbContacts = cache.clients.map(x=>({
       ...x,
