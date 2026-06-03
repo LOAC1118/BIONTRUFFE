@@ -1244,15 +1244,11 @@ function startListeners() {
   setSyncing(true);
   let loaded = 0;
   const onLoad = () => { loaded++; if(loaded>=3){ setSyncing(false); refreshDashboard(); updateBadges(); } };
-  const listen = (col, key, cb) => {
-    const u = db.collection(col).orderBy('createdAt','desc').onSnapshot(snap => {
-      cache[key] = snap.docs.map(d=>({id:d.id,...d.data()}));
-      cb && cb(); onLoad(); updateBadges(); refreshDashboard();
-    }, ()=>onLoad());
-    listeners.push(u);
-  };
-  listen('clients','clients', ()=>{
-    // Reconstruire cdbContacts depuis cache.clients (source de vérité Firestore)
+
+  // Clients : PAS de orderBy (évite l'erreur si createdAt manquant sur certains docs)
+  const uClients = db.collection('clients').onSnapshot(snap => {
+    cache.clients = snap.docs.map(d=>({id:d.id,...d.data()}));
+    // Reconstruire cdbContacts depuis Firestore (source de vérité)
     cdbContacts = cache.clients.map(x=>({
       ...x,
       nom:       x.nom       || x.raison       || x.raisonSociale || '',
@@ -1261,7 +1257,17 @@ function startListeners() {
     }));
     try{localStorage.setItem(CDB_CACHE_KEY,JSON.stringify(cdbContacts));}catch(e){}
     cdbRender();
-  });
+    onLoad(); updateBadges(); refreshDashboard();
+  }, e=>{ console.warn('clients listener err:',e); onLoad(); });
+  listeners.push(uClients);
+
+  const listen = (col, key, cb) => {
+    const u = db.collection(col).orderBy('createdAt','desc').onSnapshot(snap => {
+      cache[key] = snap.docs.map(d=>({id:d.id,...d.data()}));
+      cb && cb(); onLoad(); updateBadges(); refreshDashboard();
+    }, ()=>onLoad());
+    listeners.push(u);
+  };
   listen('prospects','prospects', renderProspects);
   listen('commandes','commandes', renderCommandes);
   const uAct = db.collection('activite').orderBy('createdAt','desc').limit(15).onSnapshot(snap=>{
@@ -2541,15 +2547,18 @@ function cdbSave() {
   var remEl=document.getElementById('cdb-edit-remise');
   if(remEl) contact.remise=parseFloat(remEl.value)||0;
   contact.prospect=parseInt(document.getElementById('cdb-edit-prospect').value)||0;
-  // Champs compat ancienne structure (raison / tel)
+  // Champs compat ancienne structure
   contact.raison = contact.nom;
   contact.tel    = contact.telephone;
+  // Timestamps
+  if (!existing) contact.createdAt = new Date().toISOString();
+  contact.updatedAt = new Date().toISOString();
 
   if (!contact.nom) { toast('Raison sociale requise','err'); return; }
 
   if (db && currentUser) {
     db.collection('clients').doc(contact.id).set(contact).then(()=>{
-      // Mettre à jour cache.clients (cohérence avec le listener)
+      // Mettre à jour cache.clients ET cdbContacts immédiatement
       if (!existing) {
         cache.clients.unshift(contact);
         cdbContacts.unshift(contact);
@@ -2563,9 +2572,23 @@ function cdbSave() {
       cdbRender();
       updateBadges();
       document.getElementById('cdb-modal-edit').classList.add('hidden');
-      toast('✅ Contact enregistré');
+      toast('✅ Contact enregistré dans Firestore');
       logActivite((existing?'Contact modifié — ':'Nouveau contact — ')+contact.nom,'teal');
-    }).catch(e=>toast('Erreur Firestore : '+e.message,'err'));
+    }).catch(e=>{
+      // Même si Firestore échoue, sauvegarder localement
+      if (!existing) { cache.clients.unshift(contact); cdbContacts.unshift(contact); }
+      else {
+        var ic2=cache.clients.findIndex(x=>x.id===contact.id);
+        if(ic2>=0) cache.clients[ic2]=contact; else cache.clients.unshift(contact);
+        var icc2=cdbContacts.findIndex(x=>x.id===contact.id);
+        if(icc2>=0) cdbContacts[icc2]=contact; else cdbContacts.unshift(contact);
+      }
+      try { localStorage.setItem(CDB_CACHE_KEY, JSON.stringify(cdbContacts)); } catch(e2){}
+      cdbRender();
+      updateBadges();
+      document.getElementById('cdb-modal-edit').classList.add('hidden');
+      toast('⚠️ Sauvegardé localement — Firestore : '+e.message,'err');
+    });
   } else {
     // Mode offline
     if (!existing) { cache.clients.unshift(contact); cdbContacts.unshift(contact); }
@@ -2588,11 +2611,14 @@ function cdbDelete() {
   if (!confirm('Supprimer ce contact définitivement ?')) return;
   if (db) {
     db.collection('clients').doc(id).delete().then(()=>{
-      cdbContacts=cdbContacts.filter(x=>x.id!==id);
+      cdbContacts = cdbContacts.filter(x=>x.id!==id);
+      cache.clients = cache.clients.filter(x=>x.id!==id);
       try { localStorage.setItem(CDB_CACHE_KEY,JSON.stringify(cdbContacts)); } catch(e){}
-      cdbRender(); document.getElementById('cdb-modal-edit').classList.add('hidden');
+      cdbRender();
+      updateBadges();
+      document.getElementById('cdb-modal-edit').classList.add('hidden');
       toast('Contact supprimé');
-    });
+    }).catch(e=>toast('Erreur suppression : '+e.message,'err'));
   }
 }
 
