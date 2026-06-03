@@ -2283,66 +2283,66 @@ async function factExtractText(file) {
 
 // ── Détection montant HT ──────────────────────────
 function factDetectMontantHT(text) {
-  // Avec la reconstruction par Y, les lignes sont du type :
-  // "Total HT Net925,80" ou "Total HT Net 925,80"
-  // → chercher le label et le montant sur la même ligne reconstituée
+  // Gère les montants avec espace comme séparateur de milliers : 1 227,84 ou 1227,84
 
-  function parse(s){ return parseFloat((s||'').replace(/\s/g,'').replace(',','.')); }
+  function parse(s){
+    // Supprimer espaces (séparateurs milliers), remplacer virgule par point
+    return parseFloat((s||'').replace(/\s/g,'').replace(',','.'));
+  }
+  // Montant = chiffres, espaces optionnels (milliers), virgule/point, 2 décimales
+  var AMT = '([\\d][\\d\\s]*[,.]\\d{2})';
 
   var lines = text.split('\n');
 
-  // ── P1 : "Total HT Net" sur une même ligne → montant immédiatement après ──
+  // ── P1 : "Total HT Net" sur la même ligne ─────────────
   for (var i = 0; i < lines.length; i++) {
-    var l = lines[i];
-    if (/Total\s*HT\s*Net/i.test(l)) {
-      var m = l.match(/Total\s*HT\s*Net\s*([\d]+[,.]\d{2})/i);
-      if (m) { var v=parse(m[1]); if(v>0){console.log('[BNT] ✅ P1 Total HT Net:',v,'←',l.slice(0,40));return v;} }
+    if (/Total\s*HT\s*Net/i.test(lines[i])) {
+      var m = lines[i].match(new RegExp('Total\\s*HT\\s*Net\\s*' + AMT, 'i'));
+      if (m) { var v=parse(m[1]); if(v>0){console.log('[BNT] ✅ P1 Total HT Net:',v);return v;} }
     }
   }
 
   // ── P2 : "Total HT" seul (sans Net/TVA/TTC sur la même ligne) ──
+  var mid = Math.floor(text.length / 2);
+  var tEnd = text.slice(mid);
   for (var j = 0; j < lines.length; j++) {
     var l2 = lines[j];
     if (/Total\s*HT\b/i.test(l2) && !/Net|TVA|TTC/i.test(l2)) {
-      var m2 = l2.match(/Total\s*HT\s*([\d]+[,.]\d{2})/i);
-      if (m2) { var v2=parse(m2[1]); if(v2>0){console.log('[BNT] ✅ P2 Total HT:',v2,'←',l2.slice(0,40));return v2;} }
+      var m2 = l2.match(new RegExp('Total\\s*HT\\s*' + AMT, 'i'));
+      if (m2) { var v2=parse(m2[1]); if(v2>0){console.log('[BNT] ✅ P2 Total HT:',v2);return v2;} }
     }
   }
 
-  // ── P3 : Tableau TVA "TauxBase HTMontant TVATotal HT 925,80" ou ligne "5,50 BASE TVA" ──
+  // ── P3 : Tableau TVA EBP "5,50 BASE TVA" ──────────────
   for (var k = 0; k < lines.length; k++) {
-    var l3 = lines[k];
-    // Ligne tableau récap TVA : commence par "5,50" ou "5.50"
-    if (/^5[,.]5/.test(l3.trim())) {
-      var nums = l3.match(/[\d]+[,.]\d{2}/g) || [];
+    if (/^5[,.]5/.test(lines[k].trim())) {
+      var nums = lines[k].match(/[\d][\d\s]*[,.]\d{2}/g) || [];
       if (nums.length >= 2) {
         var base=parse(nums[0]), tva=parse(nums[1]);
         if (base>0 && tva>0 && Math.abs(tva/base-0.055)<0.01) {
-          console.log('[BNT] ✅ P3 Tableau TVA 5,5%:',base);
-          return base;
+          console.log('[BNT] ✅ P3 Tableau TVA 5,5%:',base); return base;
         }
       }
     }
-    // Ligne type "TauxBase HTMontant TVATotal HT925,80" → prendre le montant après Total HT
-    if (/Taux.*Base.*HT.*Total\s*HT/i.test(l3)) {
-      var m3b = l3.match(/Total\s*HT\s*([\d]+[,.]\d{2})/i);
-      if (m3b) { var v3b=parse(m3b[1]); if(v3b>0){console.log('[BNT] ✅ P3b ligne recap:',v3b);return v3b;} }
+    // Ligne recap "TauxBase HTMontant TVATotal HT 1 227,84"
+    if (/Taux.*Base.*HT.*Total\s*HT/i.test(lines[k])) {
+      var m3b = lines[k].match(new RegExp('Total\\s*HT\\s*' + AMT, 'i'));
+      if (m3b) { var v3b=parse(m3b[1]); if(v3b>0){console.log('[BNT] ✅ P3b recap:',v3b);return v3b;} }
     }
   }
 
-  // ── P4 : Fallback — Net à payer ÷ 1,055 ──
+  // ── P4 : Fallback Net à payer ÷ 1,055 ─────────────────
   for (var n = 0; n < lines.length; n++) {
     if (/Net\s*[àa]\s*payer/i.test(lines[n])) {
-      var m4 = lines[n].match(/([\d]+[,.]\d{2})/);
+      var m4 = lines[n].match(/[\d][\d\s]*[,.]\d{2}/);
       if (m4) {
-        var ttc=parse(m4[1]);
+        var ttc=parse(m4[0]);
         if (ttc>0) { var ht=Math.round(ttc/1.055*100)/100; console.log('[BNT] ⚠️ P4 TTC→HT:',ht); return ht; }
       }
     }
   }
 
-  console.log('[BNT] ⚠️ Non détecté — saisie manuelle');
-  return null;
+  console.log('[BNT] ⚠️ Non détecté — saisie manuelle'); return null;
 }
 
 // ── Handlers fichier ──────────────────────────────
