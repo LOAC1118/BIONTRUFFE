@@ -632,6 +632,17 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
         <span>▼ Voir infos client</span>
       </button>
       <div id="bdc-sidebar-content">
+      <!-- Bouton rattachement client -->
+      <div style="margin-bottom:.75rem;">
+        <button onclick="bdcOpenClientPicker()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:.45rem .7rem;background:var(--brand-bg);border:1.5px solid #bbf7d0;border-radius:8px;font-family:var(--f);font-size:.78rem;font-weight:600;color:var(--brand2);cursor:pointer;transition:background .15s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='var(--brand-bg)'">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="5" r="3"/><path d="M1 13c0-3 2-5 5-5h1M13 10v4M11 12h4"/></svg>
+          Rattacher à un client
+        </button>
+        <div id="bdc-client-badge" style="display:none;margin-top:.35rem;padding:.3rem .6rem;background:var(--brand-bg);border:1px solid #bbf7d0;border-radius:6px;display:none;align-items:center;justify-content:space-between;font-size:.75rem;">
+          <span style="font-weight:600;color:var(--brand2);" id="bdc-client-badge-nom">—</span>
+          <button onclick="bdcDetachClient()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:0 2px;" title="Détacher">✕</button>
+        </div>
+      </div>
       <div style="font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:.5rem;">Informations client</div>
       <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">Magasin *</label><input type="text" id="bdc-magasin" placeholder="Nom du magasin" style="width:100%;background:#f8faff;border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--ink);font-family:var(--inter);font-size:.78rem;outline:none;"></div>
       <div style="margin-bottom:.5rem;"><label style="display:block;font-size:.65rem;font-weight:600;color:var(--g600);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem;">N° Client</label><input type="text" id="bdc-numclient" placeholder="BNT-0001" style="width:100%;background:#f8faff;border:1px solid var(--border-med);border-radius:6px;padding:.4rem .6rem;color:var(--ink);font-family:var(--inter);font-size:.78rem;outline:none;"></div>
@@ -891,6 +902,22 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
         <tbody id="comm-tbody"></tbody>
         <tfoot id="comm-tfoot"></tfoot>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE RATTACHEMENT CLIENT BDC -->
+<div class="modal-bg hidden" id="bdc-client-picker">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-head">
+      <span class="modal-title">🔗 Rattacher à un client</span>
+      <button class="close-btn" onclick="document.getElementById('bdc-client-picker').classList.add('hidden')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:.75rem;">
+      <input type="text" id="bdc-picker-search" oninput="bdcPickerSearch()"
+        placeholder="🔎 Rechercher par nom, code, ville…"
+        style="width:100%;padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:9px;font-family:var(--f);font-size:.85rem;outline:none;background:var(--bg);color:var(--ink);margin-bottom:.6rem;">
+      <div id="bdc-picker-results" style="max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:9px;"></div>
     </div>
   </div>
 </div>
@@ -1635,6 +1662,9 @@ function bdcUpdateTotals() {
 function resetBDC() {
   if (Object.keys(bdcQtys).length && !confirm('Effacer toutes les quantités ?')) return;
   bdcQtys={}; bdcRemiseLigne={}; bdcRemise=0;
+  bdcAttachedClientId = null;
+  var badge = document.getElementById('bdc-client-badge');
+  if (badge) badge.style.display = 'none';
   document.querySelectorAll('.bdc-rem-btn').forEach(b=>b.classList.remove('active'));
   document.querySelector('.bdc-rem-btn').classList.add('active');
   buildTable();
@@ -1710,10 +1740,11 @@ async function bdcSendOrder() {
   if(db&&currentUser){
     try {
       await db.collection('commandes').add({
-        clientNom:mag,numClient:nc||'',contact:ct||'',tel:tel||'',
-        email:mail,datelivraison:dl||'',commentaire:com||'',
-        statut:'Envoyée',montant:tN,nbRefs,nbColis,nbUVC,
-        remise:bdcRemise,lignes,
+        clientNom:mag, numClient:nc||'', contact:ct||'', tel:tel||'',
+        email:mail, datelivraison:dl||'', commentaire:com||'',
+        statut:'Envoyée', montant:tN, nbRefs, nbColis, nbUVC,
+        remise:bdcRemise, lignes,
+        clientId: bdcAttachedClientId || '',
         createdBy:currentUser.uid,
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -2507,7 +2538,105 @@ function cdbShowMenu(anchor, id) {
   setTimeout(()=>{ document.addEventListener('click',function close(ev){ if(!menu.contains(ev.target)){ menu.remove(); document.removeEventListener('click',close); } }); },50);
 }
 
-// ── NOUVEAU BDC DEPUIS FICHE ─────────────────────
+// ── RATTACHEMENT CLIENT AU BDC ───────────────────
+var bdcAttachedClientId = null;
+
+function bdcOpenClientPicker() {
+  var modal = document.getElementById('bdc-client-picker');
+  var search = document.getElementById('bdc-picker-search');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  if (search) { search.value = ''; setTimeout(function(){ search.focus(); }, 80); }
+  bdcPickerSearch();
+}
+
+function bdcPickerSearch() {
+  var q = (document.getElementById('bdc-picker-search').value || '').toLowerCase().trim();
+  var src = cdbContacts.length ? cdbContacts : cache.clients;
+  var filtered = src.filter(function(c) {
+    if (!q) return true;
+    var hay = ((c.nom||'')+(c.raison||'')+(c.numClient||'')+(c.ville||'')+(c.email||'')).toLowerCase();
+    return hay.includes(q);
+  }).slice(0, 40);
+
+  var el = document.getElementById('bdc-picker-results');
+  if (!filtered.length) {
+    el.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--sub);font-size:.82rem;">' +
+      (q ? 'Aucun résultat pour "'+esc(q)+'"' : 'Base clients vide — créez des clients d\'abord') + '</div>';
+    return;
+  }
+  el.innerHTML = filtered.map(function(c) {
+    var nom = esc(c.nom || c.raison || '—');
+    var info = [c.numClient, c.ville, c.email].filter(Boolean).map(esc).join(' · ');
+    var badge = c.prospect
+      ? '<span style="padding:1px 6px;background:#fef3c7;color:#92400e;border-radius:99px;font-size:.65rem;margin-left:4px;">Prospect</span>'
+      : '';
+    return '<div onclick="bdcAttachClient(\''+esc(c.id)+'\')" ' +
+      'style="display:flex;align-items:center;justify-content:space-between;padding:.6rem .85rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;" ' +
+      'onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">' +
+      '<div><div style="font-size:.85rem;font-weight:600;color:var(--ink);">'+nom+badge+'</div>' +
+      '<div style="font-size:.7rem;color:var(--sub);margin-top:1px;">'+info+'</div></div>' +
+      '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M6 12l4-4-4-4"/></svg>' +
+      '</div>';
+  }).join('');
+}
+
+function bdcAttachClient(clientId) {
+  var src = cdbContacts.length ? cdbContacts : cache.clients;
+  var c = src.find(function(x){ return x.id === clientId; });
+  if (!c) { toast('Client introuvable','err'); return; }
+
+  bdcAttachedClientId = clientId;
+
+  // Pré-remplir les champs BDC
+  var set = function(id, val) {
+    var el = document.getElementById(id);
+    if (el && val !== undefined && val !== '') el.value = val;
+  };
+  set('bdc-magasin',   c.nom || c.raison || '');
+  set('bdc-numclient', c.numClient || '');
+  set('bdc-email',     c.email || '');
+  set('bdc-tel',       c.telephone || c.tel || '');
+  set('bdc-contact',   c.contact || '');
+
+  // Appliquer la remise client si définie
+  if (c.remise > 0) {
+    bdcRemise = c.remise;
+    var found = false;
+    document.querySelectorAll('.bdc-rem-btn').forEach(function(btn) {
+      btn.classList.remove('active');
+      if (Math.abs(parseFloat(btn.textContent) - c.remise) < 0.01) {
+        btn.classList.add('active'); found = true;
+      }
+    });
+    if (!found) {
+      var ci = document.getElementById('bdc-remise-custom');
+      if (ci) ci.value = c.remise;
+    }
+    buildTable();
+  }
+
+  // Afficher le badge client rattaché
+  var badge = document.getElementById('bdc-client-badge');
+  var badgeNom = document.getElementById('bdc-client-badge-nom');
+  if (badge && badgeNom) {
+    badgeNom.textContent = (c.nom || c.raison || '—') + (c.numClient ? ' · ' + c.numClient : '');
+    badge.style.display = 'flex';
+  }
+
+  // Fermer la modale
+  document.getElementById('bdc-client-picker').classList.add('hidden');
+  toast('🔗 BDC rattaché à ' + (c.nom || c.raison || 'client'));
+}
+
+function bdcDetachClient() {
+  bdcAttachedClientId = null;
+  var badge = document.getElementById('bdc-client-badge');
+  if (badge) badge.style.display = 'none';
+  toast('Rattachement supprimé');
+}
+
+
 function cdbNewOrderFromClient(c) {
   if (!c) return;
   if (Object.keys(bdcQtys).filter(k=>bdcQtys[k]>0).length>0) {
