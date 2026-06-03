@@ -2877,7 +2877,23 @@ async function cmdAttachClient(orderId, clientId) {
       cache.commandes[idx].numClient = client.numClient || '';
       cache.commandes[idx].clientNom = client.nom || client.raison || '';
     }
+    // Rafraîchir partout
     renderCommandes();
+    refreshDashboard();
+    cdbRender();
+    // Si la fiche de ce client est ouverte → mettre à jour ses onglets
+    var openId = document.getElementById('cdb-edit-id') ? document.getElementById('cdb-edit-id').value : '';
+    if (openId === clientId && !document.getElementById('cdb-modal-edit').classList.contains('hidden')) {
+      // Recalculer les KPIs header
+      var cmds = cmdsDuClient(client);
+      var caTotal = cmds.reduce((s,o)=>s+(o.montant||0), 0);
+      var caFact  = (client.factures||[]).reduce((s,f)=>s+(f.montantHT||0), 0);
+      s2('cdb-stat-ca-total', cdbFmtCA(caTotal + caFact));
+      s2('cdb-stat-ca', caTotal > 0 ? cdbFmtCA(caTotal) : '—');
+      s2('cdb-stat-cmds', cmds.length ? cmds.length+' cmd'+(cmds.length>1?'s':'') : '—');
+      // Reconstruire l'onglet CA si actif
+      cdbBuildCATab(client);
+    }
     document.getElementById('cmd-picker-modal').classList.add('hidden');
     toast('🔗 Commande rattachée à ' + (client.nom || client.raison));
     logActivite('Commande rattachée — '+(client.nom||client.raison),'teal');
@@ -2887,10 +2903,35 @@ async function cmdAttachClient(orderId, clientId) {
 async function cmdDetachClient(orderId) {
   if (!confirm('Détacher ce client de la commande ?')) return;
   try {
+    // Récupérer le clientId avant de le supprimer (pour rafraîchir sa fiche)
+    const order = cache.commandes.find(o => o.id === orderId);
+    const prevClientId = order ? order.clientId : '';
     await db.collection('commandes').doc(orderId).update({ clientId: '', numClient: '', clientNom: '' });
     const idx = cache.commandes.findIndex(o => o.id === orderId);
-    if (idx >= 0) { cache.commandes[idx].clientId=''; cache.commandes[idx].numClient=''; }
+    if (idx >= 0) {
+      cache.commandes[idx].clientId  = '';
+      cache.commandes[idx].numClient = '';
+      cache.commandes[idx].clientNom = '';
+    }
     renderCommandes();
+    refreshDashboard();
+    cdbRender();
+    // Si la fiche du client précédent est ouverte → rafraîchir
+    if (prevClientId) {
+      var openId = document.getElementById('cdb-edit-id') ? document.getElementById('cdb-edit-id').value : '';
+      if (openId === prevClientId && !document.getElementById('cdb-modal-edit').classList.contains('hidden')) {
+        var prevClient = (cdbContacts.length ? cdbContacts : cache.clients).find(c => c.id === prevClientId);
+        if (prevClient) {
+          var cmds2 = cmdsDuClient(prevClient);
+          var caTotal2 = cmds2.reduce((s,o)=>s+(o.montant||0), 0);
+          var caFact2  = (prevClient.factures||[]).reduce((s,f)=>s+(f.montantHT||0), 0);
+          s2('cdb-stat-ca-total', cdbFmtCA(caTotal2 + caFact2));
+          s2('cdb-stat-ca', caTotal2 > 0 ? cdbFmtCA(caTotal2) : '—');
+          s2('cdb-stat-cmds', cmds2.length ? cmds2.length+' cmd'+(cmds2.length>1?'s':'') : '—');
+          cdbBuildCATab(prevClient);
+        }
+      }
+    }
     toast('Client détaché');
   } catch(e) { toast('Erreur : '+e.message,'err'); }
 }
