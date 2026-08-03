@@ -179,6 +179,9 @@ tr:hover td{background:#f9f9f9;}
 .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem;}
 .form-row-2 label{display:block;font-size:.72rem;font-weight:600;color:var(--ink);margin-bottom:.3rem;}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;}
+#fact-modal input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:.4rem .55rem;color:var(--ink);font-family:var(--f);font-size:.82rem;outline:none;transition:all .15s;}
+#fact-modal input:focus{border-color:var(--brand);background:var(--white);box-shadow:0 0 0 3px var(--brand-bg);}
+#fact-modal .fact-fld{margin-bottom:.45rem;}
 
 /* ── TOAST ── */
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--ink);color:#fff;padding:.6rem 1.25rem;border-radius:99px;font-size:.82rem;font-weight:500;z-index:9999;transition:transform .25s;box-shadow:var(--shadow-md);white-space:nowrap;}
@@ -850,6 +853,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
       <div class="page-sub">Calcul automatique sur BDC et factures importées · Taux modifiables par client</div>
     </div>
     <button class="btn btn-primary" onclick="commSave()">💾 Enregistrer les taux</button>
+    <button class="btn btn-ghost" onclick="factOpen()" style="margin-left:.5rem;">🧾 Générer une facture</button>
   </div>
   <!-- KPIs commissions -->
   <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1.25rem;">
@@ -902,6 +906,82 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
         <tbody id="comm-tbody"></tbody>
         <tfoot id="comm-tfoot"></tfoot>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE FACTURE DE COMMISSION -->
+<div class="modal-bg hidden" id="fact-modal">
+  <div class="modal" style="max-width:720px;">
+    <div class="modal-head">
+      <span class="modal-title">🧾 Facture de commission</span>
+      <button class="close-btn" onclick="document.getElementById('fact-modal').classList.add('hidden')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:1rem;max-height:80vh;overflow-y:auto;">
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:.7rem;">
+        <div><label class="lb">N° de facture</label><input id="fact-numero" type="text"></div>
+        <div><label class="lb">Date d'émission</label><input id="fact-date" type="date"></div>
+        <div><label class="lb">Échéance</label><input id="fact-echeance" type="date"></div>
+      </div>
+      <div style="margin-bottom:.9rem;">
+        <label class="lb">Objet</label>
+        <input id="fact-objet" type="text" placeholder="Commission commerciale — ventes …">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.9rem;">
+        <div style="border:1px solid var(--border);border-radius:10px;padding:.7rem;">
+          <div style="font-size:.66rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.55rem;">Émetteur</div>
+          <div class="fact-fld"><label class="lb">Nom / raison sociale</label><input id="fact-em-nom" type="text"></div>
+          <div class="fact-fld"><label class="lb">Statut</label><input id="fact-em-statut" type="text"></div>
+          <div class="fact-fld"><label class="lb">Adresse</label><input id="fact-em-adresse" type="text"></div>
+          <div style="display:grid;grid-template-columns:88px 1fr;gap:.4rem;">
+            <div class="fact-fld"><label class="lb">CP</label><input id="fact-em-cp" type="text"></div>
+            <div class="fact-fld"><label class="lb">Ville</label><input id="fact-em-ville" type="text"></div>
+          </div>
+          <div class="fact-fld"><label class="lb">SIRET</label><input id="fact-em-siret" type="text"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;">
+            <div class="fact-fld"><label class="lb">Tél</label><input id="fact-em-tel" type="text"></div>
+            <div class="fact-fld"><label class="lb">Email</label><input id="fact-em-email" type="text"></div>
+          </div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:10px;padding:.7rem;">
+          <div style="font-size:.66rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.55rem;">Facturé à</div>
+          <div class="fact-fld"><label class="lb">Nom / raison sociale</label><input id="fact-de-nom" type="text"></div>
+          <div class="fact-fld"><label class="lb">Adresse</label><input id="fact-de-adresse" type="text"></div>
+          <div style="display:grid;grid-template-columns:88px 1fr;gap:.4rem;">
+            <div class="fact-fld"><label class="lb">CP</label><input id="fact-de-cp" type="text"></div>
+            <div class="fact-fld"><label class="lb">Ville</label><input id="fact-de-ville" type="text"></div>
+          </div>
+          <div class="fact-fld"><label class="lb">SIRET</label><input id="fact-de-siret" type="text"></div>
+          <div class="fact-fld"><label class="lb">N° TVA</label><input id="fact-de-tva" type="text"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;">
+        <div style="font-size:.66rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;">Lignes (une par client)</div>
+        <button class="btn btn-ghost" style="font-size:.72rem;padding:.25rem .6rem;" onclick="factReloadLines()">↻ Reprendre du tableau</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:.4rem;">
+        <thead><tr>
+          <th style="text-align:left;font-size:.64rem;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;padding:.2rem;">Désignation</th>
+          <th style="text-align:right;font-size:.64rem;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;padding:.2rem;">Montant</th>
+          <th style="width:34px;"></th>
+        </tr></thead>
+        <tbody id="fact-lines"></tbody>
+      </table>
+      <button class="btn btn-ghost" style="font-size:.75rem;padding:.3rem .7rem;" onclick="factAddLine()">+ Ajouter une ligne</button>
+
+      <div style="display:flex;justify-content:flex-end;align-items:baseline;gap:1rem;margin-top:.9rem;padding-top:.6rem;border-top:1px solid var(--border);">
+        <span style="font-size:.78rem;color:var(--sub);">Total — <em style="font-style:italic;">TVA non applicable, art. 293 B du CGI</em></span>
+        <span id="fact-total" style="font-size:1.25rem;font-weight:800;color:#7c3aed;">0,00€</span>
+      </div>
+
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem;">
+        <button class="btn btn-primary" onclick="factGeneratePDF()">📄 Télécharger le PDF</button>
+        <button class="btn btn-ghost" onclick="factSaveInfos()">💾 Enregistrer mes infos</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -3249,6 +3329,343 @@ function commInit() {
   }
 }
 
+
+
+// ══════════════════════════════════════════════════
+//  FACTURE DE COMMISSION (micro-entreprise, art. 293 B du CGI)
+// ══════════════════════════════════════════════════
+var FACT_KEY = 'bnt_facture_params';
+var factParams = null;   // paramètres en cours (émetteur, destinataire, compteur)
+var factLignes = [];     // [{designation, montant}]
+
+function factDefaults() {
+  return {
+    emetteur: {
+      nom: 'Christophe SPOTO',
+      statut: 'Micro-entrepreneur',
+      adresse: '',
+      cp: '',
+      ville: '',
+      siret: '',
+      tel: '06 78 37 89 06',
+      email: ''
+    },
+    destinataire: {
+      nom: 'Eridan BNT SARL',
+      adresse: '65 Allée des Oliviers II',
+      cp: '84290',
+      ville: 'Cairanne',
+      siret: '91796844800014',
+      tva: 'FR84917968448'
+    },
+    seq: 1,
+    year: new Date().getFullYear(),
+    delaiJours: 30
+  };
+}
+
+function factMerge(over) {
+  var def = factDefaults();
+  over = over || {};
+  return {
+    emetteur:     Object.assign({}, def.emetteur,     over.emetteur     || {}),
+    destinataire: Object.assign({}, def.destinataire, over.destinataire || {}),
+    seq:        over.seq        || def.seq,
+    year:       over.year       || def.year,
+    delaiJours: over.delaiJours || def.delaiJours
+  };
+}
+
+function factLoadLocal() {
+  var d = null;
+  try { d = JSON.parse(localStorage.getItem(FACT_KEY) || 'null'); } catch(e) { d = null; }
+  return factMerge(d);
+}
+
+function factSaveLocal(p) {
+  try { localStorage.setItem(FACT_KEY, JSON.stringify(p)); } catch(e) {}
+}
+
+function factNumero(p) {
+  var y = p.year || new Date().getFullYear();
+  return y + '-' + String(p.seq || 1).padStart(3, '0');
+}
+
+// Reconstruit les lignes depuis le calcul de commission par client (même logique que commRefresh)
+function factCollectLignes() {
+  var data = commLoad();
+  var src = (typeof cdbContacts !== 'undefined' && cdbContacts.length) ? cdbContacts : cache.clients;
+  var out = [];
+  src.forEach(function(cl) {
+    var caFact = (cl.factures || []).reduce(function(s, f) { return s + (f.montantHT || 0); }, 0);
+    if (caFact <= 0) return;
+    var input = document.getElementById('comm-fact-' + cl.id);
+    var taux = input ? (parseFloat(input.value) || 0) : commGetTaux(data, cl.id);
+    var comm = Math.round(caFact * taux / 100 * 100) / 100;
+    if (comm <= 0) return;
+    out.push({ designation: (cl.nom || cl.raison || 'Client'), montant: comm });
+  });
+  return out;
+}
+
+function factFillForm() {
+  var em = factParams.emetteur, de = factParams.destinataire;
+  sv('fact-em-nom', em.nom || '');       sv('fact-em-statut', em.statut || '');
+  sv('fact-em-adresse', em.adresse || ''); sv('fact-em-cp', em.cp || '');
+  sv('fact-em-ville', em.ville || '');   sv('fact-em-siret', em.siret || '');
+  sv('fact-em-tel', em.tel || '');       sv('fact-em-email', em.email || '');
+  sv('fact-de-nom', de.nom || '');       sv('fact-de-adresse', de.adresse || '');
+  sv('fact-de-cp', de.cp || '');         sv('fact-de-ville', de.ville || '');
+  sv('fact-de-siret', de.siret || '');   sv('fact-de-tva', de.tva || '');
+}
+
+function factReadForm() {
+  factParams.emetteur = {
+    nom: g('fact-em-nom'), statut: g('fact-em-statut'), adresse: g('fact-em-adresse'),
+    cp: g('fact-em-cp'), ville: g('fact-em-ville'), siret: g('fact-em-siret'),
+    tel: g('fact-em-tel'), email: g('fact-em-email')
+  };
+  factParams.destinataire = {
+    nom: g('fact-de-nom'), adresse: g('fact-de-adresse'), cp: g('fact-de-cp'),
+    ville: g('fact-de-ville'), siret: g('fact-de-siret'), tva: g('fact-de-tva')
+  };
+}
+
+function factRenderLines() {
+  var tb = document.getElementById('fact-lines');
+  if (!tb) return;
+  var rows = factLignes.map(function(l, i) {
+    return '<tr>' +
+      '<td style="padding:.15rem;"><input class="fact-desg" data-i="' + i + '" value="' + esc(l.designation) + '" oninput="factOnEdit()"></td>' +
+      '<td style="padding:.15rem;width:130px;"><input class="fact-mont" data-i="' + i + '" type="number" step="0.01" value="' + (l.montant || 0) + '" oninput="factOnEdit()" style="text-align:right;"></td>' +
+      '<td style="padding:.15rem;width:34px;text-align:center;"><button onclick="factDelLine(' + i + ')" title="Supprimer" style="border:none;background:transparent;color:var(--red);cursor:pointer;font-size:1rem;line-height:1;">✕</button></td>' +
+      '</tr>';
+  }).join('');
+  tb.innerHTML = rows || '<tr><td colspan="3" style="text-align:center;color:var(--sub);padding:1rem;font-size:.8rem;">Aucune ligne — cliquez « Ajouter une ligne » ou « Reprendre du tableau ».</td></tr>';
+  factRecalcTotal();
+}
+
+function factOnEdit() {
+  document.querySelectorAll('.fact-desg').forEach(function(el) {
+    var i = +el.getAttribute('data-i'); if (factLignes[i]) factLignes[i].designation = el.value;
+  });
+  document.querySelectorAll('.fact-mont').forEach(function(el) {
+    var i = +el.getAttribute('data-i'); if (factLignes[i]) factLignes[i].montant = parseFloat(el.value) || 0;
+  });
+  factRecalcTotal();
+}
+
+function factRecalcTotal() {
+  var t = factLignes.reduce(function(s, l) { return s + (parseFloat(l.montant) || 0); }, 0);
+  s2('fact-total', bdcFmt(t));
+  return t;
+}
+
+function factAddLine() { factLignes.push({ designation: '', montant: 0 }); factRenderLines(); }
+function factDelLine(i) { factLignes.splice(i, 1); factRenderLines(); }
+function factReloadLines() { factLignes = factCollectLignes(); factRenderLines(); toast('↻ Lignes reprises du tableau des commissions'); }
+
+function factApplyParams(p) {
+  factParams = p;
+  var curY = new Date().getFullYear();
+  if (factParams.year !== curY) { factParams.year = curY; factParams.seq = 1; }
+  factFillForm();
+  var moisAn = new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  var objEl = document.getElementById('fact-objet');
+  if (objEl && !objEl.value) objEl.value = 'Commission commerciale — ventes ' + moisAn;
+  sv('fact-numero', factNumero(factParams));
+  var today = new Date();
+  sv('fact-date', today.toISOString().slice(0, 10));
+  var ech = new Date(today.getTime() + (factParams.delaiJours || 30) * 86400000);
+  sv('fact-echeance', ech.toISOString().slice(0, 10));
+  factLignes = factCollectLignes();
+  factRenderLines();
+  document.getElementById('fact-modal').classList.remove('hidden');
+}
+
+function factOpen() {
+  if (db && currentUser) {
+    db.collection('config').doc('facture_params').get().then(function(doc) {
+      factApplyParams(factMerge(doc.exists ? doc.data() : factLoadLocal()));
+    }).catch(function() { factApplyParams(factLoadLocal()); });
+  } else {
+    factApplyParams(factLoadLocal());
+  }
+}
+
+function factSaveInfos() {
+  factReadForm();
+  factSaveLocal(factParams);
+  if (db && currentUser) {
+    db.collection('config').doc('facture_params').set(factParams, { merge: true }).catch(function(e) { console.warn('fact params save:', e); });
+  }
+  toast('✅ Informations de facturation enregistrées');
+}
+
+function factWithJsPdf(cb) {
+  if (window.jspdf && window.jspdf.jsPDF) return cb();
+  var s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  s.onload = function() { cb(); };
+  s.onerror = function() { toast('Impossible de charger le générateur PDF (réseau).', 'err'); };
+  document.head.appendChild(s);
+}
+
+function factFmtDateFr(iso) {
+  if (!iso) return '—';
+  var d = new Date(iso + 'T00:00:00');
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('fr-FR');
+}
+function factEuro(n) {
+  return (parseFloat(n) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+
+function factGeneratePDF() {
+  factReadForm();
+  factOnEdit();
+  var total = factRecalcTotal();
+  if (!factLignes.length || total <= 0) { toast('Ajoutez au moins une ligne avec un montant.', 'err'); return; }
+  var meta = {
+    numero: g('fact-numero') || factNumero(factParams),
+    date: g('fact-date'),
+    echeance: g('fact-echeance'),
+    objet: g('fact-objet'),
+    total: total
+  };
+  factWithJsPdf(function() {
+    try { factDrawPdf(meta); }
+    catch (e) { console.error(e); toast('Erreur à la génération du PDF.', 'err'); return; }
+    // Incrément séquentiel + archivage (best-effort, ne bloque pas le PDF)
+    factParams.seq = (factParams.seq || 1) + 1;
+    factParams.year = new Date().getFullYear();
+    factSaveLocal(factParams);
+    if (db && currentUser) {
+      db.collection('config').doc('facture_params').set(factParams, { merge: true }).catch(function() {});
+      db.collection('factures_commission').add({
+        numero: meta.numero, date: meta.date, echeance: meta.echeance, objet: meta.objet,
+        total: meta.total,
+        lignes: factLignes.map(function(l) { return { designation: l.designation, montant: l.montant }; }),
+        destinataire: (factParams.destinataire || {}).nom || '',
+        createdAt: new Date().toISOString()
+      }).catch(function() {});
+    }
+    sv('fact-numero', factNumero(factParams));
+    toast('✅ Facture ' + meta.numero + ' générée');
+  });
+}
+
+function factDrawPdf(m) {
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF('p', 'mm', 'a4');
+  var W = 210, H = 297, mx = 18;
+  var em = factParams.emetteur || {}, de = factParams.destinataire || {};
+  var ink = [24, 24, 27], sub = [113, 113, 122], green = [22, 163, 74], line = [228, 228, 231];
+  var colR = 116;
+  var y = 22;
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(ink[0], ink[1], ink[2]);
+  doc.text('FACTURE', mx, y);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(sub[0], sub[1], sub[2]);
+  doc.text('N° ' + m.numero, W - mx, y - 5, { align: 'right' });
+  doc.text('Émise le ' + factFmtDateFr(m.date), W - mx, y, { align: 'right' });
+  doc.text('Échéance : ' + factFmtDateFr(m.echeance), W - mx, y + 5, { align: 'right' });
+
+  y += 9;
+  doc.setDrawColor(green[0], green[1], green[2]); doc.setLineWidth(0.8); doc.line(mx, y, W - mx, y);
+  y += 9;
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(sub[0], sub[1], sub[2]);
+  doc.text('ÉMETTEUR', mx, y);
+  doc.text('FACTURÉ À', colR, y);
+  y += 5;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(ink[0], ink[1], ink[2]);
+  doc.text(em.nom || '—', mx, y);
+  doc.text(de.nom || '—', colR, y);
+
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(sub[0], sub[1], sub[2]);
+  var emLines = [];
+  if (em.statut) emLines.push(em.statut);
+  if (em.adresse) emLines.push(em.adresse);
+  var emCV = [em.cp, em.ville].filter(Boolean).join(' '); if (emCV) emLines.push(emCV);
+  if (em.siret) emLines.push('SIRET : ' + em.siret);
+  if (em.tel) emLines.push('Tél : ' + em.tel);
+  if (em.email) emLines.push(em.email);
+  var deLines = [];
+  if (de.adresse) deLines.push(de.adresse);
+  var deCV = [de.cp, de.ville].filter(Boolean).join(' '); if (deCV) deLines.push(deCV);
+  if (de.siret) deLines.push('SIRET : ' + de.siret);
+  if (de.tva) deLines.push('TVA : ' + de.tva);
+
+  var yy = y + 5;
+  emLines.forEach(function(t, i) { doc.text(t, mx, yy + i * 4.6); });
+  deLines.forEach(function(t, i) { doc.text(t, colR, yy + i * 4.6); });
+  y = yy + Math.max(emLines.length, deLines.length) * 4.6 + 5;
+
+  if (m.objet) {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(ink[0], ink[1], ink[2]);
+    doc.text('Objet : ', mx, y);
+    var w = doc.getTextWidth('Objet : ');
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(sub[0], sub[1], sub[2]);
+    doc.text(String(m.objet), mx + w, y);
+    y += 8;
+  }
+
+  // En-tête tableau
+  var tW = W - 2 * mx;
+  doc.setFillColor(240, 253, 244); doc.rect(mx, y - 5, tW, 8, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(21, 128, 61);
+  doc.text('DÉSIGNATION', mx + 3, y);
+  doc.text('MONTANT', W - mx - 3, y, { align: 'right' });
+  y += 7;
+
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(ink[0], ink[1], ink[2]);
+  doc.setDrawColor(line[0], line[1], line[2]); doc.setLineWidth(0.2);
+  factLignes.forEach(function(l) {
+    if (y > H - 78) { doc.addPage(); y = 25; }
+    doc.text(String(l.designation || '—').slice(0, 72), mx + 3, y);
+    doc.text(factEuro(l.montant), W - mx - 3, y, { align: 'right' });
+    y += 2.5; doc.line(mx, y, mx + tW, y); y += 5.5;
+  });
+  y += 3;
+
+  // Totaux
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(sub[0], sub[1], sub[2]);
+  doc.text('Total HT', W - mx - 45, y, { align: 'right' });
+  doc.setFont('helvetica', 'bold'); doc.setTextColor(ink[0], ink[1], ink[2]);
+  doc.text(factEuro(m.total), W - mx - 3, y, { align: 'right' });
+  y += 7;
+
+  doc.setFillColor(green[0], green[1], green[2]); doc.rect(W - mx - 74, y - 5, 74, 10, 'F');
+  doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5);
+  doc.text('NET À PAYER', W - mx - 71, y + 1.5);
+  doc.text(factEuro(m.total), W - mx - 3, y + 1.5, { align: 'right' });
+  y += 15;
+
+  doc.setFont('helvetica', 'italic'); doc.setFontSize(8.5); doc.setTextColor(sub[0], sub[1], sub[2]);
+  doc.text('TVA non applicable, art. 293 B du CGI', mx, y);
+  y += 9;
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(ink[0], ink[1], ink[2]);
+  doc.text('Conditions de règlement', mx, y); y += 4.5;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(sub[0], sub[1], sub[2]);
+  var mentions = [
+    'Paiement à réception — échéance au ' + factFmtDateFr(m.echeance) + '.',
+    "En cas de retard : pénalités au taux de 3 fois le taux d'intérêt légal, exigibles sans rappel.",
+    'Indemnité forfaitaire pour frais de recouvrement : 40 €.',
+    "Pas d'escompte pour paiement anticipé."
+  ];
+  mentions.forEach(function(t) { doc.text(t, mx, y); y += 4; });
+
+  // Pied de page
+  var fy = H - 14;
+  doc.setDrawColor(line[0], line[1], line[2]); doc.setLineWidth(0.3); doc.line(mx, fy - 5, W - mx, fy - 5);
+  doc.setFontSize(7.5); doc.setTextColor(sub[0], sub[1], sub[2]); doc.setFont('helvetica', 'normal');
+  var foot = [em.nom, em.siret ? ('SIRET ' + em.siret) : '', em.tel, em.email].filter(Boolean).join('   ·   ');
+  doc.text(foot, W / 2, fy, { align: 'center' });
+
+  doc.save('Facture_' + String(m.numero).replace(/[^\w\-]/g, '_') + '.pdf');
+}
 
 // ══════════════════════════════════════════════════
 //  UTILS
