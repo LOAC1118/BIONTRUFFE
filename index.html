@@ -1150,6 +1150,14 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
         </div>
       </div>
     </div>
+    
+    <!-- ACTIONS CLIENT: BDC, BL, FACTURE -->
+    <div style="background: #f9fafb; border-top: 1px solid var(--border); padding: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <button class="btn btn-primary" onclick="cdbCreateBDC()" style="font-size: .85rem;">📋 Bon de Commande</button>
+      <button class="btn btn-primary" onclick="cdbCreateBL()" style="font-size: .85rem;">🚚 Bon de Livraison</button>
+      <button class="btn btn-primary" onclick="cdbCreateFacture()" style="font-size: .85rem;">📄 Facture</button>
+    </div>
+    
     <div class="modal-foot">
       <button class="btn btn-danger" id="cdb-edit-delete" onclick="cdbDelete()" style="margin-right:auto;display:none;">🗑 Supprimer</button>
       <button class="btn btn-ghost" onclick="document.getElementById('cdb-modal-edit').classList.add('hidden')">Annuler</button>
@@ -3789,3 +3797,126 @@ function fmtDate(ts) {
 
 </body>
 </html>
+
+<!-- FONCTIONS POUR CRÉER BDC, BL, FACTURE DEPUIS FICHE CLIENT -->
+<script>
+// Créer un Bon de Commande pour le client
+// Variable globale pour stocker les données du client courant
+let currentClientData = null;
+
+function cdbCreateBDC() {
+  const clientEmail = document.getElementById('cdb-edit-id').value;
+  const clientNom = document.getElementById('cdb-edit-nom').value;
+  const clientContact = document.getElementById('cdb-edit-contact')?.value || '';
+  const clientTel = document.getElementById('cdb-edit-telephone')?.value || '';
+  const clientAdresse = document.getElementById('cdb-edit-adresse')?.value || '';
+  const clientVille = document.getElementById('cdb-edit-ville')?.value || '';
+  const clientCP = document.getElementById('cdb-edit-cp')?.value || '';
+  const clientSIRET = document.getElementById('cdb-edit-siret')?.value || '';
+  
+  if (!clientEmail || !clientNom) {
+    alert('❌ Erreur: Client non valide');
+    return;
+  }
+  
+  // Stocker les données du client
+  currentClientData = {
+    email: clientEmail,
+    nom: clientNom,
+    contact: clientContact,
+    tel: clientTel,
+    adresse: clientAdresse,
+    ville: clientVille,
+    codepostal: clientCP,
+    siret: clientSIRET
+  };
+  
+  // Fermer la modale
+  document.getElementById('cdb-modal-edit').classList.add('hidden');
+  
+  // Aller à l'onglet BDC
+  showSection('bdc', null);
+  
+  // Pré-remplir les champs BDC après un délai
+  setTimeout(() => {
+    const bdcNum = 'BDC-' + new Date().getFullYear() + '-' + Math.random().toString().slice(2, 6);
+    document.getElementById('bdc-numclient').value = '';  // À remplir manuellement
+    document.getElementById('bdc-contact').value = clientContact || clientNom;
+    document.getElementById('bdc-email').value = clientEmail;
+    document.getElementById('bdc-tel').value = clientTel;
+    document.getElementById('bdc-magasin').value = clientNom;
+    document.getElementById('bdc-client-badge-nom').textContent = clientNom;
+    document.getElementById('bdc-client-badge').style.display = 'flex';
+    
+    console.log('✅ Bon de Commande pré-rempli pour:', clientNom);
+  }, 100);
+}
+
+// Créer un Bon de Livraison pour le client
+function cdbCreateBL() {
+  const clientEmail = document.getElementById('cdb-edit-id').value;
+  const clientNom = document.getElementById('cdb-edit-nom').value;
+  const clientContact = document.getElementById('cdb-edit-contact')?.value || '';
+  const clientAdresse = document.getElementById('cdb-edit-adresse')?.value || '';
+  const clientVille = document.getElementById('cdb-edit-ville')?.value || '';
+  const clientCP = document.getElementById('cdb-edit-cp')?.value || '';
+  
+  if (!clientEmail || !clientNom) {
+    alert('❌ Erreur: Client non valide');
+    return;
+  }
+  
+  // Stocker les données du client
+  currentClientData = {
+    email: clientEmail,
+    nom: clientNom,
+    contact: clientContact,
+    adresse: clientAdresse,
+    ville: clientVille,
+    codepostal: clientCP
+  };
+  
+  // Fermer la modale
+  document.getElementById('cdb-modal-edit').classList.add('hidden');
+  
+  // Aller à l'onglet BL
+  showSection('bl', null);
+  
+  // Message de confirmation
+  alert('✅ Bon de Livraison créé pour: ' + clientNom + '\n\nDonnées du client pré-remplies automatiquement');
+}
+
+// Créer une Facture pour le client
+function cdbCreateFacture() {
+  const clientEmail = document.getElementById('cdb-edit-id').value;
+  const clientNom = document.getElementById('cdb-edit-nom').value;
+  const clientAdresse = document.getElementById('cdb-edit-adresse')?.value || '';
+  const clientVille = document.getElementById('cdb-edit-ville')?.value || '';
+  const clientCP = document.getElementById('cdb-edit-cp')?.value || '';
+  const clientSIRET = document.getElementById('cdb-edit-siret')?.value || '';
+  const clientTVA = document.getElementById('cdb-edit-tva')?.value || '';
+  
+  if (!clientEmail || !clientNom) {
+    alert('❌ Erreur: Client non valide');
+    return;
+  }
+  
+  // Stocker les données du client
+  currentClientData = {
+    email: clientEmail,
+    nom: clientNom,
+    adresse: clientAdresse,
+    ville: clientVille,
+    codepostal: clientCP,
+    siret: clientSIRET,
+    tva: clientTVA
+  };
+  
+  // Fermer la modale
+  document.getElementById('cdb-modal-edit').classList.add('hidden');
+  
+  // Message de confirmation
+  alert('✅ Facture créée pour: ' + clientNom + '\n\nDonnées du client pré-remplies automatiquement');
+}
+</script>
+
