@@ -1,0 +1,343 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║              FIRESTORE RULES — BIO N TRUFFE (avec rôles)                  ║
+║                                                                            ║
+║  À copier dans Firebase Console → Firestore → Règles                      ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+RÈGLES COMPLÈTES (Copier-coller intégral)
+════════════════════════════════════════════════════════════════════════════
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ─────────────────────────────────────
+    // COMPTES ET RÔLES
+    // ─────────────────────────────────────
+    match /accounts_biontruffle/{email} {
+      // Lire son propre compte
+      allow read: if request.auth != null && request.auth.email == email;
+      
+      // Admin peut lire/créer/modifier/supprimer
+      allow read, create, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.role == 'admin';
+    }
+    
+    // ─────────────────────────────────────
+    // BON DE COMMANDE (BDC)
+    // ─────────────────────────────────────
+    match /bdc_biontruffle/{docId} {
+      // Admin : accès complet
+      allow read, create, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.role == 'admin';
+      
+      // Commercial : lecture seule
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.permissions.hasAny(['bdc_view']);
+    }
+    
+    // ─────────────────────────────────────
+    // ENTRÉE EN STOCK
+    // ─────────────────────────────────────
+    match /stock_entries_biontruffle/{docId} {
+      // Admin : accès complet
+      allow read, create, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.role == 'admin';
+      
+      // Commercial : lecture seule
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.permissions.hasAny(['stock_view']);
+    }
+    
+    // ─────────────────────────────────────
+    // CONFIG & STOCK MAP
+    // ─────────────────────────────────────
+    match /config_biontruffle/{docId} {
+      // Admin : accès complet
+      allow read, create, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.role == 'admin';
+      
+      // Commercial : lecture seule
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email));
+    }
+    
+    // ─────────────────────────────────────
+    // BASE CLIENTS
+    // ─────────────────────────────────────
+    match /clients_biontruffle/{email} {
+      // Admin : accès complet
+      allow read, create, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.role == 'admin';
+      
+      // Commercial : lecture seule
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.permissions.hasAny(['clients_view']);
+    }
+    
+    // ─────────────────────────────────────
+    // FACTURES
+    // ─────────────────────────────────────
+    match /factures_biontruffle/{docId} {
+      // Admin : accès complet
+      allow read, create, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.role == 'admin';
+      
+      // Commercial : lecture seule
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.permissions.hasAny(['invoices_view']);
+    }
+    
+    // ─────────────────────────────────────
+    // BONS DE LIVRAISON
+    // ─────────────────────────────────────
+    match /bls_biontruffle/{docId} {
+      // Admin : accès complet
+      allow read, create, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.role == 'admin';
+      
+      // Commercial : lecture seule
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.permissions.hasAny(['delivery_view']);
+    }
+    
+    // ─────────────────────────────────────
+    // FALLBACK
+    // ─────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+
+EXPLICATIONS DES RÈGLES
+════════════════════════════════════════════════════════════════════════════
+
+1. Comptes (accounts_biontruffle)
+   ├─ Chacun peut lire son propre compte
+   └─ Admin peut tout faire
+
+2. BDC (bdc_biontruffle)
+   ├─ Admin: CRUD complet
+   └─ Commercial: Lecture seule (permission 'bdc_view')
+
+3. Entrée Stock (stock_entries_biontruffle)
+   ├─ Admin: CRUD complet
+   └─ Commercial: Lecture seule (permission 'stock_view')
+
+4. Config (config_biontruffle)
+   ├─ Admin: CRUD complet
+   └─ Commercial: Lecture seule
+
+5. Base Clients (clients_biontruffle)
+   ├─ Admin: CRUD complet
+   └─ Commercial: Lecture seule (permission 'clients_view')
+
+6. Factures (factures_biontruffle)
+   ├─ Admin: CRUD complet
+   └─ Commercial: Lecture seule (permission 'invoices_view')
+
+7. Bons de Livraison (bls_biontruffle)
+   ├─ Admin: CRUD complet
+   └─ Commercial: Lecture seule (permission 'delivery_view')
+
+
+INDEXE RECOMMANDÉ
+════════════════════════════════════════════════════════════════════════════
+
+Pour les requêtes complexes, créer ces indexes Firebase :
+
+1. stock_entries_biontruffle
+   - Fields: uid (Asc), createdAt (Desc)
+   - TTL: (optionnel)
+
+2. clients_biontruffle
+   - Fields: ville (Asc), importedAt (Desc)
+   - TTL: (optionnel)
+
+
+INITIAL ADMIN ACCOUNT
+════════════════════════════════════════════════════════════════════════════
+
+Après déploiement, créer manuellement le premier compte admin :
+
+Firebase Console → Firestore → Collection: accounts_biontruffle → Add Document
+
+Document ID: christophe@example.com
+Fields:
+  - email: "christophe@example.com"
+  - displayName: "Christophe"
+  - role: "admin"
+  - permissions: ["bdc", "stock_entry", "stock_view", "accounts_manage"]
+  - status: "active"
+  - createdAt: (timestamp now)
+  - createdBy: "christophe@example.com"
+
+Puis vous pouvez utiliser l'interface Gestion des Comptes pour ajouter les autres.
+
+
+STRUCTURE DES DOCUMENTS
+════════════════════════════════════════════════════════════════════════════
+
+Account document:
+{
+  email: "user@example.com",
+  displayName: "Nom Complet",
+  role: "admin" | "commercial",
+  permissions: ["bdc", "stock_entry", "stock_view", "accounts_manage"],
+  status: "active" | "inactive",
+  createdAt: Timestamp,
+  createdBy: "admin@example.com"
+}
+
+BDC document: (inchangé)
+{
+  numero: "BDC-001",
+  date: "2026-09-02",
+  ...autres champs...
+}
+
+Stock Entry document: (inchangé)
+{
+  ean: "5410188005000",
+  ref: "PRD-001",
+  qty: 12,
+  movementType: "reception",
+  reason: "Livraison fournisseur",
+  location: "central",
+  uid: "user@example.com",
+  createdAt: Timestamp,
+  date: "2026-09-02"
+}
+
+Client document:
+{
+  email: "client@example.com",           // Document ID
+  nom: "Nom Client",
+  adresse: "123 Rue de la Paix",
+  telephone: "+33612345678",
+  contact: "Jean Dupont",
+  siret: "12345678901234",
+  ville: "Grenoble",
+  codepostal: "38000",
+  importedAt: Timestamp,
+  importedBy: "admin@example.com"
+}
+
+BDC document:
+{
+  numero: "BDC-2026-001",
+  date: "2026-09-02",
+  clientEmail: "client@example.com",
+  clientNom: "Entreprise 1",
+  clientAdresse: "123 Rue de la Paix",
+  clientCodepostal: "38000",
+  clientVille: "Grenoble",
+  description: "Description de la commande",
+  montantHT: 1000.00,
+  tvaPct: 20,
+  createdAt: Timestamp,
+  createdBy: "admin@example.com",
+  status: "draft",
+  invoiceId: "invoice-uuid",           // Après conversion en facture
+  invoiceNumero: "FAC-2026-001",
+  convertedAt: Timestamp
+}
+
+Invoice document:
+{
+  numero: "FAC-2026-001",
+  date: "2026-09-02",
+  bdcNumero: "BDC-2026-001",
+  bdcId: "bdc-uuid",
+  clientEmail: "client@example.com",
+  clientNom: "Entreprise 1",
+  clientAdresse: "123 Rue de la Paix",
+  clientCodepostal: "38000",
+  clientVille: "Grenoble",
+  montantHT: 1000.00,
+  tvaPct: 20,
+  notes: "Notes supplémentaires",
+  createdAt: Timestamp,
+  createdBy: "admin@example.com",
+  status: "draft"
+}
+
+Delivery Note (BL) document:
+{
+  numero: "BL-2026-001",
+  date: "2026-09-02",
+  clientEmail: "client@example.com",
+  clientNom: "Entreprise 1",
+  clientAdresse: "123 Rue de la Paix",
+  clientCodepostal: "38000",
+  clientVille: "Grenoble",
+  description: "Liste des produits livrés",
+  createdAt: Timestamp,
+  createdBy: "admin@example.com",
+  status: "draft",
+  updatedAt: Timestamp
+}
+
+
+TESTER LES RÈGLES
+════════════════════════════════════════════════════════════════════════════
+
+Firebase Console → Firestore → Règles → Onglet "Simuler" (Simulator)
+
+Cas 1: Admin can write to BDC
+  - Auth UID: christophe@example.com
+  - Request type: write
+  - Collection: bdc_biontruffle/test
+  - Expected: Allow ✅
+
+Cas 2: Commercial can read BDC
+  - Auth UID: commercial@example.com
+  - Request type: read
+  - Collection: stock_entries_biontruffle/test
+  - Expected: Allow ✅
+
+Cas 3: Commercial cannot write
+  - Auth UID: commercial@example.com
+  - Request type: write
+  - Collection: bdc_biontruffle/test
+  - Expected: Deny ❌
+
+
+DÉPANNAGE
+════════════════════════════════════════════════════════════════════════════
+
+❌ "Permission denied"
+→ Vérifier que l'utilisateur a un compte dans accounts_biontruffle
+→ Vérifier le rôle et les permissions
+
+❌ "Missing or insufficient permissions"
+→ Vérifier que le compte existe ET que le rôle est correct
+→ Vérifier que les règles sont bien sauvegardées
+
+✅ Texte gris "Published" dans l'onglet Règles = OK
+
+
+VERSION
+════════════════════════════════════════════════════════════════════════════
+
+Date: Septembre 2026
+Type: Firestore Security Rules v3
+Rôles supportés: admin, commercial
+Collections: accounts_biontruffle, bdc_biontruffle, stock_entries_biontruffle, config_biontruffle, clients_biontruffle, factures_biontruffle, bls_biontruffle
+
+Status: ✅ Production-ready

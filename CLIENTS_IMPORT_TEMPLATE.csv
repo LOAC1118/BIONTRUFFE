@@ -1,0 +1,11 @@
+email,nom,adresse,telephone,contact,siret,ville,codepostal
+client1@example.com,Entreprise One,123 Rue de la Paix,+33612345678,Jean Dupont,12345678901234,Grenoble,38000
+client2@example.com,Société Two,456 Avenue Principale,+33612345679,Marie Martin,12345678901235,Lyon,69000
+client3@example.com,Compagnie Three,789 Boulevard de la République,+33612345680,Pierre Bernard,12345678901236,Marseille,13000
+client4@example.com,Industrie Four,321 Rue de l'Égalité,+33612345681,Sophie Durand,12345678901237,Paris,75000
+client5@example.com,Boutique Five,654 Rue Victor Hugo,+33612345682,Luc Leclerc,12345678901238,Toulouse,31000
+client6@example.com,Magasin Six,987 Rue Lafayette,+33612345683,Anne Moreau,12345678901239,Bordeaux,33000
+client7@example.com,Négoce Seven,147 Rue Nationale,+33612345684,Marc Gauthier,12345678901240,Lille,59000
+client8@example.com,Groupe Eight,258 Avenue Montaigne,+33612345685,Christine Roux,12345678901241,Nice,06000
+client9@example.com,Holding Nine,369 Rue des Tilleuls,+33612345686,Stéphane Fournier,12345678901242,Nantes,44000
+client10@example.com,Consortium Ten,741 Rue du Faubourg,+33612345687,Valérie Lefèvre,12345678901243,Strasbourg,67000

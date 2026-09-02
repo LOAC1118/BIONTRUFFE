@@ -1,0 +1,514 @@
+/* BDC MANAGER — Styles */
+
+.bdc-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* Empty state */
+.bdc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: #71717a;
+  gap: 1rem;
+}
+
+.bdc-empty-icon {
+  font-size: 3rem;
+  opacity: 0.5;
+}
+
+.bdc-empty-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #18181b;
+}
+
+/* List view */
+.bdc-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.bdc-list-header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e4e4e7;
+  margin-bottom: 1rem;
+}
+
+.bdc-search-box {
+  display: flex;
+}
+
+.bdc-search {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: white;
+}
+
+.bdc-search:focus {
+  outline: none;
+  border-color: #4338ca;
+  box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
+}
+
+/* Table */
+.bdc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.bdc-table thead {
+  background: #f3f0ff;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.bdc-table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #4338ca;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #e9d5ff;
+}
+
+.bdc-table tbody tr {
+  border-bottom: 1px solid #e4e4e7;
+  transition: background 0.15s;
+}
+
+.bdc-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.bdc-table td {
+  padding: 0.75rem;
+}
+
+.bdc-numero {
+  color: #4338ca;
+  font-weight: 600;
+}
+
+.bdc-client {
+  font-weight: 600;
+  color: #18181b;
+}
+
+.bdc-date {
+  color: #71717a;
+}
+
+.bdc-amount {
+  text-align: right;
+  color: #18181b;
+}
+
+.bdc-amount-ttc {
+  font-weight: 600;
+  color: #16a34a;
+}
+
+/* Status badges */
+.bdc-status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bdc-status-draft {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.bdc-status-sent {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.bdc-status-invoice {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+/* Buttons */
+.bdc-btn {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.bdc-btn-small {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+}
+
+.bdc-btn-primary {
+  background: #4338ca;
+  color: white;
+}
+
+.bdc-btn-primary:hover {
+  background: #3730a3;
+}
+
+.bdc-btn-secondary {
+  background: white;
+  border: 1px solid #e4e4e7;
+  color: #71717a;
+}
+
+.bdc-btn-secondary:hover {
+  background: #fafafa;
+  color: #18181b;
+}
+
+.bdc-btn-view {
+  background: #f3f0ff;
+  color: #4338ca;
+  border: 1px solid #e9d5ff;
+}
+
+.bdc-btn-view:hover {
+  background: #e5d9ff;
+}
+
+.bdc-btn-invoice {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.bdc-btn-invoice:hover {
+  background: #e0fce8;
+}
+
+.bdc-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Detail view */
+.bdc-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.bdc-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e4e4e7;
+}
+
+.bdc-back-btn {
+  background: white;
+  border: 1px solid #e4e4e7;
+  color: #71717a;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+
+.bdc-back-btn:hover {
+  background: #fafafa;
+  color: #18181b;
+}
+
+.bdc-detail-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #18181b;
+}
+
+.bdc-detail-card {
+  background: white;
+  border: 1px solid #e4e4e7;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.bdc-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.bdc-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.bdc-detail-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bdc-detail-value {
+  font-size: 1rem;
+  color: #18181b;
+  word-break: break-word;
+}
+
+.bdc-detail-text {
+  font-size: 0.95rem;
+  color: #18181b;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bdc-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e4e4e7;
+}
+
+.bdc-detail-amounts {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bdc-amount-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  font-size: 0.95rem;
+}
+
+.bdc-amount-line-ttc {
+  border-top: 2px solid #e4e4e7;
+  padding-top: 1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #16a34a;
+}
+
+.bdc-amount-value {
+  text-align: right;
+}
+
+.bdc-amount-value-ttc {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.bdc-detail-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.bdc-detail-actions .bdc-btn {
+  flex: 1;
+}
+
+/* Invoice view */
+.bdc-invoice {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.bdc-invoice-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e4e4e7;
+}
+
+.bdc-invoice-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #18181b;
+}
+
+.bdc-invoice-form {
+  background: white;
+  border: 1px solid #e4e4e7;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.bdc-invoice-info {
+  background: #f3f0ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.bdc-info-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+}
+
+.bdc-info-line:last-child {
+  margin-bottom: 0;
+}
+
+.bdc-info-label {
+  font-weight: 600;
+  color: #4338ca;
+}
+
+.bdc-info-value {
+  color: #4338ca;
+}
+
+/* Form */
+.bdc-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.bdc-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #18181b;
+}
+
+.bdc-input,
+.bdc-textarea {
+  padding: 0.6rem 1rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: white;
+}
+
+.bdc-input:focus,
+.bdc-textarea:focus {
+  outline: none;
+  border-color: #4338ca;
+  box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
+}
+
+.bdc-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.bdc-invoice-summary {
+  background: #f3f0ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1.5rem 0;
+}
+
+.bdc-summary-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  padding: 0.5rem 0;
+}
+
+.bdc-summary-ttc {
+  border-top: 2px solid #e9d5ff;
+  padding-top: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #16a34a;
+}
+
+/* Form actions */
+.bdc-form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e4e4e7;
+}
+
+.bdc-form-actions .bdc-btn {
+  flex: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .bdc-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .bdc-table {
+    font-size: 0.75rem;
+  }
+  
+  .bdc-table th,
+  .bdc-table td {
+    padding: 0.5rem;
+  }
+  
+  .bdc-actions {
+    flex-direction: column;
+  }
+  
+  .bdc-btn-small {
+    width: 100%;
+  }
+  
+  .bdc-detail-header,
+  .bdc-invoice-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .bdc-detail-actions,
+  .bdc-form-actions {
+    flex-direction: column;
+  }
+  
+  .bdc-detail-actions .bdc-btn,
+  .bdc-form-actions .bdc-btn {
+    width: 100%;
+  }
+}
