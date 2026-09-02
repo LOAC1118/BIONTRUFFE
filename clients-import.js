@@ -284,20 +284,13 @@ const ClientsImport = (() => {
       if (fb) db = fb;
       if (usr) currentUser = usr;
       
-      // Vérifier que l'utilisateur est admin
-      if (typeof AccountsManager !== 'undefined') {
-        AccountsManager.checkPermission('accounts_manage').then(isAdmin => {
-          if (!isAdmin) {
-            hostEl.innerHTML = '<div class="imp-error">❌ Accès refusé. Seuls les administrateurs peuvent importer une base clients.</div>';
-            return;
-          }
-          
-          renderModule();
-        });
-      } else {
-        // Fallback si AccountsManager non disponible
-        renderModule();
+      // Admin seulement
+      if (currentUser && currentUser.email !== 'spoto.christophe@gmail.com') {
+        hostEl.innerHTML = '<div class="imp-error">❌ Accès refusé. Seul l\'administrateur peut importer une base clients.</div>';
+        return;
       }
+      
+      renderModule();
     },
     
     // Rendu du module
