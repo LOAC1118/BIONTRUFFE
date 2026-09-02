@@ -1529,7 +1529,7 @@ function showSection(id, btn) {
     StockEntry.mount('#stock-host', db, currentUser, 'biontruffle');
   }, 50);
   if (id === 'accounts' && typeof AccountsManager !== 'undefined') setTimeout(() => {
-    AccountsManager.mount('#accounts-host', db, currentUser);
+    AccountsManager.mount('#accounts-host', db, auth, currentUser);
   }, 50);
   if (id === 'clients-import' && typeof ClientsImport !== 'undefined') setTimeout(() => {
     ClientsImport.mount('#clients-import-host', db, currentUser);

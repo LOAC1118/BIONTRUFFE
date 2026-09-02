@@ -1,27 +1,25 @@
 /**
- * ACCOUNTS MANAGER — VERSION DEBUG (v3)
- * Gestion des comptes avec vérifications
+ * ACCOUNTS MANAGER — VERSION AVEC MOT DE PASSE (v4)
+ * Créer des comptes avec email, nom ET mot de passe
+ * Crée automatiquement l'utilisateur dans Firebase Auth
  */
 
 const AccountsManager = (() => {
   let hostEl = null;
   let db = null;
+  let auth = null;
   let currentUser = null;
   let accounts = [];
   
   const ADMIN_EMAIL = 'spoto.christophe@gmail.com';
 
   const loadAccounts = async () => {
-    if (!db) {
-      console.error('DB non défini');
-      return;
-    }
+    if (!db) return;
     try {
       const snap = await db.collection('accounts_biontruffle').get();
       accounts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      console.log('✅ Comptes chargés:', accounts.length);
     } catch (e) {
-      console.error('❌ Erreur chargement:', e);
+      console.error('Erreur chargement:', e);
       accounts = [];
     }
     render();
@@ -29,21 +27,20 @@ const AccountsManager = (() => {
 
   const saveAccount = async () => {
     console.log('🔍 saveAccount appelée');
-    console.log('DB défini?', !!db);
-    console.log('User défini?', !!currentUser);
     
     const email = document.getElementById('acc-email')?.value?.trim() || '';
+    const password = document.getElementById('acc-password')?.value || '';
     const name = document.getElementById('acc-name')?.value?.trim() || '';
     const role = document.getElementById('acc-role')?.value || 'commercial';
     const selectedPerms = Array.from(document.querySelectorAll('input[name="perm"]:checked')).map(el => el.value);
     
-    console.log('Email:', email);
-    console.log('Name:', name);
-    console.log('Role:', role);
-    console.log('Perms:', selectedPerms);
-    
-    if (!email || !name) {
-      alert('⚠️ Remplissez email et nom');
+    if (!email || !password || !name) {
+      alert('⚠️ Remplissez email, mot de passe et nom');
+      return;
+    }
+
+    if (password.length < 6) {
+      alert('⚠️ Le mot de passe doit faire au moins 6 caractères');
       return;
     }
 
@@ -52,28 +49,39 @@ const AccountsManager = (() => {
       return;
     }
     
-    if (!db) {
-      alert('❌ Erreur: Firestore non disponible');
+    if (!db || !auth) {
+      alert('❌ Erreur: Firestore/Auth non disponible');
       return;
     }
     
     try {
-      console.log('📝 Création du compte...');
+      console.log('📝 Création du compte Firebase Auth...');
       
+      // 1. Créer l'utilisateur dans Firebase Auth
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      const uid = userCredential.user.uid;
+      
+      console.log('✅ Utilisateur Firebase créé:', uid);
+      console.log('📝 Création du document Firestore...');
+      
+      // 2. Créer le document Firestore
       await db.collection('accounts_biontruffle').doc(email.toLowerCase()).set({
         email: email.toLowerCase(),
         displayName: name,
         role: role,
         status: 'active',
         permissions: selectedPerms,
+        uid: uid,
         createdAt: new Date(),
         createdBy: currentUser?.email || 'unknown'
       });
       
-      console.log('✅ Compte créé avec succès');
-      alert('✅ Compte créé');
+      console.log('✅ Compte Firestore créé');
+      alert('✅ Compte créé avec succès!\n\nEmail: ' + email + '\nMot de passe: (celui saisi)');
       
+      // Réinitialiser le formulaire
       document.getElementById('acc-email').value = '';
+      document.getElementById('acc-password').value = '';
       document.getElementById('acc-name').value = '';
       document.querySelectorAll('input[name="perm"]').forEach(el => el.checked = false);
       
@@ -82,12 +90,22 @@ const AccountsManager = (() => {
       console.error('❌ Erreur création compte:', e);
       console.error('Message:', e.message);
       console.error('Code:', e.code);
-      alert('❌ Erreur: ' + e.message);
+      
+      // Gestion des erreurs spécifiques
+      if (e.code === 'auth/email-already-in-use') {
+        alert('❌ Cet email est déjà utilisé');
+      } else if (e.code === 'auth/invalid-email') {
+        alert('❌ Email invalide');
+      } else if (e.code === 'auth/weak-password') {
+        alert('❌ Le mot de passe est trop faible');
+      } else {
+        alert('❌ Erreur: ' + e.message);
+      }
     }
   };
 
   const deleteAccount = async (email) => {
-    if (!confirm('Êtes-vous sûr?')) return;
+    if (!confirm('Êtes-vous sûr? Cette action est irréversible.')) return;
     try {
       await db.collection('accounts_biontruffle').doc(email).delete();
       alert('✅ Compte supprimé');
@@ -113,10 +131,16 @@ const AccountsManager = (() => {
           <div style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; color: #18181b;">➕ Créer un nouveau compte</div>
           
           <div style="display: flex; flex-direction: column; gap: 1rem;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            
+            <!-- Email, Mot de passe, Nom -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
               <div>
                 <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.4rem;">Email *</label>
                 <input type="email" id="acc-email" placeholder="user@example.com" style="width: 100%; padding: 0.75rem; border: 1px solid #e4e4e7; border-radius: 8px; font-family: inherit; font-size: 0.95rem;">
+              </div>
+              <div>
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.4rem;">Mot de passe *</label>
+                <input type="password" id="acc-password" placeholder="Min. 6 caractères" style="width: 100%; padding: 0.75rem; border: 1px solid #e4e4e7; border-radius: 8px; font-family: inherit; font-size: 0.95rem;">
               </div>
               <div>
                 <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.4rem;">Nom complet *</label>
@@ -124,6 +148,7 @@ const AccountsManager = (() => {
               </div>
             </div>
 
+            <!-- Rôle -->
             <div>
               <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.4rem;">Rôle *</label>
               <select id="acc-role" style="width: 100%; padding: 0.75rem; border: 1px solid #e4e4e7; border-radius: 8px; font-family: inherit; font-size: 0.95rem;">
@@ -132,6 +157,7 @@ const AccountsManager = (() => {
               </select>
             </div>
 
+            <!-- Droits -->
             <div>
               <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.75rem;">Accès et Droits *</label>
               <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; background: #fafafa; padding: 1rem; border-radius: 8px; border: 1px solid #e4e4e7;">
@@ -166,10 +192,12 @@ const AccountsManager = (() => {
               </div>
             </div>
 
+            <!-- Bouton créer -->
             <button onclick="AccountsManager.save()" style="padding: 0.85rem 1.5rem; background: #16a34a; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; margin-top: 0.5rem;">✅ Créer le compte</button>
           </div>
         </div>
 
+        <!-- Liste comptes -->
         <div style="background: white; border: 1px solid #e4e4e7; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
           <div style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; color: #18181b;">👥 Comptes (${accounts.length})</div>
           
@@ -202,22 +230,14 @@ const AccountsManager = (() => {
   };
 
   return {
-    mount(selector, fb, usr) {
-      console.log('🔍 AccountsManager.mount appelé');
-      console.log('fb:', !!fb);
-      console.log('usr:', !!usr);
-      
+    mount(selector, fb, auth_instance, usr) {
       hostEl = typeof selector === 'string' ? document.querySelector(selector) : selector;
       db = fb;
+      auth = auth_instance;
       currentUser = usr;
       
-      console.log('✅ DB défini:', !!db);
-      console.log('✅ User défini:', !!currentUser);
-      
-      if (hostEl && db && currentUser) {
+      if (hostEl && db && auth && currentUser) {
         loadAccounts();
-      } else {
-        console.error('❌ Erreur: hostEl, db ou currentUser manquant');
       }
     },
     save: saveAccount,
