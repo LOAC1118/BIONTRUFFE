@@ -1,19 +1,18 @@
 /**
- * STOCK ENTRY MODULE — BIONTRUFFE (v2)
+ * STOCK ENTRY MODULE — BIONTRUFFLE (v2.1)
  * Entrée de stock par EAN / RÉFÉRENCE avec mouvements, raisons, localisations, synchro BDC
+ * + Intégration scanner EAN
  * IIFE self-contained, styles `stk-`, API `StockEntry.mount()`
  */
 
 const StockEntry = (() => {
-  // Private state
   let hostEl = null;
-  let currentBrand = 'biontruffe'; // À parametrer
-  let stockHistory = []; // Cache local pour affichage
-  let stockSummary = {}; // Totaux par produit
+  let currentBrand = 'biontruffle';
+  let stockHistory = [];
+  let stockSummary = {};
   let db = null;
   let currentUser = null;
   
-  // Config mouvements et localisations
   const MOVEMENT_TYPES = [
     { value: 'reception', label: 'Réception', color: '#4CAF50' },
     { value: 'sortie', label: 'Sortie', color: '#FF9800' },
@@ -34,59 +33,45 @@ const StockEntry = (() => {
     { id: 'perigord', label: 'Stock Périgord' },
   ];
   
-  // Hook pour synchro BDC
   let onStockSync = null;
 
-  // Helpers privés
   const setDb = (firestore) => { db = firestore; };
   const setUser = (u) => { currentUser = u; };
   const setBrand = (b) => { currentBrand = b; };
 
-  // Lookup produit par EAN ou REF dans le catalogue
   const findProduct = (searchTerm) => {
     if (!window.PRODUCTS) return null;
     const term = (searchTerm || '').trim().toUpperCase();
     if (!term) return null;
-    
-    // Cherche par EAN d'abord
     let p = window.PRODUCTS.find(x => x.ean && x.ean.toUpperCase() === term);
     if (p) return p;
-    
-    // Puis par code/référence
     p = window.PRODUCTS.find(x => x.code && x.code.toUpperCase() === term);
     if (p) return p;
-    
     return null;
   };
 
-  // Lecture historique depuis Firestore
   const loadHistory = async () => {
     if (!db || !currentUser) return;
-    
     try {
       const col = db.collection(`stock_entries_${currentBrand}`);
       const snap = await col
         .where('uid', '==', currentUser.uid)
         .orderBy('createdAt', 'desc')
-        .limit(200) // Plus d'historique pour les totaux
+        .limit(200)
         .get();
-      
       stockHistory = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderHistory();
-      computeSummary(); // Recalc totaux
+      computeSummary();
     } catch (e) {
       console.error('[StockEntry] load history:', e);
     }
   };
 
-  // Calcul des totaux consolidés par produit
   const computeSummary = () => {
     stockSummary = {};
-    
     stockHistory.forEach(entry => {
       const code = entry.code || entry.ref;
       if (!code) return;
-      
       if (!stockSummary[code]) {
         stockSummary[code] = {
           code: code,
@@ -96,53 +81,58 @@ const StockEntry = (() => {
           byLocation: {},
         };
       }
-      
       stockSummary[code].totalQty += (entry.qty || 0);
       stockSummary[code].countEntries += 1;
-      
       const loc = entry.location || 'central';
       if (!stockSummary[code].byLocation[loc]) {
         stockSummary[code].byLocation[loc] = 0;
       }
       stockSummary[code].byLocation[loc] += (entry.qty || 0);
     });
-    
     renderSummary();
   };
 
-  // Enregistrement d'une entrée (enrichie)
+  const syncStockToBDC = async (ref, qtyDelta) => {
+    if (!ref || !window.bdcStockMap) return;
+    try {
+      const currentStk = window.bdcStockMap[ref] || 0;
+      window.bdcStockMap[ref] = Math.max(0, currentStk + qtyDelta);
+      if (db && currentUser) {
+        const cfgRef = db.collection('config_' + currentBrand).doc('stock_map');
+        const current = (await cfgRef.get()).data() || {};
+        current[ref] = window.bdcStockMap[ref];
+        await cfgRef.set(current, { merge: true });
+      }
+      console.log(`[StockEntry] Synchro BDC: ${ref} => ${window.bdcStockMap[ref]}`);
+    } catch (e) {
+      console.warn('[StockEntry] Synchro BDC échouée:', e);
+    }
+  };
+
   const saveEntry = async (ean, ref, qty, productName, movementType, reason, location) => {
     if (!db || !currentUser) return false;
     if (!qty || qty === 0) return false;
-    
     const qtyInt = parseInt(qty, 10);
-    
     try {
       const col = db.collection(`stock_entries_${currentBrand}`);
       const entry = {
         ean: ean || '',
         ref: ref || '',
-        code: ref || '', // Alias pour recherche
+        code: ref || '',
         productName: productName || ref || ean,
-        qty: qtyInt, // Signé : positif=entrée, négatif=sortie
-        movementType: movementType || 'reception', // Type de mouvement
-        reason: reason || '', // Raison du mouvement
-        location: location || 'central', // Localisation
+        qty: qtyInt,
+        movementType: movementType || 'reception',
+        reason: reason || '',
+        location: location || 'central',
         uid: currentUser.uid,
         createdAt: firebase.firestore.Timestamp.now(),
-        date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        date: new Date().toISOString().split('T')[0],
       };
-      
-      const docRef = await col.add(entry);
-      
-      // Synchro BDC + recalc totaux
+      await col.add(entry);
       await syncStockToBDC(ref, qtyInt);
-      
-      // Hook personnalisé
       if (onStockSync) {
         onStockSync({ code: ref, qty: qtyInt, type: movementType });
       }
-      
       return true;
     } catch (e) {
       console.error('[StockEntry] save:', e);
@@ -150,40 +140,12 @@ const StockEntry = (() => {
     }
   };
 
-  // Synchro du stock vers le BDC (bdcStockMap)
-  const syncStockToBDC = async (ref, qtyDelta) => {
-    if (!ref || !window.bdcStockMap) return;
-    
-    try {
-      // Mise à jour du stock disponible
-      const currentStk = window.bdcStockMap[ref] || 0;
-      window.bdcStockMap[ref] = Math.max(0, currentStk + qtyDelta);
-      
-      // Persister dans Firestore (même doc que la recherche produit)
-      if (db && currentUser) {
-        const cfgRef = db.collection('config_' + currentBrand).doc('stock_map');
-        const current = (await cfgRef.get()).data() || {};
-        current[ref] = window.bdcStockMap[ref];
-        await cfgRef.set(current, { merge: true });
-      }
-      
-      console.log(`[StockEntry] Synchro BDC: ${ref} => ${window.bdcStockMap[ref]}`);
-    } catch (e) {
-      console.warn('[StockEntry] Synchro BDC échouée:', e);
-    }
-  };
-
-  // Rendu du formulaire (enrichi)
   const renderForm = () => {
     const form = document.createElement('form');
     form.className = 'stk-form';
-    
-    // Options types de mouvement
     const movementOpts = MOVEMENT_TYPES
       .map(m => `<option value="${m.value}">${m.label}</option>`)
       .join('');
-    
-    // Options localisations
     const locationOpts = LOCATIONS
       .map(l => `<option value="${l.id}">${l.label}</option>`)
       .join('');
@@ -191,53 +153,40 @@ const StockEntry = (() => {
     form.innerHTML = `
       <fieldset class="stk-fieldset">
         <legend class="stk-legend">Mouvement de stock</legend>
-        
         <div class="stk-group">
           <label for="stk-type">Type *</label>
           <select id="stk-type" class="stk-input stk-select">
             ${movementOpts}
           </select>
         </div>
-        
         <div class="stk-group">
           <label for="stk-search">EAN ou RÉFÉRENCE *</label>
-          <input 
-            type="text" 
-            id="stk-search" 
-            class="stk-input stk-search"
-            placeholder="Ex: 5410188005000 ou PRD-001"
-            autocomplete="off"
-          />
+          <div class="stk-search-group">
+            <input type="text" id="stk-search" class="stk-input stk-search"
+              placeholder="Ex: 5410188005000 ou PRD-001" autocomplete="off"/>
+            <button type="button" id="stk-scanner-toggle" class="stk-icon-btn stk-scanner-btn" title="Scanner EAN">📱</button>
+          </div>
           <div class="stk-result" id="stk-result"></div>
+          <div id="stk-scanner-host" class="stk-scanner-panel" style="display: none;"></div>
         </div>
-        
         <div class="stk-group">
           <label for="stk-qty">Quantité *</label>
-          <input 
-            type="number" 
-            id="stk-qty" 
-            class="stk-input stk-qty"
-            min="-9999"
-            step="1"
-            placeholder="0"
-          />
+          <input type="number" id="stk-qty" class="stk-input stk-qty"
+            min="-9999" step="1" placeholder="0"/>
           <small class="stk-hint">Positive = entrée, négative = sortie</small>
         </div>
-        
         <div class="stk-group">
           <label for="stk-reason">Raison *</label>
           <select id="stk-reason" class="stk-input stk-select">
             <option value="">-- Sélectionner --</option>
           </select>
         </div>
-        
         <div class="stk-group">
-          <label for="stk-location">Localisations</label>
+          <label for="stk-location">Localisation</label>
           <select id="stk-location" class="stk-input stk-select">
             ${locationOpts}
           </select>
         </div>
-        
         <div class="stk-actions">
           <button type="submit" class="stk-btn stk-btn-primary">Enregistrer</button>
           <button type="reset" class="stk-btn stk-btn-secondary">Réinitialiser</button>
@@ -251,9 +200,11 @@ const StockEntry = (() => {
     const reasonSelect = form.querySelector('#stk-reason');
     const locationSelect = form.querySelector('#stk-location');
     const resultDiv = form.querySelector('#stk-result');
+    const scannerToggleBtn = form.querySelector('#stk-scanner-toggle');
+    const scannerHost = form.querySelector('#stk-scanner-host');
     let currentProduct = null;
+    let scannerOpen = false;
 
-    // Update raisons selon le type
     const updateReasons = () => {
       const movementType = typeSelect.value;
       const reasons = MOVEMENT_REASONS[movementType] || [];
@@ -267,16 +218,13 @@ const StockEntry = (() => {
     };
 
     typeSelect.addEventListener('change', updateReasons);
-    updateReasons(); // Init
+    updateReasons();
 
-    // Recherche produit en temps réel
     searchInput.addEventListener('input', (e) => {
       const term = e.target.value.trim();
       resultDiv.innerHTML = '';
       currentProduct = null;
-      
       if (!term) return;
-      
       const found = findProduct(term);
       if (found) {
         currentProduct = found;
@@ -292,10 +240,28 @@ const StockEntry = (() => {
       }
     });
 
-    // Submit
+    if (scannerToggleBtn && typeof StockScanner !== 'undefined') {
+      scannerToggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        scannerOpen = !scannerOpen;
+        if (scannerOpen) {
+          scannerHost.style.display = 'block';
+          StockScanner.mount('#stk-scanner-host', '#stk-search');
+          StockScanner.onDetected((event) => {
+            console.log('[StockEntry] Code scanner:', event.code);
+            scannerOpen = false;
+            scannerHost.style.display = 'none';
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+          });
+        } else {
+          StockScanner.stop();
+          scannerHost.style.display = 'none';
+        }
+      });
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
       const search = searchInput.value.trim();
       const qty = qtyInput.value.trim();
       const movementType = typeSelect.value;
@@ -325,15 +291,11 @@ const StockEntry = (() => {
         resultDiv.innerHTML = '';
         currentProduct = null;
         updateReasons();
-        
-        // Feedback
         const msg = document.createElement('div');
         msg.className = 'stk-success';
         msg.textContent = `✓ ${name} — ${qty} pcs (${reason})`;
         form.prepend(msg);
         setTimeout(() => msg.remove(), 3000);
-        
-        // Reload historique
         await loadHistory();
       } else {
         alert('Erreur lors de l\'enregistrement');
@@ -343,24 +305,19 @@ const StockEntry = (() => {
     return form;
   };
 
-  // Rendu de l'historique (enrichi)
   const renderHistory = () => {
     const histDiv = document.getElementById('stk-history');
     if (!histDiv) return;
-    
     if (!stockHistory.length) {
       histDiv.innerHTML = '<p class="stk-empty">Aucune entrée enregistrée</p>';
       return;
     }
-    
-    // Grouper par date
     const byDate = {};
     stockHistory.forEach(e => {
       const d = e.date || e.createdAt?.toDate?.().toISOString().split('T')[0] || '?';
       if (!byDate[d]) byDate[d] = [];
       byDate[d].push(e);
     });
-    
     let html = '<div class="stk-timeline">';
     Object.entries(byDate)
       .sort((a, b) => b[0].localeCompare(a[0]))
@@ -368,17 +325,8 @@ const StockEntry = (() => {
         html += `<div class="stk-date-group">
           <h4 class="stk-date-label">${date}</h4>
           <table class="stk-table">
-            <thead>
-              <tr>
-                <th>Produit</th>
-                <th>Code</th>
-                <th>Type</th>
-                <th>Raison</th>
-                <th>Quantité</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
+            <thead><tr><th>Produit</th><th>Code</th><th>Type</th><th>Raison</th><th>Quantité</th></tr></thead>
+            <tbody>`;
         items.forEach(e => {
           const movType = MOVEMENT_TYPES.find(m => m.value === e.movementType);
           const badge = movType 
@@ -393,36 +341,27 @@ const StockEntry = (() => {
             <td class="stk-qty ${qtyClass}">${e.qty > 0 ? '+' : ''}${e.qty}</td>
           </tr>`;
         });
-        html += `
-            </tbody>
-          </table>
-        </div>`;
+        html += `</tbody></table></div>`;
       });
     html += '</div>';
-    
     histDiv.innerHTML = html;
   };
 
-  // Rendu des totaux consolidés
   const renderSummary = () => {
     const summDiv = document.getElementById('stk-summary');
     if (!summDiv) return;
-    
     const products = Object.values(stockSummary)
       .sort((a, b) => b.totalQty - a.totalQty);
-    
     if (!products.length) {
       summDiv.innerHTML = '<p class="stk-empty">Aucune consolidation</p>';
       return;
     }
-    
     let html = '<div class="stk-summary-list">';
     products.forEach(p => {
       const locations = Object.entries(p.byLocation)
         .map(([loc, qty]) => `<span class="stk-loc-badge">${loc}: ${qty > 0 ? '+' : ''}${qty}</span>`)
         .join(' ');
       const qtyClass = p.totalQty > 0 ? 'stk-qty-in' : 'stk-qty-out';
-      
       html += `
         <div class="stk-summary-card">
           <div class="stk-summary-head">
@@ -434,52 +373,29 @@ const StockEntry = (() => {
               <span>Total:</span>
               <span class="stk-qty ${qtyClass}">${p.totalQty > 0 ? '+' : ''}${p.totalQty}</span>
             </div>
-            <div class="stk-summary-detail">
-              ${locations}
-            </div>
-            <div class="stk-summary-count">
-              ${p.countEntries} mouvement${p.countEntries > 1 ? 's' : ''}
-            </div>
+            <div class="stk-summary-detail">${locations}</div>
+            <div class="stk-summary-count">${p.countEntries} mouvement${p.countEntries > 1 ? 's' : ''}</div>
           </div>
         </div>
       `;
     });
     html += '</div>';
-    
     summDiv.innerHTML = html;
   };
 
-  // API publique
   return {
     mount(selector, fb, usr, brand) {
       hostEl = typeof selector === 'string' 
         ? document.querySelector(selector) 
         : selector;
-      
       if (!hostEl) {
         console.error('[StockEntry] mount: host not found');
         return;
       }
-      
       if (fb) setDb(fb);
       if (usr) setUser(usr);
       if (brand) setBrand(brand);
-      
-      // Charger les locations depuis config si disponible
-      if (db && brand) {
-        (async () => {
-          try {
-            const cfgSnap = await db.collection(`config_${brand}`).doc('locations').get();
-            if (cfgSnap.exists && cfgSnap.data()?.list) {
-              LOCATIONS = cfgSnap.data().list;
-            }
-          } catch (e) {
-            console.log('[StockEntry] Locations non configurées, utilise défaut');
-          }
-        })();
-      }
-      
-      // Rendu
+
       hostEl.innerHTML = `
         <div class="stk-container">
           <div class="stk-form-panel">
@@ -497,13 +413,33 @@ const StockEntry = (() => {
           </div>
         </div>
       `;
-      
-      // Re-attach form listeners
+
       const form = hostEl.querySelector('.stk-form');
       const searchInput = form.querySelector('#stk-search');
+      const typeSelect = form.querySelector('#stk-type');
       const qtyInput = form.querySelector('#stk-qty');
+      const reasonSelect = form.querySelector('#stk-reason');
+      const locationSelect = form.querySelector('#stk-location');
       const resultDiv = form.querySelector('#stk-result');
+      const scannerToggleBtn = form.querySelector('#stk-scanner-toggle');
+      const scannerHost = form.querySelector('#stk-scanner-host');
       let currentProduct = null;
+      let scannerOpen = false;
+
+      const updateReasons = () => {
+        const movementType = typeSelect.value;
+        const reasons = MOVEMENT_REASONS[movementType] || [];
+        reasonSelect.innerHTML = '<option value="">-- Sélectionner --</option>';
+        reasons.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = r;
+          opt.textContent = r;
+          reasonSelect.appendChild(opt);
+        });
+      };
+
+      typeSelect.addEventListener('change', updateReasons);
+      updateReasons();
 
       searchInput.addEventListener('input', (e) => {
         const term = e.target.value.trim();
@@ -525,29 +461,60 @@ const StockEntry = (() => {
         }
       });
 
+      if (scannerToggleBtn && typeof StockScanner !== 'undefined') {
+        scannerToggleBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          scannerOpen = !scannerOpen;
+          if (scannerOpen) {
+            scannerHost.style.display = 'block';
+            StockScanner.mount('#stk-scanner-host', '#stk-search');
+            StockScanner.onDetected((event) => {
+              console.log('[StockEntry] Code scanner:', event.code);
+              scannerOpen = false;
+              scannerHost.style.display = 'none';
+              searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+          } else {
+            StockScanner.stop();
+            scannerHost.style.display = 'none';
+          }
+        });
+      }
+
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const search = searchInput.value.trim();
         const qty = qtyInput.value.trim();
+        const movementType = typeSelect.value;
+        const reason = reasonSelect.value;
+        const location = locationSelect.value;
+        
         if (!currentProduct && !search) {
           alert('Veuillez entrer un EAN ou une référence');
           return;
         }
-        if (!qty || parseInt(qty, 10) <= 0) {
-          alert('Veuillez entrer une quantité valide');
+        if (!qty || parseInt(qty, 10) === 0) {
+          alert('Veuillez entrer une quantité non-nulle');
           return;
         }
+        if (!reason) {
+          alert('Veuillez sélectionner une raison');
+          return;
+        }
+        
         const ean = currentProduct?.ean || '';
         const ref = currentProduct?.code || search;
         const name = currentProduct?.libelle || search;
-        const ok = await saveEntry(ean, ref, qty, name);
+        
+        const ok = await saveEntry(ean, ref, qty, name, movementType, reason, location);
         if (ok) {
           form.reset();
           resultDiv.innerHTML = '';
           currentProduct = null;
+          updateReasons();
           const msg = document.createElement('div');
           msg.className = 'stk-success';
-          msg.textContent = `✓ ${name} — ${qty} pcs enregistrés`;
+          msg.textContent = `✓ ${name} — ${qty} pcs (${reason})`;
           form.prepend(msg);
           setTimeout(() => msg.remove(), 3000);
           await loadHistory();
@@ -555,30 +522,19 @@ const StockEntry = (() => {
           alert('Erreur lors de l\'enregistrement');
         }
       });
-      
-      // Charger l'historique
+
       loadHistory();
     },
 
     setDb,
     setUser,
     setBrand,
-    setLocations(locs) {
-      LOCATIONS = locs || LOCATIONS;
-    },
-    setMovementReasons(reasons) {
-      Object.assign(MOVEMENT_REASONS, reasons);
-    },
-    onStockSync(callback) {
-      onStockSync = callback;
-    },
+    setLocations(locs) { LOCATIONS = locs || LOCATIONS; },
+    setMovementReasons(reasons) { Object.assign(MOVEMENT_REASONS, reasons); },
+    onStockSync(callback) { onStockSync = callback; },
     loadHistory,
     computeSummary,
-    getSummary() {
-      return stockSummary;
-    },
-    getHistory() {
-      return stockHistory;
-    },
+    getSummary() { return stockSummary; },
+    getHistory() { return stockHistory; },
   };
 })();
