@@ -19,7 +19,6 @@
 <link rel="stylesheet" href="stock-scanner-styles.css">
 <link rel="stylesheet" href="accounts-manager-styles.css">
 <link rel="stylesheet" href="clients-import-styles.css">
-<link rel="stylesheet" href="clients-list-styles.css">
 <link rel="stylesheet" href="bdc-manager-styles.css">
 <link rel="stylesheet" href="bl-manager-styles.css">
 <style>
@@ -437,8 +436,6 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
     <button class="t-tab" onclick="showSection('commandes',this)">📦 Commandes</button>
     <button class="t-tab" onclick="showSection('mailing',this)">📧 Mailing</button>
     <button class="t-tab" onclick="showSection('stock',this)">📦 Entrée Stock</button>
-    <button class="t-tab" onclick="showSection('clients-list',this)">👥 Base Clients</button>
-    <button class="t-tab" onclick="showSection('bdc',this)">📋 Bons de Commande</button>
     <button class="t-tab" onclick="showSection('bl',this)">🚚 Bons de Livraison</button>
     <button class="t-tab" onclick="showSection('accounts',this)">🔐 Comptes</button>
     <button class="t-tab" onclick="showSection('clients-import',this)">📥 Import Clients</button>
@@ -478,8 +475,6 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
   <div class="nav-section">
     <div class="nav-label">Gestion</div>
     <div class="nav-item" onclick="showSection('stock',this)">📦 Entrée Stock</div>
-    <div class="nav-item" onclick="showSection('clients-list',this)">👥 Base Clients</div>
-    <div class="nav-item" onclick="showSection('bdc',this)">📋 Bons de Commande</div>
     <div class="nav-item" onclick="showSection('bl',this)">🚚 Bons de Livraison</div>
     <div class="nav-item" onclick="showSection('accounts',this)">🔐 Gestion des Comptes</div>
     <div class="nav-item" onclick="showSection('clients-import',this)">📥 Import Clients</div>
@@ -1057,17 +1052,6 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
   <div id="clients-import-host"></div>
 </div>
 
-<!-- BASE CLIENTS — BIO N TRUFFE (v1) -->
-<div id="sec-clients-list" class="section hidden">
-  <div class="page-header">
-    <div>
-      <div class="page-title">Base Clients</div>
-      <div class="page-sub">Visualiser les clients et créer des bons de commande</div>
-    </div>
-  </div>
-  <div id="clients-list-host"></div>
-</div>
-
 <!-- BONS DE COMMANDE — BIO N TRUFFE (v1) -->
 <div id="sec-bdc" class="section hidden">
   <div class="page-header">
@@ -1533,9 +1517,6 @@ function showSection(id, btn) {
   }, 50);
   if (id === 'clients-import' && typeof ClientsImport !== 'undefined') setTimeout(() => {
     ClientsImport.mount('#clients-import-host', db, currentUser);
-  }, 50);
-  if (id === 'clients-list' && typeof ClientsList !== 'undefined') setTimeout(() => {
-    ClientsList.mount('#clients-list-host', db, currentUser);
   }, 50);
   if (id === 'bdc' && typeof BDCManager !== 'undefined') setTimeout(() => {
     BDCManager.mount('#bdc-host', db, currentUser);
@@ -3801,7 +3782,6 @@ function fmtDate(ts) {
 <script src="stock-scanner.js?v=1"></script>
 <script src="accounts-manager.js?v=1"></script>
 <script src="clients-import.js?v=1"></script>
-<script src="clients-list.js?v=1"></script>
 <script src="bdc-manager.js?v=1"></script>
 <script src="bl-manager.js?v=1"></script>
 <script src="init-accounts.js?v=1"></script>
