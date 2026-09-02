@@ -1,23 +1,189 @@
 /**
- * CLIENTS IMPORT — BIO N TRUFFE (v1)
+ * CLIENTS IMPORT — VERSION SIMPLE (v2)
  * Module d'import de base clients (CSV/Excel)
- * IIFE self-contained, styles `imp-`, API `ClientsImport.mount()`
+ * Simplifié pour admin auto
  */
 
 const ClientsImport = (() => {
   let hostEl = null;
   let db = null;
   let currentUser = null;
-  
-  // Champs attendus (configurable)
-  const REQUIRED_FIELDS = ['email', 'nom'];
-  const OPTIONAL_FIELDS = ['adresse', 'telephone', 'contact', 'siret', 'ville', 'codepostal'];
-  const ALL_FIELDS = [...REQUIRED_FIELDS, ...OPTIONAL_FIELDS];
-  
-  // Parser CSV
+
+  const render = () => {
+    if (!hostEl) return;
+    
+    hostEl.innerHTML = `
+      <div style="padding: 2rem; max-width: 900px; margin: 0 auto;">
+        
+        <div style="background: white; border: 1px solid #e4e4e7; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+          <div style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; color: #18181b;">📥 Importer une base de clients</div>
+          
+          <div style="background: #f0f9ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+            <div style="font-weight: 600; color: #1e40af; margin-bottom: 0.5rem;">📋 Format attendu:</div>
+            <div style="font-size: 0.9rem; color: #1e3a8a;">
+              Fichier CSV ou Excel avec colonnes:<br>
+              <strong>Requis:</strong> email, nom<br>
+              <strong>Optionnels:</strong> adresse, telephone, contact, siret, ville, codepostal
+            </div>
+          </div>
+          
+          <form id="import-form" style="display: flex; flex-direction: column; gap: 1rem;">
+            
+            <div id="drop-zone" style="border: 2px dashed #94a3b8; border-radius: 8px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s;" 
+                 onmouseover="this.style.background='#f1f5f9'" 
+                 onmouseout="this.style.background='white'">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">📁</div>
+              <div style="font-weight: 600; color: #1e293b; margin-bottom: 0.25rem;">Cliquez ou déposez votre fichier</div>
+              <div style="font-size: 0.85rem; color: #64748b;">CSV ou Excel (.xlsx, .xls)</div>
+              <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display: none;">
+            </div>
+            
+            <div id="file-status" style="display: none; padding: 0.75rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; color: #16a34a;">
+              ✅ <span id="file-name"></span>
+            </div>
+            
+            <div id="preview-area" style="display: none; margin: 1rem 0;">
+              <div style="font-weight: 600; margin-bottom: 0.5rem;">📊 Aperçu:</div>
+              <div id="preview" style="max-height: 300px; overflow-y: auto; border: 1px solid #e4e4e7; border-radius: 6px; background: #fafafa; padding: 1rem; font-size: 0.85rem; font-family: monospace;"></div>
+            </div>
+            
+            <div style="display: flex; gap: 1rem;">
+              <button type="submit" id="submit-btn" disabled style="flex: 1; padding: 0.75rem; background: #16a34a; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; disabled-opacity: 0.5;">✅ Importer</button>
+              <button type="reset" style="padding: 0.75rem 1.5rem; background: #f3f4f6; color: #4b5563; border: 1px solid #e4e4e7; border-radius: 6px; cursor: pointer; font-weight: 600;">↻ Annuler</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    
+    attachEvents();
+  };
+
+  const attachEvents = () => {
+    const form = document.getElementById('import-form');
+    const fileInput = document.getElementById('file-input');
+    const dropZone = document.getElementById('drop-zone');
+    const submitBtn = document.getElementById('submit-btn');
+    const fileStatus = document.getElementById('file-status');
+    const fileName = document.getElementById('file-name');
+    const previewArea = document.getElementById('preview-area');
+    const previewDiv = document.getElementById('preview');
+
+    form._fileData = null;
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.style.background = '#f1f5f9';
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.background = 'white';
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.style.background = 'white';
+      const files = e.dataTransfer.files;
+      if (files.length > 0) handleFileSelect(files[0]);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) handleFileSelect(e.target.files[0]);
+    });
+
+    const handleFileSelect = async (file) => {
+      try {
+        let data = null;
+        if (file.name.endsWith('.csv')) {
+          const text = await file.text();
+          data = parseCSV(text);
+        } else if (/\.(xlsx|xls)$/.test(file.name)) {
+          const buffer = await file.arrayBuffer();
+          data = parseExcel(buffer);
+        } else {
+          alert('Format non supporté');
+          return;
+        }
+
+        form._fileData = data;
+        fileName.textContent = file.name + ' (' + data.rows.length + ' lignes)';
+        fileStatus.style.display = 'block';
+        submitBtn.disabled = false;
+
+        previewDiv.innerHTML = data.rows.slice(0, 5).map(row => 
+          JSON.stringify(row)
+        ).join('\n');
+        previewArea.style.display = 'block';
+      } catch (e) {
+        alert('❌ Erreur: ' + e.message);
+      }
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!form._fileData) {
+        alert('Sélectionnez un fichier');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Import en cours...';
+
+      try {
+        const rows = form._fileData.rows;
+        let imported = 0, skipped = 0;
+
+        for (const row of rows) {
+          if (!row.email || !row.nom) {
+            skipped++;
+            continue;
+          }
+
+          try {
+            await db.collection('clients_biontruffle').doc(row.email.toLowerCase()).set({
+              email: row.email.toLowerCase(),
+              nom: row.nom,
+              adresse: row.adresse || '',
+              telephone: row.telephone || '',
+              contact: row.contact || '',
+              siret: row.siret || '',
+              ville: row.ville || '',
+              codepostal: row.codepostal || '',
+              importedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              importedBy: currentUser.email
+            });
+            imported++;
+          } catch (e) {
+            console.error('Erreur import ligne:', e);
+            skipped++;
+          }
+        }
+
+        alert(`✅ Import terminé!\n\n✓ ${imported} clients importés\n⚠️ ${skipped} ignorés`);
+        form.reset();
+        form._fileData = null;
+        fileStatus.style.display = 'none';
+        previewArea.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.textContent = '✅ Importer';
+      } catch (e) {
+        alert('❌ Erreur: ' + e.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = '✅ Importer';
+      }
+    });
+
+    form.addEventListener('reset', () => {
+      fileInput.value = '';
+      form._fileData = null;
+      fileStatus.style.display = 'none';
+      previewArea.style.display = 'none';
+      submitBtn.disabled = true;
+    });
+  };
+
   const parseCSV = (text) => {
     const lines = text.split('\n').filter(l => l.trim());
-    if (lines.length < 2) throw new Error('Fichier CSV vide ou invalide');
+    if (lines.length < 2) throw new Error('Fichier vide');
     
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
     const rows = [];
@@ -25,361 +191,60 @@ const ClientsImport = (() => {
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',').map(v => v.trim());
       const row = {};
-      headers.forEach((header, idx) => {
-        if (ALL_FIELDS.includes(header) || header === '') {
-          row[header || `col_${idx}`] = values[idx] || '';
-        }
+      headers.forEach((h, idx) => {
+        row[h] = values[idx] || '';
       });
-      if (Object.keys(row).length > 0) rows.push(row);
+      if (row.email && row.nom) rows.push(row);
     }
     
     return { headers, rows };
   };
-  
-  // Parser Excel (utilise SheetJS via CDN si disponible)
-  const parseExcel = (arrayBuffer) => {
+
+  const parseExcel = (buffer) => {
     if (typeof XLSX === 'undefined') {
-      throw new Error('Excel parsing requires SheetJS library');
+      throw new Error('Excel parsing non disponible');
     }
     
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(worksheet, {
-      header: 1,
-      blankrows: false
-    });
+    const workbook = XLSX.read(buffer, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(sheet);
     
-    if (rows.length < 2) throw new Error('Fichier Excel vide ou invalide');
-    
-    const headers = (rows[0] || []).map(h => String(h).trim().toLowerCase());
-    const data = [];
-    
-    for (let i = 1; i < rows.length; i++) {
-      const row = {};
-      headers.forEach((header, idx) => {
-        if (ALL_FIELDS.includes(header) || header === '') {
-          row[header || `col_${idx}`] = rows[i][idx] || '';
-        }
-      });
-      if (Object.keys(row).length > 0) data.push(row);
-    }
-    
-    return { headers, rows: data };
+    return { 
+      headers: Object.keys(data[0] || {}),
+      rows: data.map(row => ({
+        email: row.email || '',
+        nom: row.nom || '',
+        adresse: row.adresse || '',
+        telephone: row.telephone || '',
+        contact: row.contact || '',
+        siret: row.siret || '',
+        ville: row.ville || '',
+        codepostal: row.codepostal || ''
+      }))
+    };
   };
-  
-  // Valider les données
-  const validateRows = (rows) => {
-    const errors = [];
-    const valid = [];
-    
-    rows.forEach((row, idx) => {
-      const rowErrors = [];
-      
-      // Vérifier champs requis
-      REQUIRED_FIELDS.forEach(field => {
-        if (!row[field] || !String(row[field]).trim()) {
-          rowErrors.push(`${field} manquant`);
-        }
-      });
-      
-      // Valider email
-      if (row.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) {
-        rowErrors.push('Email invalide');
-      }
-      
-      if (rowErrors.length > 0) {
-        errors.push({ row: idx + 2, line: row, errors: rowErrors });
-      } else {
-        valid.push({
-          email: row.email.toLowerCase().trim(),
-          nom: row.nom.trim(),
-          adresse: row.adresse || '',
-          telephone: row.telephone || '',
-          contact: row.contact || '',
-          siret: row.siret || '',
-          ville: row.ville || '',
-          codepostal: row.codepostal || '',
-          importedAt: firebase.firestore.Timestamp.now(),
-          importedBy: currentUser.email
-        });
-      }
-    });
-    
-    return { valid, errors };
-  };
-  
-  // Importer dans Firestore
-  const importToFirestore = async (clients) => {
-    if (!clients.length) return { success: 0, failed: 0 };
-    
-    const results = { success: 0, failed: 0, duplicates: 0 };
-    
-    for (const client of clients) {
-      try {
-        const existingDoc = await db.collection('clients_biontruffle')
-          .doc(client.email)
-          .get();
-        
-        if (existingDoc.exists) {
-          results.duplicates++;
-          continue;
-        }
-        
-        await db.collection('clients_biontruffle').doc(client.email).set(client);
-        results.success++;
-      } catch (e) {
-        console.error(`Erreur import ${client.email}:`, e);
-        results.failed++;
-      }
-    }
-    
-    return results;
-  };
-  
-  // Afficher le formulaire
-  const renderForm = () => {
-    const form = document.createElement('form');
-    form.className = 'imp-form';
-    form.id = 'clients-import-form';
-    
-    form.innerHTML = `
-      <div class="imp-fieldset">
-        <legend class="imp-legend">📥 Importer une base de clients</legend>
-        
-        <div class="imp-info">
-          <p class="imp-info-title">Format attendu:</p>
-          <p class="imp-info-text">
-            Fichier CSV ou Excel avec colonnes:<br>
-            <strong>Requis:</strong> email, nom<br>
-            <strong>Optionnels:</strong> adresse, telephone, contact, siret, ville, codepostal
-          </p>
-        </div>
-        
-        <div class="imp-upload-zone" id="imp-upload-zone">
-          <div class="imp-upload-icon">📁</div>
-          <div class="imp-upload-text">
-            <div class="imp-upload-main">Cliquez ou déposez votre fichier</div>
-            <div class="imp-upload-sub">CSV ou Excel (.xlsx, .xls)</div>
-          </div>
-          <input type="file" id="imp-file-input" class="imp-file-input" accept=".csv,.xlsx,.xls" style="display:none;" />
-        </div>
-        
-        <div class="imp-actions">
-          <button type="submit" class="imp-btn imp-btn-primary" disabled id="imp-submit">✅ Importer</button>
-          <button type="reset" class="imp-btn imp-btn-secondary">↻ Annuler</button>
-        </div>
-      </div>
-    `;
-    
-    return form;
-  };
-  
-  // Traiter le fichier
-  const handleFileSelect = async (file, form) => {
-    if (!file) return;
-    
-    const fileInput = form.querySelector('#imp-file-input');
-    const submitBtn = form.querySelector('#imp-submit');
-    let parsed = null;
-    
-    try {
-      const isCSV = file.name.endsWith('.csv');
-      const isExcel = /\.(xlsx|xls)$/.test(file.name);
-      
-      if (isCSV) {
-        const text = await file.text();
-        parsed = parseCSV(text);
-      } else if (isExcel) {
-        const arrayBuffer = await file.arrayBuffer();
-        parsed = parseExcel(arrayBuffer);
-      } else {
-        throw new Error('Format non supporté (CSV ou Excel requis)');
-      }
-      
-      if (!parsed) throw new Error('Erreur de parsing du fichier');
-      
-      // Afficher aperçu
-      showPreview(form, file, parsed);
-      submitBtn.disabled = false;
-      form._parsedData = parsed;
-      form._file = file;
-      
-    } catch (e) {
-      alert(`❌ Erreur: ${e.message}`);
-      submitBtn.disabled = true;
-      form._parsedData = null;
-    }
-  };
-  
-  // Afficher aperçu
-  const showPreview = (form, file, parsed) => {
-    let previewDiv = form.querySelector('.imp-preview');
-    if (!previewDiv) {
-      previewDiv = document.createElement('div');
-      previewDiv.className = 'imp-preview';
-      form.insertBefore(previewDiv, form.querySelector('.imp-actions'));
-    }
-    
-    const { valid, errors } = validateRows(parsed.rows);
-    
-    let html = `
-      <div class="imp-preview-header">
-        <div class="imp-preview-title">📋 Aperçu du fichier: ${file.name}</div>
-        <div class="imp-preview-stats">
-          <span class="imp-stat-good">${valid.length} valides ✅</span>
-          ${errors.length > 0 ? `<span class="imp-stat-bad">${errors.length} erreurs ❌</span>` : ''}
-        </div>
-      </div>
-    `;
-    
-    if (errors.length > 0) {
-      html += `
-        <div class="imp-preview-errors">
-          <div class="imp-errors-title">Erreurs detectées:</div>
-          ${errors.slice(0, 5).map(err => `
-            <div class="imp-error-item">
-              <strong>Ligne ${err.row}:</strong> ${err.errors.join(', ')}
-            </div>
-          `).join('')}
-          ${errors.length > 5 ? `<div class="imp-error-item">... et ${errors.length - 5} erreurs de plus</div>` : ''}
-        </div>
-      `;
-    }
-    
-    html += `
-      <div class="imp-preview-table">
-        <table>
-          <thead>
-            <tr>
-              ${parsed.headers.map(h => `<th>${h || 'Col'}</th>`).join('')}
-            </tr>
-          </thead>
-          <tbody>
-            ${parsed.rows.slice(0, 3).map(row => `
-              <tr>
-                ${Object.values(row).map(v => `<td>${v || '-'}</td>`).join('')}
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        ${parsed.rows.length > 3 ? `<div class="imp-table-more">... et ${parsed.rows.length - 3} lignes de plus</div>` : ''}
-      </div>
-    `;
-    
-    previewDiv.innerHTML = html;
-  };
-  
+
   return {
     mount(selector, fb, usr) {
-      hostEl = typeof selector === 'string'
-        ? document.querySelector(selector)
+      hostEl = typeof selector === 'string' 
+        ? document.querySelector(selector) 
         : selector;
       
       if (!hostEl) {
-        console.error('[ClientsImport] mount: host not found');
+        console.error('ClientsImport: host not found');
         return;
       }
-      
-      if (fb) db = fb;
-      if (usr) currentUser = usr;
-      
-      // Admin seulement
-      if (currentUser && currentUser.email !== 'spoto.christophe@gmail.com') {
-        hostEl.innerHTML = '<div class="imp-error">❌ Accès refusé. Seul l\'administrateur peut importer une base clients.</div>';
+
+      db = fb;
+      currentUser = usr;
+
+      // Seulement pour l'admin
+      if (!currentUser || currentUser.email !== 'spoto.christophe@gmail.com') {
+        hostEl.innerHTML = '<div style="padding: 2rem; color: #dc2626; text-align: center;">❌ Accès refusé.</div>';
         return;
       }
-      
-      renderModule();
-    },
-    
-    // Rendu du module
-    renderModule: function() {
-      const form = renderForm();
-      hostEl.innerHTML = '';
-      hostEl.appendChild(form);
-      
-      const fileInput = form.querySelector('#imp-file-input');
-      const uploadZone = form.querySelector('#imp-upload-zone');
-      const submitBtn = form.querySelector('#imp-submit');
-      
-      // Clic sur zone upload
-      uploadZone.addEventListener('click', () => fileInput.click());
-      
-      // Drag & drop
-      uploadZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadZone.classList.add('imp-upload-zone-hover');
-      });
-      
-      uploadZone.addEventListener('dragleave', () => {
-        uploadZone.classList.remove('imp-upload-zone-hover');
-      });
-      
-      uploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadZone.classList.remove('imp-upload-zone-hover');
-        if (e.dataTransfer.files.length > 0) {
-          handleFileSelect(e.dataTransfer.files[0], form);
-        }
-      });
-      
-      // Sélection fichier
-      fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-          handleFileSelect(e.target.files[0], form);
-        }
-      });
-      
-      // Submit
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        if (!form._parsedData) {
-          alert('Veuillez sélectionner un fichier');
-          return;
-        }
-        
-        submitBtn.disabled = true;
-        submitBtn.textContent = '⏳ Import en cours...';
-        
-        try {
-          const { valid, errors } = validateRows(form._parsedData.rows);
-          
-          if (valid.length === 0) {
-            alert('❌ Aucun client valide à importer');
-            submitBtn.disabled = false;
-            submitBtn.textContent = '✅ Importer';
-            return;
-          }
-          
-          const results = await importToFirestore(valid);
-          
-          const msg = `✅ Import terminé!\n\n✓ ${results.success} clients importés\n⚠️ ${results.duplicates} doublons (ignorés)\n❌ ${results.failed} erreurs`;
-          alert(msg);
-          
-          form.reset();
-          form._parsedData = null;
-          const preview = form.querySelector('.imp-preview');
-          if (preview) preview.remove();
-          
-          submitBtn.disabled = true;
-          submitBtn.textContent = '✅ Importer';
-          
-        } catch (e) {
-          alert(`❌ Erreur lors de l'import: ${e.message}`);
-          submitBtn.disabled = false;
-          submitBtn.textContent = '✅ Importer';
-        }
-      });
-      
-      form.addEventListener('reset', () => {
-        fileInput.value = '';
-        const preview = form.querySelector('.imp-preview');
-        if (preview) preview.remove();
-        submitBtn.disabled = true;
-        form._parsedData = null;
-      });
+
+      render();
     }
   };
 })();
