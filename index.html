@@ -1389,7 +1389,14 @@ document.addEventListener('DOMContentLoaded', function() {
     db   = firebase.firestore();
     document.getElementById('login-screen').style.display = 'flex';
     auth.onAuthStateChanged(user => {
-      if (user) { currentUser = user; showApp(); }
+      if (user) { 
+        currentUser = user; 
+        showApp();
+        // Initialiser les comptes admin à la première connexion
+        if (typeof InitAccounts !== 'undefined') {
+          InitAccounts.init(db).catch(e => console.error('Erreur init comptes:', e));
+        }
+      }
     });
   } catch(e) {
     console.error('Firebase init error:', e);
@@ -3797,6 +3804,7 @@ function fmtDate(ts) {
 <script src="clients-list.js?v=1"></script>
 <script src="bdc-manager.js?v=1"></script>
 <script src="bl-manager.js?v=1"></script>
+<script src="init-accounts.js?v=1"></script>
 
 </body>
 </html>
