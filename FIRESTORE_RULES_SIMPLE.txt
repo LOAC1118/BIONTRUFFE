@@ -1,0 +1,108 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║              FIRESTORE RULES — VERSION SIMPLE (AUTO-ADMIN)                ║
+║                                                                            ║
+║  À copier dans: Firebase Console → Firestore → Règles                     ║
+║  spoto.christophe@gmail.com = Admin automatique sans configuration         ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+COPIER-COLLER INTÉGRAL DANS FIREBASE CONSOLE
+════════════════════════════════════════════════════════════════════════════
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ADMIN EMAIL - Accès complet automatique
+    match /accounts_biontruffle/{email} {
+      // spoto.christophe@gmail.com = Admin automatique
+      allow read, create, update, delete: if request.auth != null && request.auth.email == 'spoto.christophe@gmail.com';
+      
+      // Admin (rôle dans Firestore) peut gérer tous les comptes
+      allow read, create, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.role == 'admin';
+      
+      // Tout utilisateur peut lire son propre compte
+      allow read: if request.auth != null && request.auth.email == email;
+    }
+    
+    // BONS DE COMMANDE
+    match /bdc_biontruffle/{docId} {
+      allow read, create, update, delete: if request.auth != null && request.auth.email == 'spoto.christophe@gmail.com';
+      allow read, create, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.role == 'admin';
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.permissions.hasAny(['bdc', 'bdc_view']);
+    }
+    
+    // ENTRÉE EN STOCK
+    match /stock_entries_biontruffle/{docId} {
+      allow read, create, update, delete: if request.auth != null && request.auth.email == 'spoto.christophe@gmail.com';
+      allow read, create, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.role == 'admin';
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.permissions.hasAny(['stock_view', 'stock_entry']);
+    }
+    
+    // BASE CLIENTS
+    match /clients_biontruffle/{email} {
+      allow read, create, update, delete: if request.auth != null && request.auth.email == 'spoto.christophe@gmail.com';
+      allow read, create, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.role == 'admin';
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.permissions.hasAny(['clients_view']);
+    }
+    
+    // FACTURES
+    match /factures_biontruffle/{docId} {
+      allow read, create, update, delete: if request.auth != null && request.auth.email == 'spoto.christophe@gmail.com';
+      allow read, create, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.role == 'admin';
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.permissions.hasAny(['invoices_view']);
+    }
+    
+    // BONS DE LIVRAISON
+    match /bls_biontruffle/{docId} {
+      allow read, create, update, delete: if request.auth != null && request.auth.email == 'spoto.christophe@gmail.com';
+      allow read, create, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.role == 'admin';
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.permissions.hasAny(['delivery_view']);
+    }
+    
+    // CONFIG
+    match /config_biontruffle/{docId} {
+      allow read, write: if request.auth != null && request.auth.email == 'spoto.christophe@gmail.com';
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)) &&
+        get(/databases/$(database)/documents/accounts_biontruffle/$(request.auth.email)).data.role == 'admin';
+      allow read: if request.auth != null;
+    }
+  }
+}
+
+════════════════════════════════════════════════════════════════════════════
+                          ✅ C'EST TOUT!
+════════════════════════════════════════════════════════════════════════════
+
+1. Copier le texte ci-dessus (tout le bloc rules_version à closing brace)
+2. Aller à Firebase Console
+3. Firestore Database → Règles
+4. Coller le texte
+5. Cliquer "Publier"
+
+spoto.christophe@gmail.com aura accès à TOUT automatiquement!
+
+════════════════════════════════════════════════════════════════════════════

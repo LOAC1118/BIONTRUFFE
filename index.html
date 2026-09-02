@@ -1392,9 +1392,9 @@ document.addEventListener('DOMContentLoaded', function() {
       if (user) { 
         currentUser = user; 
         showApp();
-        // Initialiser les comptes admin à la première connexion
-        if (typeof InitAccounts !== 'undefined') {
-          InitAccounts.init(db).catch(e => console.error('Erreur init comptes:', e));
+        // Initialiser automatiquement le compte admin
+        if (typeof AutoInit !== 'undefined') {
+          AutoInit.init(db, user.email);
         }
       }
     });
@@ -3805,6 +3805,7 @@ function fmtDate(ts) {
 <script src="bdc-manager.js?v=1"></script>
 <script src="bl-manager.js?v=1"></script>
 <script src="init-accounts.js?v=1"></script>
+<script src="auto-init.js?v=1"></script>
 
 </body>
 </html>

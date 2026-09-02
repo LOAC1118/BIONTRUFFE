@@ -1,7 +1,7 @@
 /**
- * ACCOUNTS MANAGER — BIO N TRUFFE (v1)
- * Gestion complète des comptes et rôles (Admin, Commercial)
- * IIFE self-contained, styles `acc-`, API `AccountsManager.mount()`
+ * ACCOUNTS MANAGER — GESTION DES COMPTES (v2)
+ * spoto.christophe@gmail.com = Admin automatique avec accès complet
+ * Permet de créer des comptes avec droits personnalisés
  */
 
 const AccountsManager = (() => {
@@ -10,316 +10,182 @@ const AccountsManager = (() => {
   let currentUser = null;
   let accounts = [];
   
-  // Rôles disponibles
-  const ROLES = {
-    admin: {
-      label: 'Administrateur',
-      color: '#dc2626',
-      description: 'Accès complet : BDC, Entrée stock, Gestion stocks & comptes',
-      permissions: ['bdc', 'stock_entry', 'stock_view', 'accounts_manage']
-    },
-    commercial: {
-      label: 'Commercial',
-      color: '#16a34a',
-      description: 'Visualisation : Stocks, BDC (lecture seule)',
-      permissions: ['stock_view', 'bdc_view']
-    }
+  const ADMIN_EMAIL = 'spoto.christophe@gmail.com';
+  const isAdmin = () => currentUser && currentUser.email === ADMIN_EMAIL;
+
+  const PERMISSIONS = {
+    bdc: 'Bons de Commande',
+    stock_entry: 'Entrée Stock',
+    stock_view: 'Voir Stocks',
+    accounts_manage: 'Gérer les Comptes',
+    clients_view: 'Voir Clients',
+    invoices_view: 'Voir Factures',
+    delivery_view: 'Voir Bons de Livraison'
   };
 
-  // Charger les comptes
   const loadAccounts = async () => {
-    if (!db || !currentUser) return;
+    if (!db) return;
     try {
-      const snap = await db.collection('accounts_biontruffe').get();
+      const snap = await db.collection('accounts_biontruffle').get();
       accounts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderAccounts();
     } catch (e) {
-      console.error('[AccountsManager] load:', e);
+      console.error('Erreur chargement comptes:', e);
+      accounts = [];
     }
+    render();
   };
 
-  // Créer/modifier un compte
-  const saveAccount = async (email, displayName, role) => {
-    if (!email || !displayName || !role) return false;
-    if (!Object.keys(ROLES).includes(role)) return false;
+  const saveAccount = async () => {
+    const email = document.getElementById('acc-email')?.value?.trim() || '';
+    const name = document.getElementById('acc-name')?.value?.trim() || '';
+    const role = document.getElementById('acc-role')?.value || 'commercial';
+    const selectedPerms = Array.from(document.querySelectorAll('input[name="perm"]:checked')).map(el => el.value);
     
-    try {
-      const docData = {
-        email: email.toLowerCase().trim(),
-        displayName: displayName.trim(),
-        role: role,
-        permissions: ROLES[role].permissions,
-        status: 'active',
-        createdAt: firebase.firestore.Timestamp.now(),
-        createdBy: currentUser.uid,
-      };
-      
-      await db.collection('accounts_biontruffe').doc(email.toLowerCase()).set(docData, { merge: true });
-      console.log(`[AccountsManager] Account saved: ${email} (${role})`);
-      return true;
-    } catch (e) {
-      console.error('[AccountsManager] save:', e);
-      return false;
-    }
-  };
-
-  // Supprimer un compte
-  const deleteAccount = async (email) => {
-    if (!email || email === currentUser.email) return false; // Protéger admin
-    try {
-      await db.collection('accounts_biontruffe').doc(email.toLowerCase()).delete();
-      console.log(`[AccountsManager] Account deleted: ${email}`);
-      return true;
-    } catch (e) {
-      console.error('[AccountsManager] delete:', e);
-      return false;
-    }
-  };
-
-  // Vérifier les permissions de l'utilisateur actuel
-  const checkPermission = async (permission) => {
-    if (!currentUser) return false;
-    try {
-      const doc = await db.collection('accounts_biontruffe').doc(currentUser.email.toLowerCase()).get();
-      if (!doc.exists) return false;
-      const data = doc.data();
-      return (data.permissions || []).includes(permission);
-    } catch (e) {
-      console.error('[AccountsManager] checkPermission:', e);
-      return false;
-    }
-  };
-
-  // Rendre le formulaire
-  const renderForm = () => {
-    const form = document.createElement('form');
-    form.className = 'acc-form';
-    form.id = 'accounts-form';
-    
-    form.innerHTML = `
-      <div class="acc-fieldset">
-        <legend class="acc-legend">Ajouter/Modifier un compte</legend>
-        
-        <div class="acc-group">
-          <label for="acc-email">Email *</label>
-          <input type="email" id="acc-email" class="acc-input"
-            placeholder="user@example.com" autocomplete="off"/>
-        </div>
-        
-        <div class="acc-group">
-          <label for="acc-name">Nom complet *</label>
-          <input type="text" id="acc-name" class="acc-input"
-            placeholder="Prénom Nom"/>
-        </div>
-        
-        <div class="acc-group">
-          <label for="acc-role">Rôle *</label>
-          <select id="acc-role" class="acc-input acc-select">
-            <option value="">-- Sélectionner --</option>
-            ${Object.entries(ROLES).map(([key, role]) => 
-              `<option value="${key}">${role.label}</option>`
-            ).join('')}
-          </select>
-          <small class="acc-role-desc" id="acc-role-desc"></small>
-        </div>
-        
-        <div class="acc-actions">
-          <button type="submit" class="acc-btn acc-btn-primary">✅ Enregistrer</button>
-          <button type="reset" class="acc-btn acc-btn-secondary">↻ Annuler</button>
-        </div>
-      </div>
-    `;
-
-    const emailInput = form.querySelector('#acc-email');
-    const nameInput = form.querySelector('#acc-name');
-    const roleSelect = form.querySelector('#acc-role');
-    const roleDesc = form.querySelector('#acc-role-desc');
-
-    // Mise à jour description du rôle
-    roleSelect.addEventListener('change', () => {
-      const role = ROLES[roleSelect.value];
-      roleDesc.textContent = role ? role.description : '';
-    });
-
-    // Submit
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = emailInput.value.trim();
-      const name = nameInput.value.trim();
-      const role = roleSelect.value;
-
-      if (!email || !name || !role) {
-        alert('Veuillez remplir tous les champs');
-        return;
-      }
-
-      const ok = await saveAccount(email, name, role);
-      if (ok) {
-        form.reset();
-        roleDesc.textContent = '';
-        const msg = document.createElement('div');
-        msg.className = 'acc-success';
-        msg.textContent = `✓ Compte ${name} (${ROLES[role].label}) enregistré`;
-        form.prepend(msg);
-        setTimeout(() => msg.remove(), 3000);
-        await loadAccounts();
-      } else {
-        alert('Erreur lors de l\'enregistrement');
-      }
-    });
-
-    return form;
-  };
-
-  // Rendre la liste des comptes
-  const renderAccounts = () => {
-    const listDiv = document.getElementById('accounts-list');
-    if (!listDiv) return;
-
-    if (!accounts.length) {
-      listDiv.innerHTML = '<p class="acc-empty">Aucun compte enregistré</p>';
+    if (!email || !name) {
+      alert('⚠️ Remplissez email et nom');
       return;
     }
 
-    let html = '<div class="acc-table-wrapper"><table class="acc-table"><thead><tr>' +
-      '<th>Email</th><th>Nom</th><th>Rôle</th><th>Statut</th><th>Actions</th>' +
-      '</tr></thead><tbody>';
-
-    accounts.forEach(acc => {
-      const role = ROLES[acc.role];
-      const badge = role ? `<span class="acc-badge" style="background:${role.color}20;color:${role.color}">${role.label}</span>` : '?';
-      const canDelete = currentUser.email !== acc.email;
+    if (!selectedPerms.length) {
+      alert('⚠️ Sélectionnez au moins 1 droit');
+      return;
+    }
+    
+    try {
+      await db.collection('accounts_biontruffle').doc(email.toLowerCase()).set({
+        email: email.toLowerCase(),
+        displayName: name,
+        role: role,
+        status: 'active',
+        permissions: selectedPerms,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdBy: currentUser.email
+      });
       
-      html += `<tr>
-        <td class="acc-email">${acc.email}</td>
-        <td class="acc-name">${acc.displayName}</td>
-        <td>${badge}</td>
-        <td><span class="acc-status ${acc.status}">${acc.status === 'active' ? '🟢 Actif' : '⚫ Inactif'}</span></td>
-        <td class="acc-actions-cell">
-          <button class="acc-btn-icon" title="Éditer" onclick="AccountsManager.editAccount('${acc.email}')">✏️</button>
-          ${canDelete ? `<button class="acc-btn-icon acc-btn-danger" title="Supprimer" onclick="AccountsManager.deleteAccountUI('${acc.email}')">🗑️</button>` : ''}
-        </td>
-      </tr>`;
-    });
-
-    html += '</tbody></table></div>';
-    listDiv.innerHTML = html;
+      // Réinitialiser le formulaire
+      document.getElementById('acc-email').value = '';
+      document.getElementById('acc-name').value = '';
+      document.querySelectorAll('input[name="perm"]').forEach(el => el.checked = false);
+      
+      alert('✅ Compte créé avec succès');
+      loadAccounts();
+    } catch (e) {
+      alert('❌ Erreur: ' + e.message);
+    }
   };
 
-  // API publique
+  const deleteAccount = async (email) => {
+    if (!confirm('Êtes-vous sûr? Cette action est irréversible.')) return;
+    try {
+      await db.collection('accounts_biontruffle').doc(email).delete();
+      alert('✅ Compte supprimé');
+      loadAccounts();
+    } catch (e) {
+      alert('❌ Erreur: ' + e.message);
+    }
+  };
+
+  const render = () => {
+    if (!hostEl) return;
+
+    const adminHtml = `
+      <div style="padding: 2rem; max-width: 1000px; margin: 0 auto;">
+        
+        <!-- HEADER -->
+        <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; color: white; text-align: center;">
+          <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">✅ ACCÈS COMPLET</div>
+          <div style="font-size: 1.1rem; opacity: 0.95;">Bienvenue Administrateur</div>
+          <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.85;">${currentUser?.email}</div>
+        </div>
+
+        <!-- CRÉER COMPTE -->
+        <div style="background: white; border: 1px solid #e4e4e7; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+          <div style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; color: #18181b;">➕ Créer un nouveau compte</div>
+          
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Email et Nom -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div>
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.4rem;">Email *</label>
+                <input type="email" id="acc-email" placeholder="user@example.com" style="width: 100%; padding: 0.75rem; border: 1px solid #e4e4e7; border-radius: 8px; font-family: inherit; font-size: 0.95rem;">
+              </div>
+              <div>
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.4rem;">Nom complet *</label>
+                <input type="text" id="acc-name" placeholder="Jean Dupont" style="width: 100%; padding: 0.75rem; border: 1px solid #e4e4e7; border-radius: 8px; font-family: inherit; font-size: 0.95rem;">
+              </div>
+            </div>
+
+            <!-- Rôle -->
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.4rem;">Rôle *</label>
+              <select id="acc-role" style="width: 100%; padding: 0.75rem; border: 1px solid #e4e4e7; border-radius: 8px; font-family: inherit; font-size: 0.95rem;">
+                <option value="commercial">Commercial</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+
+            <!-- Droits -->
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.75rem;">Accès et Droits *</label>
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; background: #fafafa; padding: 1rem; border-radius: 8px; border: 1px solid #e4e4e7;">
+                ${Object.entries(PERMISSIONS).map(([key, label]) => `
+                  <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="perm" value="${key}" style="cursor: pointer; width: 18px; height: 18px;">
+                    <span style="font-size: 0.9rem;">${label}</span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Bouton créer -->
+            <button onclick="AccountsManager.save()" style="padding: 0.85rem 1.5rem; background: #16a34a; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; margin-top: 0.5rem;">✅ Créer le compte</button>
+          </div>
+        </div>
+
+        <!-- LISTE COMPTES -->
+        <div style="background: white; border: 1px solid #e4e4e7; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+          <div style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; color: #18181b;">👥 Comptes (${accounts.length})</div>
+          
+          ${accounts.length === 0 ? 
+            '<div style="color: #71717a; text-align: center; padding: 2rem;">Aucun compte créé</div>' : 
+            `<div style="display: flex; flex-direction: column; gap: 1rem;">
+              ${accounts.map(acc => `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 1rem; background: #f9fafb; border: 1px solid #e4e4e7; border-radius: 8px;">
+                  <div style="flex: 1;">
+                    <div style="font-weight: 600; font-size: 0.95rem; color: #18181b;">${acc.displayName}</div>
+                    <div style="font-size: 0.85rem; color: #71717a; margin-top: 0.25rem;">${acc.email}</div>
+                    <div style="font-size: 0.8rem; color: #a1a1aa; margin-top: 0.5rem;">
+                      Rôle: <span style="font-weight: 600; color: ${acc.role === 'admin' ? '#dc2626' : '#16a34a'}">${acc.role}</span>
+                    </div>
+                    <div style="font-size: 0.75rem; color: #a1a1aa; margin-top: 0.5rem;">
+                      Droits: ${acc.permissions?.length || 0} / 7
+                    </div>
+                  </div>
+                  <button onclick="AccountsManager.delete('${acc.email}')" style="padding: 0.5rem 1rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">🗑️ Supprimer</button>
+                </div>
+              `).join('')}
+            </div>`
+          }
+        </div>
+
+      </div>
+    `;
+
+    hostEl.innerHTML = adminHtml;
+  };
+
   return {
     mount(selector, fb, usr) {
-      hostEl = typeof selector === 'string'
-        ? document.querySelector(selector)
-        : selector;
-      
-      if (!hostEl) {
-        console.error('[AccountsManager] mount: host not found');
-        return;
-      }
-      
-      if (fb) db = fb;
-      if (usr) currentUser = usr;
-
-      // Vérifier que l'utilisateur est admin
-      checkPermission('accounts_manage').then(isAdmin => {
-        if (!isAdmin) {
-          hostEl.innerHTML = '<div class="acc-error">❌ Accès refusé. Seuls les administrateurs peuvent gérer les comptes.</div>';
-          return;
-        }
-
-        hostEl.innerHTML = `
-          <div class="acc-container">
-            <div class="acc-form-section">
-              ${renderForm().outerHTML}
-            </div>
-            <div class="acc-list-section">
-              <h3 class="acc-list-title">📋 Comptes enregistrés</h3>
-              <div id="accounts-list" class="acc-list"></div>
-            </div>
-          </div>
-        `;
-
-        const form = hostEl.querySelector('#accounts-form');
-        const emailInput = form.querySelector('#acc-email');
-        const nameInput = form.querySelector('#acc-name');
-        const roleSelect = form.querySelector('#acc-role');
-        const roleDesc = form.querySelector('#acc-role-desc');
-
-        roleSelect.addEventListener('change', () => {
-          const role = ROLES[roleSelect.value];
-          roleDesc.textContent = role ? role.description : '';
-        });
-
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const email = emailInput.value.trim();
-          const name = nameInput.value.trim();
-          const role = roleSelect.value;
-
-          if (!email || !name || !role) {
-            alert('Veuillez remplir tous les champs');
-            return;
-          }
-
-          const ok = await saveAccount(email, name, role);
-          if (ok) {
-            form.reset();
-            roleDesc.textContent = '';
-            const msg = document.createElement('div');
-            msg.className = 'acc-success';
-            msg.textContent = `✓ Compte ${name} (${ROLES[role].label}) enregistré`;
-            form.prepend(msg);
-            setTimeout(() => msg.remove(), 3000);
-            await loadAccounts();
-          } else {
-            alert('Erreur lors de l\'enregistrement');
-          }
-        });
-
+      hostEl = typeof selector === 'string' ? document.querySelector(selector) : selector;
+      db = fb;
+      currentUser = usr;
+      if (hostEl && isAdmin()) {
         loadAccounts();
-      });
-    },
-
-    deleteAccountUI(email) {
-      if (!email || email === currentUser.email) {
-        alert('Impossible de supprimer ce compte');
-        return;
-      }
-      if (confirm(`Êtes-vous sûr de vouloir supprimer le compte ${email} ?`)) {
-        this.deleteAccount(email);
+      } else if (hostEl) {
+        hostEl.innerHTML = '<div style="padding: 2rem; color: #dc2626; text-align: center;">❌ Accès refusé. Seul l\'administrateur peut gérer les comptes.</div>';
       }
     },
-
-    deleteAccount(email) {
-      deleteAccount(email).then(ok => {
-        if (ok) {
-          const msg = document.createElement('div');
-          msg.className = 'acc-success';
-          msg.textContent = `✓ Compte ${email} supprimé`;
-          document.getElementById('accounts-list').prepend(msg);
-          setTimeout(() => msg.remove(), 3000);
-          loadAccounts();
-        } else {
-          alert('Erreur lors de la suppression');
-        }
-      });
-    },
-
-    editAccount(email) {
-      const acc = accounts.find(a => a.email === email);
-      if (!acc) return;
-      document.getElementById('acc-email').value = acc.email;
-      document.getElementById('acc-name').value = acc.displayName;
-      document.getElementById('acc-role').value = acc.role;
-      const role = ROLES[acc.role];
-      document.getElementById('acc-role-desc').textContent = role ? role.description : '';
-      document.getElementById('acc-email').disabled = true; // Email non modifiable
-      document.querySelector('.acc-form').scrollIntoView({ behavior: 'smooth' });
-    },
-
-    checkPermission,
-    getRoles: () => ROLES,
-    getAccounts: () => accounts,
+    save: saveAccount,
+    delete: deleteAccount
   };
 })();
