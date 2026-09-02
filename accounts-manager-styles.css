@@ -1,0 +1,324 @@
+/* ACCOUNTS MANAGER — Styles */
+
+.acc-container {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 2rem;
+  padding: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+  .acc-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+/* Formulaire */
+.acc-form-section {
+  min-height: 300px;
+}
+
+.acc-form {
+  background: white;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 80px;
+}
+
+.acc-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.acc-legend {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #18181b;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f0fdf4;
+}
+
+.acc-group {
+  margin-bottom: 1rem;
+}
+
+.acc-group label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #18181b;
+  margin-bottom: 0.4rem;
+}
+
+.acc-input {
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  border: 1.5px solid #e4e4e7;
+  border-radius: 6px;
+  background: white;
+  color: #18181b;
+  font-family: inherit;
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.acc-input:focus {
+  border-color: #16a34a;
+  background: white;
+  box-shadow: 0 0 0 3px #f0fdf4;
+}
+
+.acc-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2371717a' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+
+.acc-role-desc {
+  display: block;
+  font-size: 0.75rem;
+  color: #71717a;
+  margin-top: 0.4rem;
+  font-style: italic;
+}
+
+.acc-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.acc-btn {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.acc-btn-primary {
+  background: #16a34a;
+  color: white;
+}
+
+.acc-btn-primary:hover {
+  background: #15803d;
+}
+
+.acc-btn-primary:active {
+  transform: scale(0.98);
+}
+
+.acc-btn-secondary {
+  background: white;
+  border: 1px solid #e4e4e7;
+  color: #71717a;
+}
+
+.acc-btn-secondary:hover {
+  background: #fafafa;
+  color: #18181b;
+}
+
+/* Success message */
+.acc-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Error */
+.acc-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* Liste */
+.acc-list-section {
+  min-height: 400px;
+}
+
+.acc-list-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #18181b;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f0fdf4;
+}
+
+.acc-empty {
+  text-align: center;
+  color: #71717a;
+  padding: 2rem 1rem;
+  font-style: italic;
+}
+
+/* Table */
+.acc-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  background: white;
+}
+
+.acc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.acc-table thead {
+  background: #f0fdf4;
+  border-bottom: 2px solid #e4e4e7;
+}
+
+.acc-table th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: #15803d;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.acc-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e4e4e7;
+  color: #18181b;
+}
+
+.acc-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.acc-email {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem;
+  color: #71717a;
+}
+
+.acc-name {
+  font-weight: 500;
+}
+
+.acc-badge {
+  display: inline-block;
+  padding: 0.35rem 0.7rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.acc-status {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.acc-status.active {
+  color: #16a34a;
+}
+
+.acc-status.inactive {
+  color: #71717a;
+}
+
+.acc-actions-cell {
+  text-align: right;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.acc-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: white;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.acc-btn-icon:hover {
+  background: #fafafa;
+  border-color: #16a34a;
+}
+
+.acc-btn-icon.acc-btn-danger:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .acc-container {
+    padding: 1rem;
+  }
+
+  .acc-form {
+    position: static;
+  }
+
+  .acc-table {
+    font-size: 0.8rem;
+  }
+
+  .acc-table th,
+  .acc-table td {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .acc-actions-cell {
+    gap: 0.25rem;
+  }
+
+  .acc-btn-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+}

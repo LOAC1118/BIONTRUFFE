@@ -14,9 +14,10 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   }
 </script>
-<!-- STOCK ENTRY + SCANNER STYLES -->
+<!-- STOCK ENTRY + SCANNER + ACCOUNTS MANAGER STYLES -->
 <link rel="stylesheet" href="stock-entry-styles.css">
 <link rel="stylesheet" href="stock-scanner-styles.css">
+<link rel="stylesheet" href="accounts-manager-styles.css">
 <style>
 :root {
   /* Palette simple et joviale */
@@ -428,6 +429,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
     <button class="t-tab" onclick="showSection('commandes',this)">📦 Commandes</button>
     <button class="t-tab" onclick="showSection('mailing',this)">📧 Mailing</button>
     <button class="t-tab" onclick="showSection('stock',this)">📦 Entrée Stock</button>
+    <button class="t-tab" onclick="showSection('accounts',this)">👥 Comptes</button>
     <button class="t-tab" onclick="showSection('commissions',this)">💶 Commissions</button>
   </div>
   <div class="topbar-right">
@@ -464,6 +466,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
   <div class="nav-section">
     <div class="nav-label">Gestion</div>
     <div class="nav-item" onclick="showSection('stock',this)">📦 Entrée Stock</div>
+    <div class="nav-item" onclick="showSection('accounts',this)">👥 Gestion des Comptes</div>
   </div>
   <div class="nav-divider"></div>
   <div class="nav-section">
@@ -1016,6 +1019,17 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
   <div id="stock-host"></div>
 </div>
 
+<!-- GESTION DES COMPTES — BIO N TRUFFE (v1) -->
+<div id="sec-accounts" class="section hidden">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Gestion des Comptes</div>
+      <div class="page-sub">Création et gestion des comptes utilisateur (Admin seul)</div>
+    </div>
+  </div>
+  <div id="accounts-host"></div>
+</div>
+
 <!-- MODALE FICHE CLIENT (style MDM V3) -->
 <div class="modal-bg hidden" id="cdb-modal-edit">
   <div class="modal modal-wide">
@@ -1446,6 +1460,9 @@ function showSection(id, btn) {
   if (id === 'commissions') setTimeout(commInit, 50);
   if (id === 'stock' && typeof StockEntry !== 'undefined') setTimeout(() => {
     StockEntry.mount('#stock-host', db, currentUser, 'biontruffle');
+  }, 50);
+  if (id === 'accounts' && typeof AccountsManager !== 'undefined') setTimeout(() => {
+    AccountsManager.mount('#accounts-host', db, currentUser);
   }, 50);
 }
 
@@ -3700,9 +3717,10 @@ function fmtDate(ts) {
 }
 </script>
 
-<!-- STOCK ENTRY + SCANNER MODULES (v2.1 + v1) -->
+<!-- STOCK ENTRY + SCANNER + ACCOUNTS MANAGER MODULES -->
 <script src="stock-entry.js?v=2.1"></script>
 <script src="stock-scanner.js?v=1"></script>
+<script src="accounts-manager.js?v=1"></script>
 
 </body>
 </html>
