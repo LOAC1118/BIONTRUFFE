@@ -1,23 +1,16 @@
 /**
- * INIT ACCOUNTS — AUTO-INITIALIZATION (v1)
+ * INIT ACCOUNTS — AUTO-INITIALIZATION (v2)
  * Initialise les comptes admin à la première connexion
- * Crée automatiquement les 2 comptes admin si absent
+ * Crée automatiquement le compte admin principal
  */
 
 const InitAccounts = (() => {
-  // Liste des comptes admin à initialiser
-  const ADMIN_ACCOUNTS = [
-    {
-      email: 'cspoto@moulindesmoines.com',
-      displayName: 'Christophe Spoto (MDM)',
-      role: 'admin'
-    },
-    {
-      email: 'loacdev@outlook.fr',
-      displayName: 'Christophe LOAC Dev',
-      role: 'admin'
-    }
-  ];
+  // Compte admin unique
+  const ADMIN_ACCOUNT = {
+    email: 'spoto.christophe@gmail.com',
+    displayName: 'Christophe Spoto',
+    role: 'admin'
+  };
   
   // Permissions par défaut pour les admins
   const DEFAULT_ADMIN_PERMISSIONS = [
@@ -30,42 +23,39 @@ const InitAccounts = (() => {
     'delivery_view'
   ];
   
-  // Initialiser les comptes
+  // Initialiser le compte admin
   const init = async (db) => {
     if (!db) return;
     
     try {
-      // Vérifier si la collection existe
-      const snapshot = await db.collection('accounts_biontruffle').limit(1).get();
+      // Vérifier si le compte admin existe
+      const adminSnapshot = await db.collection('accounts_biontruffle')
+        .doc(ADMIN_ACCOUNT.email)
+        .get();
       
-      // Si aucun compte n'existe, créer les comptes admin
-      if (snapshot.empty) {
-        console.log('📝 Initialisation des comptes admin...');
+      // Si le compte n'existe pas, le créer
+      if (!adminSnapshot.exists) {
+        console.log('📝 Création du compte admin principal...');
         
-        for (const account of ADMIN_ACCOUNTS) {
-          const docRef = db.collection('accounts_biontruffle').doc(account.email);
-          
-          await docRef.set({
-            email: account.email,
-            displayName: account.displayName,
-            role: account.role,
-            permissions: DEFAULT_ADMIN_PERMISSIONS,
-            status: 'active',
-            createdAt: new Date(),
-            createdBy: 'system'
-          });
-          
-          console.log(`✅ Compte créé: ${account.email}`);
-        }
+        await db.collection('accounts_biontruffle').doc(ADMIN_ACCOUNT.email).set({
+          email: ADMIN_ACCOUNT.email,
+          displayName: ADMIN_ACCOUNT.displayName,
+          role: ADMIN_ACCOUNT.role,
+          permissions: DEFAULT_ADMIN_PERMISSIONS,
+          status: 'active',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdBy: 'system'
+        });
         
-        console.log('✅ Initialisation des comptes admin terminée!');
+        console.log(`✅ Compte admin créé: ${ADMIN_ACCOUNT.email}`);
+        console.log('✅ Initialisation terminée!');
         return true;
       } else {
-        console.log('✅ Comptes existants trouvés');
+        console.log('✅ Compte admin existant trouvé');
         return false;
       }
     } catch (e) {
-      console.error('❌ Erreur initialisation comptes:', e);
+      console.error('❌ Erreur initialisation compte admin:', e);
       return false;
     }
   };
