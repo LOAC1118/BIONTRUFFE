@@ -938,19 +938,22 @@ onAuthStateChanged(window.auth, user => {
   const appShell = document.getElementById('app-shell');
   const bootLoader = document.getElementById('boot-loader');
 
-  if (user) {
-    window.currentUser = user;
-    loginScreen.classList.add('hidden');
-    bootLoader.classList.add('hidden');
-    appShell.classList.remove('hidden');
-    updateUserUI(user);
-    initializeApp();
-  } else {
-    window.currentUser = null;
-    appShell.classList.add('hidden');
-    loginScreen.classList.remove('hidden');
-    bootLoader.classList.add('hidden');
-  }
+  setTimeout(() => {
+    if (user) {
+      window.currentUser = user;
+      loginScreen.classList.add('hidden');
+      bootLoader.classList.add('hidden');
+      appShell.classList.remove('hidden');
+      updateUserUI(user);
+      console.log('✅ CRM Bio N Truffe - Connecté!');
+    } else {
+      window.currentUser = null;
+      appShell.classList.add('hidden');
+      bootLoader.classList.add('hidden');
+      loginScreen.classList.remove('hidden');
+      console.log('🔐 Veuillez vous connecter');
+    }
+  }, 300);
 });
 
 window.doLogin = async () => {
@@ -965,8 +968,12 @@ window.doLogin = async () => {
 
   try {
     err.textContent = '';
+    document.getElementById('l-email').disabled = true;
+    document.getElementById('l-pwd').disabled = true;
     await signInWithEmailAndPassword(window.auth, email, pwd);
   } catch (e) {
+    document.getElementById('l-email').disabled = false;
+    document.getElementById('l-pwd').disabled = false;
     err.textContent = `❌ ${e.message}`;
   }
 };
@@ -984,10 +991,6 @@ function updateUserUI(user) {
   document.getElementById('sb-name').textContent = user.displayName || 'Utilisateur';
   document.getElementById('sb-role').textContent = user.email;
   document.getElementById('menu-email').textContent = user.email;
-}
-
-function initializeApp() {
-  console.log('✅ CRM Bio N Truffe prêt!');
 }
 
 // Navigation
