@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bio N Truffe CRM — Configuration Admin</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #f0f4f0 0%, #e8f1de 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  
+  .setup-box {
+    background: white;
+    border-radius: 16px;
+    padding: 2.5rem;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(45, 80, 22, 0.1);
+    border: 1px solid #e8f1de;
+  }
+  
+  .setup-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .setup-icon {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .setup-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a2f0d;
+    margin: 0;
+  }
+  
+  .setup-subtitle {
+    color: #74776f;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+  
+  label {
+    display: block;
+    font-weight: 600;
+    color: #4a4d49;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+  }
+  
+  input:focus {
+    outline: none;
+    border-color: #2d5016;
+    box-shadow: 0 0 0 3px #e8f1de;
+  }
+  
+  .btn-setup {
+    width: 100%;
+    padding: 0.75rem;
+    background: #2d5016;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .btn-setup:hover {
+    background: #234010;
+    transform: translateY(-1px);
+  }
+  
+  .btn-setup:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .msg {
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    display: none;
+  }
+  
+  .msg.success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+    display: block;
+  }
+  
+  .msg.error {
+    background: #fee2e2;
+    color: #7f1d1d;
+    border: 1px solid #fca5a5;
+    display: block;
+  }
+  
+  .info-box {
+    background: #f0efe9;
+    border-left: 4px solid #2d5016;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+    color: #4a4d49;
+  }
+</style>
+</head>
+<body>
+
+<div class="setup-box">
+  <div class="setup-header">
+    <div class="setup-icon">🍄</div>
+    <h1 class="setup-title">Bio N Truffe CRM</h1>
+    <div class="setup-subtitle">Configuration Administrateur</div>
+  </div>
+  
+  <div class="info-box">
+    ✅ Cette page crée le compte administrateur principal pour accéder au CRM.
+  </div>
+  
+  <form id="setup-form" onsubmit="handleSetup(event)">
+    <div class="form-group">
+      <label for="setup-email">Email Admin</label>
+      <input type="email" id="setup-email" value="spoto.christophe@gmail.com" readonly>
+    </div>
+    
+    <div class="form-group">
+      <label for="setup-password">Mot de passe</label>
+      <input type="password" id="setup-password" placeholder="Minimum 6 caractères" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="setup-password-confirm">Confirmer mot de passe</label>
+      <input type="password" id="setup-password-confirm" placeholder="Répéter le mot de passe" required>
+    </div>
+    
+    <button type="submit" class="btn-setup" id="btn-setup">Créer le compte admin</button>
+  </form>
+  
+  <div id="setup-msg" class="msg"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js';
+import { getFirestore, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBq3I_Fds_r1kFlNKpqnm1r8WH34J7lkJQ",
+  authDomain: "biontruffe-8ef75.firebaseapp.com",
+  projectId: "biontruffe-8ef75",
+  storageBucket: "biontruffe-8ef75.appspot.com",
+  messagingSenderId: "752639151847",
+  appId: "1:752639151847:web:1e81f78b2f0bf1238ba2f2"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+window.handleSetup = async (e) => {
+  e.preventDefault();
+  
+  const email = document.getElementById('setup-email').value.trim();
+  const pwd = document.getElementById('setup-password').value.trim();
+  const pwdConfirm = document.getElementById('setup-password-confirm').value.trim();
+  const msg = document.getElementById('setup-msg');
+  const btn = document.getElementById('btn-setup');
+  
+  msg.className = 'msg';
+  msg.textContent = '';
+  
+  // Validations
+  if (!pwd || !pwdConfirm) {
+    msg.className = 'msg error';
+    msg.textContent = '❌ Remplissez les deux mots de passe';
+    return;
+  }
+  
+  if (pwd !== pwdConfirm) {
+    msg.className = 'msg error';
+    msg.textContent = '❌ Les mots de passe ne correspondent pas';
+    return;
+  }
+  
+  if (pwd.length < 6) {
+    msg.className = 'msg error';
+    msg.textContent = '❌ Le mot de passe doit avoir au minimum 6 caractères';
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.textContent = '⏳ Création...';
+  
+  try {
+    // 1. Créer l'utilisateur Firebase Auth
+    console.log('📝 Création utilisateur Firebase Auth...');
+    const userCred = await createUserWithEmailAndPassword(auth, email, pwd);
+    const user = userCred.user;
+    
+    // 2. Mettre à jour le profil
+    console.log('📝 Mise à jour du profil...');
+    await updateProfile(user, {
+      displayName: 'Christophe Spoto - Admin'
+    });
+    
+    // 3. Créer le document admin dans Firestore
+    console.log('📝 Création du document Firestore...');
+    await setDoc(doc(db, 'accounts_biontruffle', email), {
+      email: email,
+      displayName: 'Christophe Spoto - Admin',
+      uid: user.uid,
+      role: 'admin',
+      status: 'active',
+      permissions: [
+        'bdc',
+        'stock_entry',
+        'stock_view',
+        'accounts_manage',
+        'clients_view',
+        'invoices_view',
+        'delivery_view'
+      ],
+      createdAt: serverTimestamp(),
+      createdBy: 'system'
+    });
+    
+    console.log('✅ Compte créé avec succès!');
+    msg.className = 'msg success';
+    msg.innerHTML = `
+      ✅ <strong>Compte admin créé!</strong><br>
+      Email: ${email}<br>
+      <br>
+      👉 <a href="https://loac1118.github.io/BIONTRUFFE/" style="color:#065f46; font-weight:600; text-decoration:none;">Aller au CRM →</a>
+    `;
+    btn.textContent = '✅ Compte créé!';
+    
+  } catch (error) {
+    console.error('❌ Erreur:', error);
+    msg.className = 'msg error';
+    
+    if (error.code === 'auth/email-already-in-use') {
+      msg.textContent = '❌ Ce compte existe déjà! Va à la page de connexion.';
+    } else if (error.code === 'auth/weak-password') {
+      msg.textContent = '❌ Le mot de passe est trop faible (minimum 6 caractères)';
+    } else {
+      msg.textContent = `❌ ${error.message}`;
+    }
+    
+    btn.disabled = false;
+    btn.textContent = 'Créer le compte admin';
+  }
+};
+</script>
+
+</body>
+</html>
