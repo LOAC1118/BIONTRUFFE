@@ -252,5 +252,11 @@ const StockScanner = (() => {
     stop() { return stopScanner(); },
     isScanning() { return scanning; },
     getDetectorType() { return detectorType; },
+    triggerScanner() {
+      if (inputEl) {
+        inputEl.focus();
+        inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    },
   };
 })();
