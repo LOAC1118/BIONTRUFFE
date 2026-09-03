@@ -109,7 +109,7 @@ const StockEntry = (() => {
     }
   };
 
-  const saveEntry = async (ean, ref, qty, productName, movementType, reason, location) => {
+  const saveEntry = async (ean, ref, qty, productName, movementType, reason, location, prixAchat, ddm, numLot) => {
     if (!db || !currentUser) return false;
     if (!qty || qty === 0) return false;
     const qtyInt = parseInt(qty, 10);
@@ -124,6 +124,9 @@ const StockEntry = (() => {
         movementType: movementType || 'reception',
         reason: reason || '',
         location: location || 'central',
+        prixAchat: prixAchat ? parseFloat(prixAchat) : null,
+        ddm: ddm || null,
+        numLot: numLot || null,
         uid: currentUser.uid,
         createdAt: firebase.firestore.Timestamp.now(),
         date: new Date().toISOString().split('T')[0],
@@ -187,6 +190,27 @@ const StockEntry = (() => {
             ${locationOpts}
           </select>
         </div>
+        
+        <!-- NOUVEAUX CHAMPS: Prix, DDM, LOT -->
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.75rem; margin: 1rem 0;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: #15803d; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.75rem;">📦 Infos complémentaires</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+            <div class="stk-group" style="margin: 0;">
+              <label for="stk-prix" style="font-size: 0.8rem;">Prix d'achat (€)</label>
+              <input type="number" id="stk-prix" class="stk-input" 
+                min="0" step="0.01" placeholder="0.00" style="font-size: 0.85rem; padding: 0.4rem 0.5rem;"/>
+            </div>
+            <div class="stk-group" style="margin: 0;">
+              <label for="stk-ddm" style="font-size: 0.8rem;">DDM</label>
+              <input type="date" id="stk-ddm" class="stk-input" style="font-size: 0.85rem; padding: 0.4rem 0.5rem;"/>
+            </div>
+            <div class="stk-group" style="margin: 0;">
+              <label for="stk-lot" style="font-size: 0.8rem;">N° de LOT</label>
+              <input type="text" id="stk-lot" class="stk-input" placeholder="Ex: LOT-2024-001" style="font-size: 0.85rem; padding: 0.4rem 0.5rem;"/>
+            </div>
+          </div>
+        </div>
+        
         <div class="stk-actions">
           <button type="submit" class="stk-btn stk-btn-primary">Enregistrer</button>
           <button type="reset" class="stk-btn stk-btn-secondary">Réinitialiser</button>
@@ -267,6 +291,9 @@ const StockEntry = (() => {
       const movementType = typeSelect.value;
       const reason = reasonSelect.value;
       const location = locationSelect.value;
+      const prixAchat = form.querySelector('#stk-prix')?.value || '';
+      const ddm = form.querySelector('#stk-ddm')?.value || '';
+      const numLot = form.querySelector('#stk-lot')?.value || '';
       
       if (!currentProduct && !search) {
         alert('Veuillez entrer un EAN ou une référence');
@@ -285,7 +312,7 @@ const StockEntry = (() => {
       const ref = currentProduct?.code || search;
       const name = currentProduct?.libelle || search;
       
-      const ok = await saveEntry(ean, ref, qty, name, movementType, reason, location);
+      const ok = await saveEntry(ean, ref, qty, name, movementType, reason, location, prixAchat, ddm, numLot);
       if (ok) {
         form.reset();
         resultDiv.innerHTML = '';
@@ -324,8 +351,8 @@ const StockEntry = (() => {
       .forEach(([date, items]) => {
         html += `<div class="stk-date-group">
           <h4 class="stk-date-label">${date}</h4>
-          <table class="stk-table">
-            <thead><tr><th>Produit</th><th>Code</th><th>Type</th><th>Raison</th><th>Quantité</th></tr></thead>
+          <table class="stk-table" style="font-size: 0.8rem;">
+            <thead><tr><th>Produit</th><th>Code</th><th>Type</th><th>Raison</th><th>Quantité</th><th>Prix €</th><th>DDM</th><th>LOT</th></tr></thead>
             <tbody>`;
         items.forEach(e => {
           const movType = MOVEMENT_TYPES.find(m => m.value === e.movementType);
@@ -333,12 +360,18 @@ const StockEntry = (() => {
             ? `<span class="stk-badge" style="background:${movType.color}">${movType.label}</span>`
             : '';
           const qtyClass = e.qty > 0 ? 'stk-qty-in' : 'stk-qty-out';
+          const prixDisplay = e.prixAchat ? e.prixAchat.toFixed(2) + ' €' : '—';
+          const ddmDisplay = e.ddm ? e.ddm : '—';
+          const lotDisplay = e.numLot ? e.numLot : '—';
           html += `<tr>
             <td class="stk-name">${e.productName}</td>
             <td class="stk-code">${e.code || e.ean || '?'}</td>
             <td>${badge}</td>
             <td class="stk-reason">${e.reason || '–'}</td>
             <td class="stk-qty ${qtyClass}">${e.qty > 0 ? '+' : ''}${e.qty}</td>
+            <td style="text-align: right; color: #16a34a; font-weight: 500;">${prixDisplay}</td>
+            <td style="color: #2196F3;">${ddmDisplay}</td>
+            <td style="color: #FF9800; font-weight: 500;">${lotDisplay}</td>
           </tr>`;
         });
         html += `</tbody></table></div>`;
@@ -488,6 +521,9 @@ const StockEntry = (() => {
         const movementType = typeSelect.value;
         const reason = reasonSelect.value;
         const location = locationSelect.value;
+        const prixAchat = form.querySelector('#stk-prix')?.value || '';
+        const ddm = form.querySelector('#stk-ddm')?.value || '';
+        const numLot = form.querySelector('#stk-lot')?.value || '';
         
         if (!currentProduct && !search) {
           alert('Veuillez entrer un EAN ou une référence');
@@ -506,7 +542,7 @@ const StockEntry = (() => {
         const ref = currentProduct?.code || search;
         const name = currentProduct?.libelle || search;
         
-        const ok = await saveEntry(ean, ref, qty, name, movementType, reason, location);
+        const ok = await saveEntry(ean, ref, qty, name, movementType, reason, location, prixAchat, ddm, numLot);
         if (ok) {
           form.reset();
           resultDiv.innerHTML = '';
