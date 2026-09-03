@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#16a34a">
+<meta name="description" content="BIONTRUFFE CRM - Gestion clients, commandes, stock, factures">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%2316a34a' width='192' height='192'/><text x='50%' y='50%' font-size='80' fill='white' font-weight='bold' text-anchor='middle' dominant-baseline='middle'>BNT</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>BIO N TRUFFE — CRM Commercial</title>
 <meta name="description" content="CRM BIO N TRUFFE — Bons de commande, base clients, suivi commercial">
 <meta name="robots" content="noindex, nofollow">
@@ -3918,5 +3923,103 @@ function cdbCreateFacture() {
   // Message de confirmation
   alert('✅ Facture créée pour: ' + clientNom + '\n\nDonnées du client pré-remplies automatiquement');
 }
+</script>
+
+
+<!-- SERVICE WORKER REGISTRATION & OFFLINE/EXPORT FEATURES -->
+<script>
+// Enregistrer le Service Worker pour offline-first
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg => {
+        console.log('✅ Service Worker enregistré:', reg);
+        // Sync périodique
+        if ('periodicSync' in reg) {
+          reg.periodicSync.register('sync-firestore', { minInterval: 24 * 60 * 60 * 1000 })
+            .then(() => console.log('✅ Synchronisation programmée'))
+            .catch(() => console.log('Sync non disponible'));
+        }
+      })
+      .catch(err => console.log('❌ SW registration failed:', err));
+  });
+}
+
+// EXPORT DONNÉES — Créer un backup JSON de toutes les collections
+async function exportData() {
+  if (!db || !currentUser) {
+    alert('❌ Connexion requise');
+    return;
+  }
+
+  console.log('📥 Export en cours...');
+  const backup = {
+    timestamp: new Date().toISOString(),
+    user: currentUser.email,
+    brand: 'biontruffle',
+    collections: {}
+  };
+
+  const collections = [
+    'accounts_biontruffle',
+    'clients_biontruffle',
+    'bdc_biontruffle',
+    'stock_entries_biontruffle',
+    'factures_biontruffle',
+    'bls_biontruffle',
+    'config_biontruffle'
+  ];
+
+  try {
+    for (const colName of collections) {
+      const snap = await db.collection(colName).get();
+      backup.collections[colName] = snap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }));
+      console.log(`✅ ${colName}: ${snap.docs.length} documents`);
+    }
+
+    // Télécharger le JSON
+    const json = JSON.stringify(backup, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `biontruffe-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    alert('✅ Export complété!\n\n' + 
+      Object.entries(backup.collections)
+        .map(([col, docs]) => `${col}: ${docs.length} docs`)
+        .join('\n'));
+  } catch (e) {
+    console.error('❌ Erreur export:', e);
+    alert('❌ Erreur: ' + e.message);
+  }
+}
+
+// Ajouter le bouton export au dashboard (dans showApp)
+function addExportButton() {
+  const dashboard = document.getElementById('sec-dashboard');
+  if (!dashboard) return;
+  
+  let exportBtn = document.getElementById('export-btn');
+  if (!exportBtn) {
+    exportBtn = document.createElement('button');
+    exportBtn.id = 'export-btn';
+    exportBtn.className = 'btn btn-primary';
+    exportBtn.style.cssText = 'position: fixed; bottom: 2rem; right: 2rem; z-index: 1000; padding: 0.75rem 1rem; background: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+    exportBtn.innerHTML = '💾 Backup';
+    exportBtn.addEventListener('click', exportData);
+    document.body.appendChild(exportBtn);
+  }
+}
+
+// Ajouter le bouton quand l'app se charge
+setTimeout(addExportButton, 1000);
 </script>
 
