@@ -1526,8 +1526,8 @@ function showSection(id, btn) {
   if (id === 'stock' && typeof StockEntry !== 'undefined') setTimeout(() => {
     StockEntry.mount('#stock-host', db, currentUser, 'biontruffle');
   }, 50);
-  if (id === 'accounts' && typeof AccountsManager !== 'undefined') setTimeout(() => {
-    AccountsManager.mount('#accounts-host', db, auth, currentUser);
+  if (id === 'accounts' && typeof AdminPanel !== 'undefined') setTimeout(() => {
+    AdminPanel.mount('#accounts-host', db, auth, currentUser);
   }, 50);
   if (id === 'clients-import' && typeof ClientsImport !== 'undefined') setTimeout(() => {
     ClientsImport.mount('#clients-import-host', db, currentUser);
@@ -3795,6 +3795,7 @@ function fmtDate(ts) {
 <script src="stock-entry.js?v=2.1"></script>
 <script src="stock-scanner.js?v=1"></script>
 <script src="accounts-manager.js?v=1"></script>
+<script src="admin-panel.js?v=1"></script>
 <script src="clients-import.js?v=1"></script>
 <script src="bdc-manager.js?v=1"></script>
 <script src="bl-manager.js?v=1"></script>
