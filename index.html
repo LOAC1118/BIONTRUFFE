@@ -4023,3 +4023,91 @@ function addExportButton() {
 setTimeout(addExportButton, 1000);
 </script>
 
+
+<!-- EXPORT STOCK PDF/CSV -->
+<script>
+function addStockExportButtons() {
+  const stockHost = document.getElementById('stock-host');
+  if (!stockHost) return;
+  
+  let exportPanel = document.getElementById('stock-export-panel');
+  if (!exportPanel) {
+    exportPanel = document.createElement('div');
+    exportPanel.id = 'stock-export-panel';
+    exportPanel.style.cssText = `
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      display: flex;
+      gap: 0.75rem;
+      z-index: 999;
+      flex-direction: column;
+      padding: 1rem;
+      background: white;
+      border: 1px solid #e4e4e7;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    `;
+    
+    // Bouton PDF
+    const btnPdf = document.createElement('button');
+    btnPdf.id = 'stock-export-pdf-btn';
+    btnPdf.innerHTML = '📄 Export PDF';
+    btnPdf.style.cssText = `
+      padding: 0.75rem 1rem;
+      background: #dc2626;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    `;
+    btnPdf.addEventListener('mouseover', () => btnPdf.style.background = '#b91c1c');
+    btnPdf.addEventListener('mouseout', () => btnPdf.style.background = '#dc2626');
+    btnPdf.addEventListener('click', () => {
+      if (typeof StockEntry !== 'undefined' && StockEntry.exportStockToPDF) {
+        StockEntry.exportStockToPDF();
+      }
+    });
+    
+    // Bouton CSV
+    const btnCsv = document.createElement('button');
+    btnCsv.id = 'stock-export-csv-btn';
+    btnCsv.innerHTML = '📊 Export CSV';
+    btnCsv.style.cssText = `
+      padding: 0.75rem 1rem;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    `;
+    btnCsv.addEventListener('mouseover', () => btnCsv.style.background = '#1976D2');
+    btnCsv.addEventListener('mouseout', () => btnCsv.style.background = '#2196F3');
+    btnCsv.addEventListener('click', () => {
+      if (typeof StockEntry !== 'undefined' && StockEntry.exportStockToCSV) {
+        StockEntry.exportStockToCSV();
+      }
+    });
+    
+    exportPanel.appendChild(btnPdf);
+    exportPanel.appendChild(btnCsv);
+    document.body.appendChild(exportPanel);
+  }
+}
+
+// Ajouter les boutons quand on affiche la section stock
+const originalShowSection = window.showSection;
+window.showSection = function(id, el) {
+  originalShowSection(id, el);
+  if (id === 'stock') {
+    setTimeout(addStockExportButtons, 500);
+  }
+};
+</script>
+

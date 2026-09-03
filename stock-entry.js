@@ -559,10 +559,179 @@ const StockEntry = (() => {
         }
       });
 
-      loadHistory();
-    },
+  const exportStockToPDF = async () => {
+    if (!stockHistory || stockHistory.length === 0) {
+      alert('Aucune entrée à exporter');
+      return;
+    }
 
-    setDb,
+    try {
+      // Charger jsPDF
+      const jsPDF = window.jspdf.jsPDF;
+      if (!jsPDF) {
+        alert('⚠️ jsPDF non disponible. Veuillez vérifier la connexion.');
+        return;
+      }
+
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const pageHeight = doc.internal.pageSize.height;
+      const pageWidth = doc.internal.pageSize.width;
+      let yPos = 10;
+
+      // En-tête
+      doc.setFontSize(16);
+      doc.setTextColor(22, 163, 74);
+      doc.text('📦 RAPPORT ENTRÉE STOCK', pageWidth / 2, yPos, { align: 'center' });
+      
+      yPos += 8;
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, pageWidth / 2, yPos, { align: 'center' });
+      doc.text(`Utilisateur: ${currentUser?.email || 'unknown'}`, pageWidth / 2, yPos + 5, { align: 'center' });
+      
+      yPos += 15;
+
+      // Grouper par date
+      const byDate = {};
+      stockHistory.forEach(e => {
+        const d = e.date || e.createdAt?.toDate?.().toISOString().split('T')[0] || '?';
+        if (!byDate[d]) byDate[d] = [];
+        byDate[d].push(e);
+      });
+
+      // Tableau pour chaque date
+      Object.entries(byDate)
+        .sort((a, b) => b[0].localeCompare(a[0]))
+        .forEach(([date, items]) => {
+          // Vérifier si on a besoin d'une nouvelle page
+          if (yPos > pageHeight - 40) {
+            doc.addPage();
+            yPos = 10;
+          }
+
+          // Titre de la date
+          doc.setFontSize(11);
+          doc.setTextColor(33, 150, 243);
+          doc.setFont(undefined, 'bold');
+          doc.text(`📅 ${date}`, 10, yPos);
+          yPos += 7;
+
+          // En-têtes du tableau
+          doc.setFontSize(9);
+          doc.setTextColor(50, 50, 50);
+          doc.setFont(undefined, 'bold');
+          const cols = [
+            { header: 'Produit', x: 10, width: 35 },
+            { header: 'Code', x: 47, width: 18 },
+            { header: 'Type', x: 67, width: 18 },
+            { header: 'Raison', x: 87, width: 30 },
+            { header: 'Qty', x: 119, width: 12 },
+            { header: 'Prix €', x: 133, width: 16 },
+            { header: 'DDM', x: 151, width: 20 },
+            { header: 'LOT', x: 173, width: 25 }
+          ];
+
+          cols.forEach(col => {
+            doc.text(col.header, col.x, yPos, { maxWidth: col.width });
+          });
+
+          yPos += 6;
+          doc.setDrawColor(200, 200, 200);
+          doc.line(10, yPos, pageWidth - 10, yPos);
+          yPos += 3;
+
+          // Lignes du tableau
+          doc.setFont(undefined, 'normal');
+          doc.setFontSize(8);
+          items.forEach(e => {
+            if (yPos > pageHeight - 20) {
+              doc.addPage();
+              yPos = 10;
+            }
+
+            const movType = MOVEMENT_TYPES.find(m => m.value === e.movementType)?.label || e.movementType;
+            const prixDisplay = e.prixAchat ? e.prixAchat.toFixed(2) : '—';
+            const ddmDisplay = e.ddm || '—';
+            const lotDisplay = e.numLot || '—';
+
+            // Colorer les lignes en fonction du type
+            if (e.qty > 0) {
+              doc.setTextColor(22, 163, 74); // Vert
+            } else {
+              doc.setTextColor(255, 152, 0); // Orange
+            }
+
+            doc.text(e.productName.substring(0, 20), 10, yPos, { maxWidth: 35 });
+            doc.text(e.code || e.ean || '?', 47, yPos, { maxWidth: 18 });
+            doc.text(movType.substring(0, 12), 67, yPos, { maxWidth: 18 });
+            doc.text((e.reason || '–').substring(0, 15), 87, yPos, { maxWidth: 30 });
+            doc.text(`${e.qty > 0 ? '+' : ''}${e.qty}`, 119, yPos, { maxWidth: 12, align: 'right' });
+            
+            doc.setTextColor(22, 163, 74);
+            doc.text(prixDisplay, 133, yPos, { maxWidth: 16, align: 'right' });
+            
+            doc.setTextColor(33, 150, 243);
+            doc.text(ddmDisplay, 151, yPos, { maxWidth: 20 });
+            
+            doc.setTextColor(255, 152, 0);
+            doc.text(lotDisplay, 173, yPos, { maxWidth: 25 });
+
+            yPos += 5;
+          });
+
+          yPos += 3;
+        });
+
+      // Pied de page
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Rapport généré automatiquement - BIONTRUFFE CRM v2.2`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+
+      // Télécharger
+      doc.save(`stock-rapport-${new Date().toISOString().split('T')[0]}.pdf`);
+      console.log('✅ PDF généré et téléchargé');
+    } catch (e) {
+      console.error('❌ Erreur export PDF:', e);
+      alert('❌ Erreur: ' + e.message);
+    }
+  };
+
+  const exportStockToCSV = () => {
+    if (!stockHistory || stockHistory.length === 0) {
+      alert('Aucune entrée à exporter');
+      return;
+    }
+
+    try {
+      let csv = 'Date,Produit,Code,Type,Raison,Quantité,Prix €,DDM,LOT\n';
+      
+      stockHistory.forEach(e => {
+        const date = e.date || e.createdAt?.toDate?.().toISOString().split('T')[0] || '?';
+        const movType = MOVEMENT_TYPES.find(m => m.value === e.movementType)?.label || e.movementType;
+        const prixDisplay = e.prixAchat ? e.prixAchat.toFixed(2) : '';
+        const ddmDisplay = e.ddm || '';
+        const lotDisplay = e.numLot || '';
+        
+        csv += `"${date}","${e.productName}","${e.code || e.ean || ''}","${movType}","${e.reason || ''}","${e.qty}","${prixDisplay}","${ddmDisplay}","${lotDisplay}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `stock-export-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      console.log('✅ CSV généré et téléchargé');
+    } catch (e) {
+      console.error('❌ Erreur export CSV:', e);
+      alert('❌ Erreur: ' + e.message);
+    }
+  };
+
     setUser,
     setBrand,
     setLocations(locs) { LOCATIONS = locs || LOCATIONS; },
@@ -571,6 +740,8 @@ const StockEntry = (() => {
     loadHistory,
     computeSummary,
     getSummary() { return stockSummary; },
+    exportStockToPDF,
+    exportStockToCSV,
     getHistory() { return stockHistory; },
   };
 })();
