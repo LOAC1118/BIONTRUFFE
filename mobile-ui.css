@@ -1,0 +1,425 @@
+/**
+ * MOBILE UI — BIONTRUFFE CRM
+ * Version optimisée pour smartphones et tablets
+ */
+
+@media (max-width: 768px) {
+  /* RESET */
+  * {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  input, textarea, select {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* LAYOUT MOBILE */
+  body {
+    margin: 0;
+    padding: 0;
+    padding-bottom: 70px;
+    font-size: 16px;
+    overflow-x: hidden;
+  }
+
+  /* HIDE DESKTOP LAYOUT */
+  #top-bar-full, #sidebar {
+    display: none !important;
+  }
+
+  /* MOBILE HEADER */
+  .mobile-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .mobile-header-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .mobile-header-user {
+    font-size: 0.75rem;
+    opacity: 0.9;
+  }
+
+  /* MOBILE BOTTOM NAV */
+  .mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: white;
+    border-top: 1px solid #e4e4e7;
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    z-index: 999;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  }
+
+  .mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 0.7rem;
+    color: #71717a;
+    padding: 0.5rem 0;
+    gap: 0.25rem;
+    transition: all 0.3s;
+  }
+
+  .mobile-nav-item:active {
+    background: #f0fdf4;
+  }
+
+  .mobile-nav-item.active {
+    color: #16a34a;
+    font-weight: 700;
+  }
+
+  .mobile-nav-icon {
+    font-size: 1.5rem;
+  }
+
+  /* CONTENT */
+  .app-content {
+    margin-top: 50px;
+    margin-bottom: 70px;
+    padding: 1rem;
+  }
+
+  .section {
+    width: 100%;
+  }
+
+  /* HIDE DESKTOP */
+  .page-header, .page-title, .page-sub {
+    display: none !important;
+  }
+
+  /* MOBILE CARDS */
+  .mobile-card {
+    background: white;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  .mobile-card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #18181b;
+    margin-bottom: 0.75rem;
+  }
+
+  .mobile-card-value {
+    font-size: 0.85rem;
+    color: #71717a;
+    line-height: 1.5;
+  }
+
+  /* MOBILE FORMS */
+  .mobile-form-group {
+    margin-bottom: 1rem;
+  }
+
+  .mobile-form-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 0.5rem;
+  }
+
+  .mobile-form-group input,
+  .mobile-form-group select,
+  .mobile-form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit;
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1rem !important;
+    min-height: 44px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: all 0.3s !important;
+    width: 100% !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .btn-primary {
+    background: #16a34a !important;
+    color: white !important;
+  }
+
+  .btn-primary:active {
+    background: #15803d !important;
+  }
+
+  .btn-ghost {
+    background: #f3f4f6 !important;
+    color: #4b5563 !important;
+  }
+
+  .btn-danger {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+  }
+
+  /* LISTS & TABLES → CARDS */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  table thead {
+    display: none !important;
+  }
+
+  table tbody tr {
+    display: block;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background: white;
+  }
+
+  table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border: none;
+    font-size: 0.85rem;
+  }
+
+  table td:before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #71717a;
+    flex: 0 0 40%;
+  }
+
+  /* MODALS */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: flex-end;
+    z-index: 1001;
+  }
+
+  .modal-content {
+    width: 100%;
+    background: white;
+    border-radius: 16px 16px 0 0;
+    padding: 1.5rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .modal-header {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #71717a;
+  }
+
+  /* SPECIFIC MODULES */
+  
+  /* CLIENTS */
+  .client-card {
+    background: white;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .client-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #18181b;
+  }
+
+  .client-info {
+    font-size: 0.75rem;
+    color: #71717a;
+    margin-top: 0.5rem;
+    line-height: 1.4;
+  }
+
+  /* STOCK */
+  .stock-entry-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  /* HISTORY */
+  .stk-history {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .stk-date-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .stk-date-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #2196F3;
+    margin-bottom: 0.75rem;
+  }
+
+  /* ACCOUNTS */
+  .account-item {
+    background: white;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .account-email {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #18181b;
+  }
+
+  .account-perms {
+    font-size: 0.75rem;
+    color: #71717a;
+    margin-top: 0.5rem;
+  }
+
+  /* FLOATING BUTTONS - HIDE ON MOBILE */
+  #export-btn,
+  #stock-export-panel,
+  .mobile-nav-item .label {
+    display: flex !important;
+  }
+
+  #export-btn {
+    position: fixed;
+    bottom: 75px;
+    right: 1rem;
+    width: auto;
+    padding: 0.75rem 1rem;
+    z-index: 998;
+  }
+
+  #stock-export-panel {
+    flex-direction: column;
+    bottom: 75px;
+    right: 1rem;
+    left: auto;
+    width: auto;
+  }
+
+  /* ORIENTATIONS */
+  @media (orientation: landscape) and (max-height: 500px) {
+    body {
+      padding-bottom: 50px;
+    }
+
+    .mobile-nav {
+      height: 50px;
+    }
+
+    .mobile-nav-icon {
+      font-size: 1.2rem;
+    }
+
+    .mobile-nav-item {
+      font-size: 0.65rem;
+    }
+  }
+}
+
+/* TABLET OPTIMIZATIONS (768px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar {
+    width: 60px;
+  }
+
+  .app-main {
+    margin-left: 60px;
+  }
+}
+
+/* SHOW DESKTOP BY DEFAULT */
+@media (min-width: 1025px) {
+  .mobile-header,
+  .mobile-nav {
+    display: none !important;
+  }
+
+  body {
+    padding-bottom: 0 !important;
+  }
+
+  .app-content {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 0 !important;
+  }
+}

@@ -26,6 +26,7 @@
 <link rel="stylesheet" href="clients-import-styles.css">
 <link rel="stylesheet" href="bdc-manager-styles.css">
 <link rel="stylesheet" href="bl-manager-styles.css">
+<link rel="stylesheet" href="mobile-ui.css">
 <style>
 :root {
   /* Palette simple et joviale */
@@ -4109,5 +4110,124 @@ window.showSection = function(id, el) {
     setTimeout(addStockExportButtons, 500);
   }
 };
+</script>
+
+
+<!-- MOBILE UI -->
+<div class="mobile-header" id="mobile-header" style="display: none;">
+  <div>
+    <div class="mobile-header-title">BNT CRM</div>
+    <div class="mobile-header-user" id="mobile-user-email">Admin</div>
+  </div>
+  <div style="font-size: 1.5rem;">📱</div>
+</div>
+
+<nav class="mobile-nav" id="mobile-nav" style="display: none;">
+  <button class="mobile-nav-item active" onclick="showSection('dashboard',this); updateMobileNav('dashboard')">
+    <div class="mobile-nav-icon">📊</div>
+    <div>Dashboard</div>
+  </button>
+  <button class="mobile-nav-item" onclick="showSection('clients',this); updateMobileNav('clients')">
+    <div class="mobile-nav-icon">👥</div>
+    <div>Clients</div>
+  </button>
+  <button class="mobile-nav-item" onclick="showSection('stock',this); updateMobileNav('stock')">
+    <div class="mobile-nav-icon">📦</div>
+    <div>Stock</div>
+  </button>
+  <button class="mobile-nav-item" onclick="showSection('bdc',this); updateMobileNav('bdc')">
+    <div class="mobile-nav-icon">📋</div>
+    <div>Commandes</div>
+  </button>
+  <button class="mobile-nav-item" onclick="toggleMobileMenu()">
+    <div class="mobile-nav-icon">⚙️</div>
+    <div>Plus</div>
+  </button>
+</nav>
+
+<!-- MOBILE MENU DRAWER -->
+<div id="mobile-menu-drawer" style="display: none; position: fixed; top: 50px; right: 0; bottom: 60px; width: 80%; background: white; border-left: 1px solid #e4e4e7; z-index: 995; overflow-y: auto; box-shadow: -2px 0 8px rgba(0,0,0,0.1);">
+  <div style="padding: 1rem;">
+    <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: #18181b;">Menu</div>
+    
+    <button onclick="showSection('clients-import',this); closeMobileMenu(); updateMobileNav('clients-import')" style="width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid #e4e4e7; border-radius: 8px; background: white; cursor: pointer; margin-bottom: 0.75rem; font-size: 0.95rem;">📥 Import Clients</button>
+    
+    <button onclick="showSection('bl',this); closeMobileMenu(); updateMobileNav('bl')" style="width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid #e4e4e7; border-radius: 8px; background: white; cursor: pointer; margin-bottom: 0.75rem; font-size: 0.95rem;">🚚 Livraison</button>
+    
+    <button onclick="showSection('factures',this); closeMobileMenu(); updateMobileNav('factures')" style="width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid #e4e4e7; border-radius: 8px; background: white; cursor: pointer; margin-bottom: 0.75rem; font-size: 0.95rem;">📄 Factures</button>
+    
+    <button onclick="showSection('accounts',this); closeMobileMenu(); updateMobileNav('accounts')" style="width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid #e4e4e7; border-radius: 8px; background: white; cursor: pointer; margin-bottom: 0.75rem; font-size: 0.95rem;">🔐 Comptes</button>
+    
+    <hr style="margin: 1rem 0; border: none; border-top: 1px solid #e4e4e7;">
+    
+    <button onclick="exportData()" style="width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid #e4e4e7; border-radius: 8px; background: white; cursor: pointer; margin-bottom: 0.75rem; font-size: 0.95rem; color: #2196F3;">💾 Backup</button>
+    
+    <button onclick="logout()" style="width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid #e4e4e7; border-radius: 8px; background: #fee2e2; cursor: pointer; font-size: 0.95rem; color: #dc2626; font-weight: 600;">🚪 Déconnexion</button>
+  </div>
+</div>
+
+<script>
+// Détection mobile
+function isMobile() {
+  return window.innerWidth <= 768;
+}
+
+// Init mobile UI
+function initMobileUI() {
+  const mobileHeader = document.getElementById('mobile-header');
+  const mobileNav = document.getElementById('mobile-nav');
+  
+  if (isMobile()) {
+    mobileHeader.style.display = 'flex';
+    mobileNav.style.display = 'flex';
+    document.body.classList.add('mobile-ui');
+  } else {
+    mobileHeader.style.display = 'none';
+    mobileNav.style.display = 'none';
+    document.body.classList.remove('mobile-ui');
+  }
+  
+  // Mettre à jour l'email utilisateur
+  const userEmail = currentUser?.email || 'Admin';
+  const mobileUserEmail = document.getElementById('mobile-user-email');
+  if (mobileUserEmail) {
+    mobileUserEmail.textContent = userEmail.split('@')[0];
+  }
+}
+
+// Update active nav item
+function updateMobileNav(sectionId) {
+  document.querySelectorAll('.mobile-nav-item').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.querySelector(`[onclick*="showSection('${sectionId}'"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+  closeMobileMenu();
+}
+
+// Toggle menu drawer
+function toggleMobileMenu() {
+  const drawer = document.getElementById('mobile-menu-drawer');
+  if (drawer.style.display === 'none') {
+    drawer.style.display = 'block';
+  } else {
+    drawer.style.display = 'none';
+  }
+}
+
+function closeMobileMenu() {
+  document.getElementById('mobile-menu-drawer').style.display = 'none';
+}
+
+// Init au chargement
+window.addEventListener('load', initMobileUI);
+window.addEventListener('resize', initMobileUI);
+
+// Fermer le menu quand on clique ailleurs
+document.addEventListener('click', (e) => {
+  const drawer = document.getElementById('mobile-menu-drawer');
+  const moreBtn = document.querySelector('[onclick="toggleMobileMenu()"]');
+  if (!drawer.contains(e.target) && !moreBtn.contains(e.target)) {
+    closeMobileMenu();
+  }
+});
 </script>
 
