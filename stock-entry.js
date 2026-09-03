@@ -1,7 +1,7 @@
 /**
- * STOCK ENTRY MODULE — BIONTRUFFLE (v2.3)
- * Entrée de stock par EAN / RÉFÉRENCE avec mouvements, raisons, localisations
- * + Scanner EAN + Export PDF/CSV
+ * STOCK ENTRY MODULE — BIONTRUFFLE (v3)
+ * Interface d'entrée de stock AMÉLIORÉE
+ * Design moderne, productivité maximale, mobile-friendly
  */
 
 const StockEntry = (() => {
@@ -12,19 +12,20 @@ const StockEntry = (() => {
   let db = null;
   let currentUser = null;
   let onStockSync = null;
+  let recentProducts = [];
   
   const MOVEMENT_TYPES = [
-    { value: 'reception', label: 'Réception', color: '#4CAF50' },
-    { value: 'sortie', label: 'Sortie', color: '#FF9800' },
-    { value: 'correction', label: 'Correction', color: '#2196F3' },
-    { value: 'ajustement', label: 'Ajustement', color: '#9C27B0' },
+    { value: 'reception', label: 'Réception', icon: '📥', color: '#10b981' },
+    { value: 'sortie', label: 'Sortie', icon: '📤', color: '#f59e0b' },
+    { value: 'correction', label: 'Correction', icon: '🔧', color: '#3b82f6' },
+    { value: 'ajustement', label: 'Ajustement', icon: '⚙️', color: '#8b5cf6' },
   ];
 
   let MOVEMENT_REASONS = {
-    reception: ['Livraison fournisseur', 'Retour client', 'Stock initial'],
-    sortie: ['Vente', 'Cadeau', 'Perte', 'Obsolescence'],
-    correction: ['Différence inventaire', 'Erreur système'],
-    ajustement: ['Réajustement', 'Comptage'],
+    reception: ['Livraison fournisseur', 'Retour client', 'Stock initial', 'Correction reçu'],
+    sortie: ['Vente', 'Cadeau', 'Perte', 'Obsolescence', 'Test'],
+    correction: ['Différence inventaire', 'Erreur système', 'Comptage'],
+    ajustement: ['Réajustement', 'Comptage', 'Régularisation'],
   };
 
   let LOCATIONS = ['Central', 'Grenoble', 'Périgord'];
@@ -33,17 +34,35 @@ const StockEntry = (() => {
     if (!db || !currentBrand) return;
     try {
       const col = `stock_entries_${currentBrand}`;
-      const snap = await db.collection(col).orderBy('createdAt', 'desc').get();
+      const snap = await db.collection(col).orderBy('createdAt', 'desc').limit(100).get();
       stockHistory = snap.docs.map(d => ({
         id: d.id,
         date: d.data().createdAt?.toDate?.().toLocaleDateString('fr-FR') || d.data().date,
+        time: d.data().createdAt?.toDate?.().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) || '',
         ...d.data()
       }));
-      console.log(`✅ Chargé ${stockHistory.length} entrées`);
+      
+      // Extraire produits récents
+      recentProducts = [];
+      const seen = new Set();
+      stockHistory.forEach(e => {
+        if (!seen.has(e.code) && recentProducts.length < 5) {
+          recentProducts.push({
+            code: e.code,
+            name: e.productName,
+            ean: e.ean,
+            lastQty: e.qty
+          });
+          seen.add(e.code);
+        }
+      });
+
+      console.log(`✅ ${stockHistory.length} entrées chargées`);
       renderHistory();
       computeSummary();
+      renderSummary();
     } catch (e) {
-      console.error('❌ Erreur chargement historique:', e);
+      console.error('❌ Erreur chargement:', e);
       stockHistory = [];
     }
   };
@@ -66,11 +85,9 @@ const StockEntry = (() => {
         createdAt: new Date(),
         createdBy: currentUser.email,
       });
-      console.log('✅ Entrée enregistrée');
-      if (onStockSync) onStockSync({ type: movementType, qty });
       return true;
     } catch (e) {
-      console.error('❌ Erreur enregistrement:', e);
+      console.error('❌ Erreur:', e);
       return false;
     }
   };
@@ -87,112 +104,130 @@ const StockEntry = (() => {
     });
   };
 
+  const getStockColor = (qty) => {
+    if (qty > 0) return { color: '#10b981', bg: '#d1fae5', label: 'Entrée' };
+    if (qty < 0) return { color: '#f59e0b', bg: '#fef3c7', label: 'Sortie' };
+    return { color: '#6b7280', bg: '#f3f4f6', label: 'Zéro' };
+  };
+
   const renderForm = () => {
     const form = document.createElement('form');
     form.className = 'stk-form';
     form.innerHTML = `
-      <div class="stk-field-group">
-        <label>Produit (EAN ou Ref)</label>
-        <input type="text" id="stk-search" placeholder="Scanner ou saisir" autocomplete="off">
-        <div id="stk-result"></div>
-      </div>
-      <div class="stk-field-group">
-        <label>Type</label>
-        <select id="stk-type">
-          ${MOVEMENT_TYPES.map(t => `<option value="${t.value}">${t.label}</option>`).join('')}
-        </select>
-      </div>
-      <div class="stk-field-group">
-        <label>Raison</label>
-        <select id="stk-reason"><option>--</option></select>
-      </div>
-      <div class="stk-field-group">
-        <label>Quantité</label>
-        <input type="number" id="stk-qty" placeholder="0" required>
-      </div>
-      <div class="stk-field-group">
-        <label>Localisation</label>
-        <select id="stk-location">
-          ${LOCATIONS.map(l => `<option value="${l}">${l}</option>`).join('')}
-        </select>
-      </div>
-      <div class="stk-section-title">📦 Infos complémentaires</div>
-      <div class="stk-field-group">
-        <label>Prix d'achat (€)</label>
-        <input type="number" id="stk-prix" placeholder="0.00" step="0.01">
-      </div>
-      <div class="stk-field-group">
-        <label>DDM</label>
-        <input type="date" id="stk-ddm">
-      </div>
-      <div class="stk-field-group">
-        <label>Numéro LOT</label>
-        <input type="text" id="stk-lot" placeholder="LOT-2024-001">
-      </div>
-      <button type="button" id="stk-scanner-toggle" class="stk-scanner-btn">📱 Scanner</button>
-      <div id="stk-scanner-host"></div>
-      <button type="submit" class="stk-submit">✅ Enregistrer</button>
-    `;
-    return form;
-  };
+      <div style="padding: 2rem; background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        
+        <!-- HEADER -->
+        <div style="margin-bottom: 2rem; border-bottom: 2px solid #f0f0f0; padding-bottom: 1.5rem;">
+          <h2 style="margin: 0; font-size: 1.5rem; font-weight: 700; color: #18181b;">📦 Nouvelle Entrée Stock</h2>
+          <p style="margin: 0.5rem 0 0; color: #71717a; font-size: 0.9rem;">Saisissez les informations du produit</p>
+        </div>
 
-  const renderHistory = () => {
-    const histDiv = document.getElementById('stk-history');
-    if (!histDiv) return;
-    
-    let html = '';
-    let currentDate = '';
-    
-    stockHistory.forEach(e => {
-      if (e.date !== currentDate) {
-        if (currentDate) html += '</div>';
-        currentDate = e.date;
-        html += `<div class="stk-date-group"><div class="stk-date-label">📅 ${e.date}</div>`;
-      }
-      
-      const color = MOVEMENT_TYPES.find(t => t.value === e.movementType)?.color || '#999';
-      const prixDisplay = e.prixAchat ? `€${e.prixAchat.toFixed(2)}` : '-';
-      const ddmDisplay = e.ddm || '-';
-      const lotDisplay = e.numLot || '-';
-      
-      html += `
-        <div class="stk-entry" style="border-left: 4px solid ${color}">
-          <div class="stk-entry-name">${e.productName}</div>
-          <div class="stk-entry-details">
-            Code: ${e.code || e.ean || '?'} | Type: ${e.movementType} | Raison: ${e.reason || '-'}
+        <!-- SECTION 1: PRODUIT -->
+        <div style="margin-bottom: 2rem;">
+          <div style="font-size: 0.9rem; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1rem;">📌 Identification Produit</div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.5rem;">EAN / Référence *</label>
+              <input type="text" id="stk-search" placeholder="Scanner ou taper" autocomplete="off" style="width: 100%; padding: 0.75rem; border: 2px solid #e4e4e7; border-radius: 8px; font-size: 1rem; font-family: monospace; transition: all 0.3s;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.5rem;">🏷️ Produit</label>
+              <input type="text" id="stk-product-name" placeholder="Nom produit" style="width: 100%; padding: 0.75rem; border: 2px solid #e4e4e7; border-radius: 8px; font-size: 1rem; background: #f9fafb; cursor: not-allowed;" readonly>
+            </div>
           </div>
-          <div class="stk-entry-qty" style="color: ${e.qty > 0 ? '#4CAF50' : '#FF9800'}">
-            ${e.qty > 0 ? '+' : ''}${e.qty} | Prix: ${prixDisplay} | DDM: ${ddmDisplay} | LOT: ${lotDisplay}
+          
+          <div id="stk-result" style="margin-bottom: 1rem;"></div>
+        </div>
+
+        <!-- SECTION 2: MOUVEMENT -->
+        <div style="margin-bottom: 2rem;">
+          <div style="font-size: 0.9rem; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1rem;">🔄 Type de Mouvement</div>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
+            ${MOVEMENT_TYPES.map(t => `
+              <label style="display: flex; align-items: center; padding: 0.75rem; border: 2px solid #e4e4e7; border-radius: 8px; cursor: pointer; background: white; transition: all 0.3s;" data-type="${t.value}">
+                <input type="radio" name="type" value="${t.value}" style="margin-right: 0.5rem;" ${t.value === 'reception' ? 'checked' : ''}>
+                <span style="font-weight: 600; color: #4b5563;">${t.icon} ${t.label}</span>
+              </label>
+            `).join('')}
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.5rem;">Raison *</label>
+              <select id="stk-reason" style="width: 100%; padding: 0.75rem; border: 2px solid #e4e4e7; border-radius: 8px; font-size: 1rem; background: white;">
+                <option>-- Sélectionner --</option>
+              </select>
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.5rem;">Quantité *</label>
+              <input type="number" id="stk-qty" placeholder="0" style="width: 100%; padding: 0.75rem; border: 2px solid #10b981; border-radius: 8px; font-size: 1rem; font-weight: 700;" required>
+            </div>
           </div>
         </div>
-      `;
-    });
-    
-    if (currentDate) html += '</div>';
-    histDiv.innerHTML = html || '<div style="color: #999;">Aucune entrée</div>';
+
+        <!-- SECTION 3: INFOS COMPLÉMENTAIRES -->
+        <div style="margin-bottom: 2rem; padding: 1.5rem; background: #f9fafb; border-radius: 8px; border: 1px solid #e4e4e7;">
+          <div style="font-size: 0.9rem; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1rem;">💾 Détails (Optionnel)</div>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.5rem;">Localisation</label>
+              <select id="stk-location" style="width: 100%; padding: 0.75rem; border: 1px solid #e4e4e7; border-radius: 6px; font-size: 0.95rem; background: white;">
+                ${LOCATIONS.map(l => `<option value="${l}">${l}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.5rem;">Prix d'achat (€)</label>
+              <input type="number" id="stk-prix" placeholder="0.00" step="0.01" style="width: 100%; padding: 0.75rem; border: 1px solid #e4e4e7; border-radius: 6px; font-size: 0.95rem;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.5rem;">DDM</label>
+              <input type="date" id="stk-ddm" style="width: 100%; padding: 0.75rem; border: 1px solid #e4e4e7; border-radius: 6px; font-size: 0.95rem;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.5rem;">N° LOT</label>
+              <input type="text" id="stk-lot" placeholder="LOT-2024-001" style="width: 100%; padding: 0.75rem; border: 1px solid #e4e4e7; border-radius: 6px; font-size: 0.95rem;">
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <button type="submit" style="flex: 1; min-width: 150px; padding: 1rem; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s;">✅ Enregistrer</button>
+          <button type="button" id="stk-scanner-toggle" style="flex: 1; min-width: 150px; padding: 1rem; background: #2196F3; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s;">📱 Scanner</button>
+        </div>
+        
+        <div id="stk-scanner-host"></div>
+      </div>
+    `;
+    return form;
   };
 
   const renderSummary = () => {
     const summDiv = document.getElementById('stk-summary');
     if (!summDiv) return;
     
-    if (Object.keys(stockSummary).length === 0) {
-      summDiv.innerHTML = '<div style="color: #999;">Aucun produit</div>';
+    const keys = Object.keys(stockSummary).slice(0, 6);
+    
+    if (keys.length === 0) {
+      summDiv.innerHTML = '<div style="text-align: center; padding: 2rem; color: #99999a;">📦 Aucun produit</div>';
       return;
     }
     
-    let html = '<div class="stk-summary-grid">';
-    Object.entries(stockSummary).forEach(([code, data]) => {
-      const qty = data.qty;
-      const color = qty > 0 ? '#4CAF50' : qty < 0 ? '#FF9800' : '#999';
+    let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">';
+    keys.forEach(code => {
+      const data = stockSummary[code];
+      const sc = getStockColor(data.qty);
       html += `
-        <div class="stk-summary-card">
-          <div class="stk-summary-name">${data.name}</div>
-          <div class="stk-summary-code">${code}</div>
-          <div class="stk-summary-qty" style="color: ${color}; font-size: 1.2rem; font-weight: 700;">
-            ${qty > 0 ? '+' : ''}${qty}
+        <div style="background: white; border: 1px solid #e4e4e7; border-radius: 12px; padding: 1.25rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.3s;">
+          <div style="font-size: 0.8rem; font-weight: 600; color: #71717a; margin-bottom: 0.5rem; word-break: break-all;">${code}</div>
+          <div style="font-size: 0.9rem; color: #4b5563; margin-bottom: 0.75rem; line-height: 1.3; min-height: 2.4rem;">${data.name}</div>
+          <div style="font-size: 1.75rem; font-weight: 700; color: ${sc.color}; margin-bottom: 0.5rem;">
+            ${data.qty > 0 ? '📈' : data.qty < 0 ? '📉' : '⏸️'} ${data.qty > 0 ? '+' : ''}${data.qty}
           </div>
-          ${data.prix ? `<div class="stk-summary-prix">€${data.prix.toFixed(2)}</div>` : ''}
+          ${data.prix ? `<div style="font-size: 0.85rem; color: #3b82f6; font-weight: 600;">€${data.prix.toFixed(2)}</div>` : ''}
         </div>
       `;
     });
@@ -200,69 +235,44 @@ const StockEntry = (() => {
     summDiv.innerHTML = html;
   };
 
-  const exportStockToPDF = async () => {
-    if (!stockHistory || stockHistory.length === 0) {
-      alert('Aucune entrée à exporter');
+  const renderHistory = () => {
+    const histDiv = document.getElementById('stk-history');
+    if (!histDiv) return;
+    
+    if (stockHistory.length === 0) {
+      histDiv.innerHTML = '<div style="text-align: center; padding: 2rem; color: #999;">📋 Aucun historique</div>';
       return;
     }
-
-    try {
-      const jsPDF = window.jspdf.jsPDF;
-      if (!jsPDF) {
-        alert('⚠️ jsPDF non disponible');
-        return;
+    
+    let html = '';
+    let currentDate = '';
+    
+    stockHistory.slice(0, 30).forEach(e => {
+      if (e.date !== currentDate) {
+        if (currentDate) html += '</div>';
+        currentDate = e.date;
+        html += `<div style="margin-bottom: 1.5rem;"><div style="font-weight: 700; font-size: 0.95rem; color: #3b82f6; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #dbeafe;">📅 ${e.date}</div><div style="display: flex; flex-direction: column; gap: 0.75rem;">`;
       }
-
-      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-      let yPos = 10;
-
-      doc.setFontSize(16);
-      doc.text('📦 RAPPORT ENTRÉE STOCK', 105, yPos, { align: 'center' });
-      yPos += 10;
-      doc.setFontSize(10);
-      doc.text(`${new Date().toLocaleString('fr-FR')} | ${currentUser?.email}`, 105, yPos, { align: 'center' });
-      yPos += 15;
-
-      stockHistory.forEach((e, idx) => {
-        if (yPos > 250) {
-          doc.addPage();
-          yPos = 10;
-        }
-        
-        const movType = MOVEMENT_TYPES.find(m => m.value === e.movementType)?.label || e.movementType;
-        doc.text(`${e.productName} (${e.code})`, 10, yPos);
-        doc.setFontSize(8);
-        doc.text(`${movType} | ${e.reason} | Qty: ${e.qty} | €${e.prixAchat || '-'} | DDM: ${e.ddm || '-'} | LOT: ${e.numLot || '-'}`, 10, yPos + 5);
-        doc.setFontSize(10);
-        yPos += 10;
-      });
-
-      doc.save(`stock-rapport-${new Date().toISOString().split('T')[0]}.pdf`);
-    } catch (e) {
-      alert('❌ Erreur: ' + e.message);
-    }
-  };
-
-  const exportStockToCSV = () => {
-    if (!stockHistory || stockHistory.length === 0) {
-      alert('Aucune entrée à exporter');
-      return;
-    }
-
-    let csv = 'Date,Produit,Code,Type,Raison,Quantité,Prix,DDM,LOT\n';
-    stockHistory.forEach(e => {
-      csv += `"${e.date}","${e.productName}","${e.code}","${e.movementType}","${e.reason}","${e.qty}","${e.prixAchat || ''}","${e.ddm || ''}","${e.numLot || ''}"\n`;
+      
+      const type = MOVEMENT_TYPES.find(t => t.value === e.movementType);
+      const sc = getStockColor(e.qty);
+      
+      html += `
+        <div style="display: flex; gap: 1rem; align-items: flex-start; padding: 0.75rem; background: ${sc.bg}; border-left: 4px solid ${sc.color}; border-radius: 6px; font-size: 0.9rem;">
+          <div style="font-size: 1.5rem; flex-shrink: 0;">${type?.icon || '📦'}</div>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; color: #18181b;">${e.productName}</div>
+            <div style="color: #71717a; font-size: 0.8rem; margin-top: 0.25rem;">${e.code || e.ean} • ${e.reason} • ${e.time || ''}</div>
+            <div style="color: ${sc.color}; font-weight: 700; margin-top: 0.5rem;">
+              ${e.qty > 0 ? '+' : ''}${e.qty} | €${e.prixAchat || '-'} | DDM: ${e.ddm || '-'} | LOT: ${e.numLot || '-'}
+            </div>
+          </div>
+        </div>
+      `;
     });
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `stock-export-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    
+    if (currentDate) html += '</div></div>';
+    histDiv.innerHTML = html;
   };
 
   return {
@@ -277,49 +287,77 @@ const StockEntry = (() => {
       if (brand) currentBrand = brand;
 
       hostEl.innerHTML = `
-        <div class="stk-container">
-          <div class="stk-form-panel" id="stk-form-host"></div>
-          <div class="stk-summary-panel">
-            <h3>📊 Totaux</h3>
-            <div id="stk-summary"></div>
-          </div>
-          <div class="stk-history-panel">
-            <h3>📋 Historique</h3>
-            <div id="stk-history"></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; padding: 2rem; max-width: 1400px;">
+          <!-- GAUCHE: FORMULAIRE -->
+          <div id="stk-form-panel"></div>
+          
+          <!-- DROITE: STATS + HISTORIQUE -->
+          <div>
+            <div style="margin-bottom: 2rem;">
+              <div style="font-size: 1.2rem; font-weight: 700; color: #18181b; margin-bottom: 1rem;">📊 Stock Récent</div>
+              <div id="stk-summary"></div>
+            </div>
+            
+            <div>
+              <div style="font-size: 1.2rem; font-weight: 700; color: #18181b; margin-bottom: 1rem;">📋 Dernières entrées</div>
+              <div id="stk-history" style="max-height: 500px; overflow-y: auto;"></div>
+            </div>
           </div>
         </div>
       `;
 
-      document.getElementById('stk-form-host').appendChild(renderForm());
+      document.getElementById('stk-form-panel').appendChild(renderForm());
       
-      const typeSelect = hostEl.querySelector('#stk-type');
-      typeSelect?.addEventListener('change', () => {
-        const reason = hostEl.querySelector('#stk-reason');
-        const type = typeSelect.value;
-        reason.innerHTML = '<option>--</option>' + 
-          (MOVEMENT_REASONS[type] || []).map(r => `<option>${r}</option>`).join('');
+      // Gestion du formulaire
+      const form = hostEl.querySelector('.stk-form');
+      const typeSelect = hostEl.querySelector('input[name="type"]');
+      const reasonSelect = hostEl.querySelector('#stk-reason');
+      const typeRadios = hostEl.querySelectorAll('input[name="type"]');
+      
+      typeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+          const type = radio.value;
+          reasonSelect.innerHTML = '<option>-- Sélectionner --</option>' + 
+            (MOVEMENT_REASONS[type] || []).map(r => `<option>${r}</option>`).join('');
+        });
       });
 
-      const submitBtn = hostEl.querySelector('.stk-submit');
-      submitBtn?.addEventListener('click', async (e) => {
+      // Init raisons
+      reasonSelect.innerHTML = '<option>-- Sélectionner --</option>' + 
+        (MOVEMENT_REASONS['reception'] || []).map(r => `<option>${r}</option>`).join('');
+
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
         const search = hostEl.querySelector('#stk-search').value.trim();
         const qty = hostEl.querySelector('#stk-qty').value;
         const reason = hostEl.querySelector('#stk-reason').value;
         const prixAchat = hostEl.querySelector('#stk-prix').value;
         const ddm = hostEl.querySelector('#stk-ddm').value;
         const numLot = hostEl.querySelector('#stk-lot').value;
-        const movementType = hostEl.querySelector('#stk-type').value;
+        const movementType = document.querySelector('input[name="type"]:checked').value;
 
-        if (!search || !qty || !reason || !movementType) {
+        if (!search || !qty || reason === '-- Sélectionner --' || !movementType) {
           alert('❌ Remplissez tous les champs obligatoires');
           return;
         }
 
         const ok = await saveEntry(search, search, qty, search, movementType, reason, 'Central', prixAchat, ddm, numLot);
+        
         if (ok) {
-          hostEl.querySelector('.stk-form').reset();
+          // Succès
+          const msg = document.createElement('div');
+          msg.style.cssText = 'position: fixed; top: 2rem; right: 2rem; background: #10b981; color: white; padding: 1.5rem 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000; animation: slideIn 0.3s ease-out;';
+          msg.innerHTML = `✅ <strong>${search}</strong> — ${qty} pcs enregistrés!`;
+          document.body.appendChild(msg);
+          
+          form.reset();
+          document.querySelector('input[value="reception"]').checked = true;
+          setTimeout(() => msg.remove(), 3000);
+          
           await loadHistory();
+        } else {
+          alert('❌ Erreur lors de l\'enregistrement');
         }
       });
 
@@ -334,10 +372,7 @@ const StockEntry = (() => {
     setMovementReasons(reasons) { Object.assign(MOVEMENT_REASONS, reasons); },
     onStockSync(callback) { onStockSync = callback; },
     loadHistory,
-    computeSummary,
     getSummary() { return stockSummary; },
-    exportStockToPDF,
-    exportStockToCSV,
     getHistory() { return stockHistory; },
   };
 })();
