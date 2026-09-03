@@ -1,8 +1,7 @@
 /**
- * STOCK ENTRY MODULE — BIONTRUFFLE (v2.1)
- * Entrée de stock par EAN / RÉFÉRENCE avec mouvements, raisons, localisations, synchro BDC
- * + Intégration scanner EAN
- * IIFE self-contained, styles `stk-`, API `StockEntry.mount()`
+ * STOCK ENTRY MODULE — BIONTRUFFLE (v2.3)
+ * Entrée de stock par EAN / RÉFÉRENCE avec mouvements, raisons, localisations
+ * + Scanner EAN + Export PDF/CSV
  */
 
 const StockEntry = (() => {
@@ -12,6 +11,7 @@ const StockEntry = (() => {
   let stockSummary = {};
   let db = null;
   let currentUser = null;
+  let onStockSync = null;
   
   const MOVEMENT_TYPES = [
     { value: 'reception', label: 'Réception', color: '#4CAF50' },
@@ -19,545 +19,186 @@ const StockEntry = (() => {
     { value: 'correction', label: 'Correction', color: '#2196F3' },
     { value: 'ajustement', label: 'Ajustement', color: '#9C27B0' },
   ];
-  
-  const MOVEMENT_REASONS = {
-    reception: ['Livraison fournisseur', 'Retour client'],
-    sortie: ['Vente', 'Transfert', 'Destruction', 'Perte'],
-    correction: ['Erreur de saisie', 'Inventaire', 'Casse'],
-    ajustement: ['Autre'],
-  };
-  
-  let LOCATIONS = [
-    { id: 'central', label: 'Stock central' },
-    { id: 'grenoble', label: 'Stock Grenoble' },
-    { id: 'perigord', label: 'Stock Périgord' },
-  ];
-  
-  let onStockSync = null;
 
-  const setDb = (firestore) => { db = firestore; };
-  const setUser = (u) => { currentUser = u; };
-  const setBrand = (b) => { currentBrand = b; };
-
-  const findProduct = (searchTerm) => {
-    if (!window.PRODUCTS) return null;
-    const term = (searchTerm || '').trim().toUpperCase();
-    if (!term) return null;
-    let p = window.PRODUCTS.find(x => x.ean && x.ean.toUpperCase() === term);
-    if (p) return p;
-    p = window.PRODUCTS.find(x => x.code && x.code.toUpperCase() === term);
-    if (p) return p;
-    return null;
+  let MOVEMENT_REASONS = {
+    reception: ['Livraison fournisseur', 'Retour client', 'Stock initial'],
+    sortie: ['Vente', 'Cadeau', 'Perte', 'Obsolescence'],
+    correction: ['Différence inventaire', 'Erreur système'],
+    ajustement: ['Réajustement', 'Comptage'],
   };
+
+  let LOCATIONS = ['Central', 'Grenoble', 'Périgord'];
 
   const loadHistory = async () => {
-    if (!db || !currentUser) return;
+    if (!db || !currentBrand) return;
     try {
-      const col = db.collection(`stock_entries_${currentBrand}`);
-      const snap = await col
-        .where('uid', '==', currentUser.uid)
-        .orderBy('createdAt', 'desc')
-        .limit(200)
-        .get();
-      stockHistory = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const col = `stock_entries_${currentBrand}`;
+      const snap = await db.collection(col).orderBy('createdAt', 'desc').get();
+      stockHistory = snap.docs.map(d => ({
+        id: d.id,
+        date: d.data().createdAt?.toDate?.().toLocaleDateString('fr-FR') || d.data().date,
+        ...d.data()
+      }));
+      console.log(`✅ Chargé ${stockHistory.length} entrées`);
       renderHistory();
       computeSummary();
     } catch (e) {
-      console.error('[StockEntry] load history:', e);
+      console.error('❌ Erreur chargement historique:', e);
+      stockHistory = [];
+    }
+  };
+
+  const saveEntry = async (ean, ref, qty, name, movementType, reason, location, prixAchat, ddm, numLot) => {
+    if (!db || !currentBrand || !currentUser) return false;
+    try {
+      const col = `stock_entries_${currentBrand}`;
+      await db.collection(col).add({
+        ean,
+        code: ref,
+        productName: name,
+        qty: parseInt(qty, 10),
+        movementType,
+        reason,
+        location,
+        prixAchat: prixAchat ? parseFloat(prixAchat) : null,
+        ddm: ddm || null,
+        numLot: numLot || null,
+        createdAt: new Date(),
+        createdBy: currentUser.email,
+      });
+      console.log('✅ Entrée enregistrée');
+      if (onStockSync) onStockSync({ type: movementType, qty });
+      return true;
+    } catch (e) {
+      console.error('❌ Erreur enregistrement:', e);
+      return false;
     }
   };
 
   const computeSummary = () => {
     stockSummary = {};
-    stockHistory.forEach(entry => {
-      const code = entry.code || entry.ref;
-      if (!code) return;
-      if (!stockSummary[code]) {
-        stockSummary[code] = {
-          code: code,
-          productName: entry.productName,
-          totalQty: 0,
-          countEntries: 0,
-          byLocation: {},
-        };
+    stockHistory.forEach(e => {
+      if (!stockSummary[e.code]) {
+        stockSummary[e.code] = { name: e.productName, qty: 0, prix: 0, entries: [] };
       }
-      stockSummary[code].totalQty += (entry.qty || 0);
-      stockSummary[code].countEntries += 1;
-      const loc = entry.location || 'central';
-      if (!stockSummary[code].byLocation[loc]) {
-        stockSummary[code].byLocation[loc] = 0;
-      }
-      stockSummary[code].byLocation[loc] += (entry.qty || 0);
+      stockSummary[e.code].qty += e.qty;
+      if (e.prixAchat) stockSummary[e.code].prix = e.prixAchat;
+      stockSummary[e.code].entries.push(e);
     });
-    renderSummary();
-  };
-
-  const syncStockToBDC = async (ref, qtyDelta) => {
-    if (!ref || !window.bdcStockMap) return;
-    try {
-      const currentStk = window.bdcStockMap[ref] || 0;
-      window.bdcStockMap[ref] = Math.max(0, currentStk + qtyDelta);
-      if (db && currentUser) {
-        const cfgRef = db.collection('config_' + currentBrand).doc('stock_map');
-        const current = (await cfgRef.get()).data() || {};
-        current[ref] = window.bdcStockMap[ref];
-        await cfgRef.set(current, { merge: true });
-      }
-      console.log(`[StockEntry] Synchro BDC: ${ref} => ${window.bdcStockMap[ref]}`);
-    } catch (e) {
-      console.warn('[StockEntry] Synchro BDC échouée:', e);
-    }
-  };
-
-  const saveEntry = async (ean, ref, qty, productName, movementType, reason, location, prixAchat, ddm, numLot) => {
-    if (!db || !currentUser) return false;
-    if (!qty || qty === 0) return false;
-    const qtyInt = parseInt(qty, 10);
-    try {
-      const col = db.collection(`stock_entries_${currentBrand}`);
-      const entry = {
-        ean: ean || '',
-        ref: ref || '',
-        code: ref || '',
-        productName: productName || ref || ean,
-        qty: qtyInt,
-        movementType: movementType || 'reception',
-        reason: reason || '',
-        location: location || 'central',
-        prixAchat: prixAchat ? parseFloat(prixAchat) : null,
-        ddm: ddm || null,
-        numLot: numLot || null,
-        uid: currentUser.uid,
-        createdAt: firebase.firestore.Timestamp.now(),
-        date: new Date().toISOString().split('T')[0],
-      };
-      await col.add(entry);
-      await syncStockToBDC(ref, qtyInt);
-      if (onStockSync) {
-        onStockSync({ code: ref, qty: qtyInt, type: movementType });
-      }
-      return true;
-    } catch (e) {
-      console.error('[StockEntry] save:', e);
-      return false;
-    }
   };
 
   const renderForm = () => {
     const form = document.createElement('form');
     form.className = 'stk-form';
-    const movementOpts = MOVEMENT_TYPES
-      .map(m => `<option value="${m.value}">${m.label}</option>`)
-      .join('');
-    const locationOpts = LOCATIONS
-      .map(l => `<option value="${l.id}">${l.label}</option>`)
-      .join('');
-    
     form.innerHTML = `
-      <fieldset class="stk-fieldset">
-        <legend class="stk-legend">Mouvement de stock</legend>
-        <div class="stk-group">
-          <label for="stk-type">Type *</label>
-          <select id="stk-type" class="stk-input stk-select">
-            ${movementOpts}
-          </select>
-        </div>
-        <div class="stk-group">
-          <label for="stk-search">EAN ou RÉFÉRENCE *</label>
-          <div class="stk-search-group">
-            <input type="text" id="stk-search" class="stk-input stk-search"
-              placeholder="Ex: 5410188005000 ou PRD-001" autocomplete="off"/>
-            <button type="button" id="stk-scanner-toggle" class="stk-icon-btn stk-scanner-btn" title="Scanner EAN">📱</button>
-          </div>
-          <div class="stk-result" id="stk-result"></div>
-          <div id="stk-scanner-host" class="stk-scanner-panel" style="display: none;"></div>
-        </div>
-        <div class="stk-group">
-          <label for="stk-qty">Quantité *</label>
-          <input type="number" id="stk-qty" class="stk-input stk-qty"
-            min="-9999" step="1" placeholder="0"/>
-          <small class="stk-hint">Positive = entrée, négative = sortie</small>
-        </div>
-        <div class="stk-group">
-          <label for="stk-reason">Raison *</label>
-          <select id="stk-reason" class="stk-input stk-select">
-            <option value="">-- Sélectionner --</option>
-          </select>
-        </div>
-        <div class="stk-group">
-          <label for="stk-location">Localisation</label>
-          <select id="stk-location" class="stk-input stk-select">
-            ${locationOpts}
-          </select>
-        </div>
-        
-        <!-- NOUVEAUX CHAMPS: Prix, DDM, LOT -->
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.75rem; margin: 1rem 0;">
-          <div style="font-size: 0.75rem; font-weight: 700; color: #15803d; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.75rem;">📦 Infos complémentaires</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
-            <div class="stk-group" style="margin: 0;">
-              <label for="stk-prix" style="font-size: 0.8rem;">Prix d'achat (€)</label>
-              <input type="number" id="stk-prix" class="stk-input" 
-                min="0" step="0.01" placeholder="0.00" style="font-size: 0.85rem; padding: 0.4rem 0.5rem;"/>
-            </div>
-            <div class="stk-group" style="margin: 0;">
-              <label for="stk-ddm" style="font-size: 0.8rem;">DDM</label>
-              <input type="date" id="stk-ddm" class="stk-input" style="font-size: 0.85rem; padding: 0.4rem 0.5rem;"/>
-            </div>
-            <div class="stk-group" style="margin: 0;">
-              <label for="stk-lot" style="font-size: 0.8rem;">N° de LOT</label>
-              <input type="text" id="stk-lot" class="stk-input" placeholder="Ex: LOT-2024-001" style="font-size: 0.85rem; padding: 0.4rem 0.5rem;"/>
-            </div>
-          </div>
-        </div>
-        
-        <div class="stk-actions">
-          <button type="submit" class="stk-btn stk-btn-primary">Enregistrer</button>
-          <button type="reset" class="stk-btn stk-btn-secondary">Réinitialiser</button>
-        </div>
-      </fieldset>
+      <div class="stk-field-group">
+        <label>Produit (EAN ou Ref)</label>
+        <input type="text" id="stk-search" placeholder="Scanner ou saisir" autocomplete="off">
+        <div id="stk-result"></div>
+      </div>
+      <div class="stk-field-group">
+        <label>Type</label>
+        <select id="stk-type">
+          ${MOVEMENT_TYPES.map(t => `<option value="${t.value}">${t.label}</option>`).join('')}
+        </select>
+      </div>
+      <div class="stk-field-group">
+        <label>Raison</label>
+        <select id="stk-reason"><option>--</option></select>
+      </div>
+      <div class="stk-field-group">
+        <label>Quantité</label>
+        <input type="number" id="stk-qty" placeholder="0" required>
+      </div>
+      <div class="stk-field-group">
+        <label>Localisation</label>
+        <select id="stk-location">
+          ${LOCATIONS.map(l => `<option value="${l}">${l}</option>`).join('')}
+        </select>
+      </div>
+      <div class="stk-section-title">📦 Infos complémentaires</div>
+      <div class="stk-field-group">
+        <label>Prix d'achat (€)</label>
+        <input type="number" id="stk-prix" placeholder="0.00" step="0.01">
+      </div>
+      <div class="stk-field-group">
+        <label>DDM</label>
+        <input type="date" id="stk-ddm">
+      </div>
+      <div class="stk-field-group">
+        <label>Numéro LOT</label>
+        <input type="text" id="stk-lot" placeholder="LOT-2024-001">
+      </div>
+      <button type="button" id="stk-scanner-toggle" class="stk-scanner-btn">📱 Scanner</button>
+      <div id="stk-scanner-host"></div>
+      <button type="submit" class="stk-submit">✅ Enregistrer</button>
     `;
-
-    const typeSelect = form.querySelector('#stk-type');
-    const searchInput = form.querySelector('#stk-search');
-    const qtyInput = form.querySelector('#stk-qty');
-    const reasonSelect = form.querySelector('#stk-reason');
-    const locationSelect = form.querySelector('#stk-location');
-    const resultDiv = form.querySelector('#stk-result');
-    const scannerToggleBtn = form.querySelector('#stk-scanner-toggle');
-    const scannerHost = form.querySelector('#stk-scanner-host');
-    let currentProduct = null;
-    let scannerOpen = false;
-
-    const updateReasons = () => {
-      const movementType = typeSelect.value;
-      const reasons = MOVEMENT_REASONS[movementType] || [];
-      reasonSelect.innerHTML = '<option value="">-- Sélectionner --</option>';
-      reasons.forEach(r => {
-        const opt = document.createElement('option');
-        opt.value = r;
-        opt.textContent = r;
-        reasonSelect.appendChild(opt);
-      });
-    };
-
-    typeSelect.addEventListener('change', updateReasons);
-    updateReasons();
-
-    searchInput.addEventListener('input', (e) => {
-      const term = e.target.value.trim();
-      resultDiv.innerHTML = '';
-      currentProduct = null;
-      if (!term) return;
-      const found = findProduct(term);
-      if (found) {
-        currentProduct = found;
-        resultDiv.innerHTML = `
-          <div class="stk-match">
-            <strong>${found.libelle || found.code}</strong>
-            <small>${found.code} • EAN: ${found.ean || 'n/a'}</small>
-          </div>
-        `;
-        qtyInput.focus();
-      } else {
-        resultDiv.innerHTML = `<div class="stk-nomatch">Produit introuvable</div>`;
-      }
-    });
-
-    if (scannerToggleBtn && typeof StockScanner !== 'undefined') {
-      scannerToggleBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        scannerOpen = !scannerOpen;
-        if (scannerOpen) {
-          scannerHost.style.display = 'block';
-          StockScanner.mount('#stk-scanner-host', '#stk-search');
-          StockScanner.onDetected((event) => {
-            console.log('[StockEntry] Code scanner:', event.code);
-            scannerOpen = false;
-            scannerHost.style.display = 'none';
-            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-          });
-        } else {
-          StockScanner.stop();
-          scannerHost.style.display = 'none';
-        }
-      });
-    }
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const search = searchInput.value.trim();
-      const qty = qtyInput.value.trim();
-      const movementType = typeSelect.value;
-      const reason = reasonSelect.value;
-      const location = locationSelect.value;
-      const prixAchat = form.querySelector('#stk-prix')?.value || '';
-      const ddm = form.querySelector('#stk-ddm')?.value || '';
-      const numLot = form.querySelector('#stk-lot')?.value || '';
-      
-      if (!currentProduct && !search) {
-        alert('Veuillez entrer un EAN ou une référence');
-        return;
-      }
-      if (!qty || parseInt(qty, 10) === 0) {
-        alert('Veuillez entrer une quantité non-nulle');
-        return;
-      }
-      if (!reason) {
-        alert('Veuillez sélectionner une raison');
-        return;
-      }
-      
-      const ean = currentProduct?.ean || '';
-      const ref = currentProduct?.code || search;
-      const name = currentProduct?.libelle || search;
-      
-      const ok = await saveEntry(ean, ref, qty, name, movementType, reason, location, prixAchat, ddm, numLot);
-      if (ok) {
-        form.reset();
-        resultDiv.innerHTML = '';
-        currentProduct = null;
-        updateReasons();
-        const msg = document.createElement('div');
-        msg.className = 'stk-success';
-        msg.textContent = `✓ ${name} — ${qty} pcs (${reason})`;
-        form.prepend(msg);
-        setTimeout(() => msg.remove(), 3000);
-        await loadHistory();
-      } else {
-        alert('Erreur lors de l\'enregistrement');
-      }
-    });
-
     return form;
   };
 
   const renderHistory = () => {
     const histDiv = document.getElementById('stk-history');
     if (!histDiv) return;
-    if (!stockHistory.length) {
-      histDiv.innerHTML = '<p class="stk-empty">Aucune entrée enregistrée</p>';
-      return;
-    }
-    const byDate = {};
+    
+    let html = '';
+    let currentDate = '';
+    
     stockHistory.forEach(e => {
-      const d = e.date || e.createdAt?.toDate?.().toISOString().split('T')[0] || '?';
-      if (!byDate[d]) byDate[d] = [];
-      byDate[d].push(e);
+      if (e.date !== currentDate) {
+        if (currentDate) html += '</div>';
+        currentDate = e.date;
+        html += `<div class="stk-date-group"><div class="stk-date-label">📅 ${e.date}</div>`;
+      }
+      
+      const color = MOVEMENT_TYPES.find(t => t.value === e.movementType)?.color || '#999';
+      const prixDisplay = e.prixAchat ? `€${e.prixAchat.toFixed(2)}` : '-';
+      const ddmDisplay = e.ddm || '-';
+      const lotDisplay = e.numLot || '-';
+      
+      html += `
+        <div class="stk-entry" style="border-left: 4px solid ${color}">
+          <div class="stk-entry-name">${e.productName}</div>
+          <div class="stk-entry-details">
+            Code: ${e.code || e.ean || '?'} | Type: ${e.movementType} | Raison: ${e.reason || '-'}
+          </div>
+          <div class="stk-entry-qty" style="color: ${e.qty > 0 ? '#4CAF50' : '#FF9800'}">
+            ${e.qty > 0 ? '+' : ''}${e.qty} | Prix: ${prixDisplay} | DDM: ${ddmDisplay} | LOT: ${lotDisplay}
+          </div>
+        </div>
+      `;
     });
-    let html = '<div class="stk-timeline">';
-    Object.entries(byDate)
-      .sort((a, b) => b[0].localeCompare(a[0]))
-      .forEach(([date, items]) => {
-        html += `<div class="stk-date-group">
-          <h4 class="stk-date-label">${date}</h4>
-          <table class="stk-table" style="font-size: 0.8rem;">
-            <thead><tr><th>Produit</th><th>Code</th><th>Type</th><th>Raison</th><th>Quantité</th><th>Prix €</th><th>DDM</th><th>LOT</th></tr></thead>
-            <tbody>`;
-        items.forEach(e => {
-          const movType = MOVEMENT_TYPES.find(m => m.value === e.movementType);
-          const badge = movType 
-            ? `<span class="stk-badge" style="background:${movType.color}">${movType.label}</span>`
-            : '';
-          const qtyClass = e.qty > 0 ? 'stk-qty-in' : 'stk-qty-out';
-          const prixDisplay = e.prixAchat ? e.prixAchat.toFixed(2) + ' €' : '—';
-          const ddmDisplay = e.ddm ? e.ddm : '—';
-          const lotDisplay = e.numLot ? e.numLot : '—';
-          html += `<tr>
-            <td class="stk-name">${e.productName}</td>
-            <td class="stk-code">${e.code || e.ean || '?'}</td>
-            <td>${badge}</td>
-            <td class="stk-reason">${e.reason || '–'}</td>
-            <td class="stk-qty ${qtyClass}">${e.qty > 0 ? '+' : ''}${e.qty}</td>
-            <td style="text-align: right; color: #16a34a; font-weight: 500;">${prixDisplay}</td>
-            <td style="color: #2196F3;">${ddmDisplay}</td>
-            <td style="color: #FF9800; font-weight: 500;">${lotDisplay}</td>
-          </tr>`;
-        });
-        html += `</tbody></table></div>`;
-      });
-    html += '</div>';
-    histDiv.innerHTML = html;
+    
+    if (currentDate) html += '</div>';
+    histDiv.innerHTML = html || '<div style="color: #999;">Aucune entrée</div>';
   };
 
   const renderSummary = () => {
     const summDiv = document.getElementById('stk-summary');
     if (!summDiv) return;
-    const products = Object.values(stockSummary)
-      .sort((a, b) => b.totalQty - a.totalQty);
-    if (!products.length) {
-      summDiv.innerHTML = '<p class="stk-empty">Aucune consolidation</p>';
+    
+    if (Object.keys(stockSummary).length === 0) {
+      summDiv.innerHTML = '<div style="color: #999;">Aucun produit</div>';
       return;
     }
-    let html = '<div class="stk-summary-list">';
-    products.forEach(p => {
-      const locations = Object.entries(p.byLocation)
-        .map(([loc, qty]) => `<span class="stk-loc-badge">${loc}: ${qty > 0 ? '+' : ''}${qty}</span>`)
-        .join(' ');
-      const qtyClass = p.totalQty > 0 ? 'stk-qty-in' : 'stk-qty-out';
+    
+    let html = '<div class="stk-summary-grid">';
+    Object.entries(stockSummary).forEach(([code, data]) => {
+      const qty = data.qty;
+      const color = qty > 0 ? '#4CAF50' : qty < 0 ? '#FF9800' : '#999';
       html += `
         <div class="stk-summary-card">
-          <div class="stk-summary-head">
-            <strong class="stk-summary-name">${p.productName}</strong>
-            <span class="stk-summary-code">${p.code}</span>
+          <div class="stk-summary-name">${data.name}</div>
+          <div class="stk-summary-code">${code}</div>
+          <div class="stk-summary-qty" style="color: ${color}; font-size: 1.2rem; font-weight: 700;">
+            ${qty > 0 ? '+' : ''}${qty}
           </div>
-          <div class="stk-summary-body">
-            <div class="stk-summary-total">
-              <span>Total:</span>
-              <span class="stk-qty ${qtyClass}">${p.totalQty > 0 ? '+' : ''}${p.totalQty}</span>
-            </div>
-            <div class="stk-summary-detail">${locations}</div>
-            <div class="stk-summary-count">${p.countEntries} mouvement${p.countEntries > 1 ? 's' : ''}</div>
-          </div>
+          ${data.prix ? `<div class="stk-summary-prix">€${data.prix.toFixed(2)}</div>` : ''}
         </div>
       `;
     });
     html += '</div>';
     summDiv.innerHTML = html;
   };
-
-  return {
-    mount(selector, fb, usr, brand) {
-      hostEl = typeof selector === 'string' 
-        ? document.querySelector(selector) 
-        : selector;
-      if (!hostEl) {
-        console.error('[StockEntry] mount: host not found');
-        return;
-      }
-      if (fb) setDb(fb);
-      if (usr) setUser(usr);
-      if (brand) setBrand(brand);
-
-      hostEl.innerHTML = `
-        <div class="stk-container">
-          <div class="stk-form-panel">
-            ${renderForm().outerHTML}
-          </div>
-          <div class="stk-right-panels">
-            <div class="stk-summary-panel">
-              <h3 class="stk-summary-title">📊 Totaux consolidés</h3>
-              <div id="stk-summary" class="stk-summary"></div>
-            </div>
-            <div class="stk-history-panel">
-              <h3 class="stk-history-title">📋 Historique détaillé</h3>
-              <div id="stk-history" class="stk-history"></div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      const form = hostEl.querySelector('.stk-form');
-      const searchInput = form.querySelector('#stk-search');
-      const typeSelect = form.querySelector('#stk-type');
-      const qtyInput = form.querySelector('#stk-qty');
-      const reasonSelect = form.querySelector('#stk-reason');
-      const locationSelect = form.querySelector('#stk-location');
-      const resultDiv = form.querySelector('#stk-result');
-      const scannerToggleBtn = form.querySelector('#stk-scanner-toggle');
-      const scannerHost = form.querySelector('#stk-scanner-host');
-      let currentProduct = null;
-      let scannerOpen = false;
-
-      const updateReasons = () => {
-        const movementType = typeSelect.value;
-        const reasons = MOVEMENT_REASONS[movementType] || [];
-        reasonSelect.innerHTML = '<option value="">-- Sélectionner --</option>';
-        reasons.forEach(r => {
-          const opt = document.createElement('option');
-          opt.value = r;
-          opt.textContent = r;
-          reasonSelect.appendChild(opt);
-        });
-      };
-
-      typeSelect.addEventListener('change', updateReasons);
-      updateReasons();
-
-      searchInput.addEventListener('input', (e) => {
-        const term = e.target.value.trim();
-        resultDiv.innerHTML = '';
-        currentProduct = null;
-        if (!term) return;
-        const found = findProduct(term);
-        if (found) {
-          currentProduct = found;
-          resultDiv.innerHTML = `
-            <div class="stk-match">
-              <strong>${found.libelle || found.code}</strong>
-              <small>${found.code} • EAN: ${found.ean || 'n/a'}</small>
-            </div>
-          `;
-          qtyInput.focus();
-        } else {
-          resultDiv.innerHTML = `<div class="stk-nomatch">Produit introuvable</div>`;
-        }
-      });
-
-      if (scannerToggleBtn && typeof StockScanner !== 'undefined') {
-        scannerToggleBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          scannerOpen = !scannerOpen;
-          if (scannerOpen) {
-            scannerHost.style.display = 'block';
-            StockScanner.mount('#stk-scanner-host', '#stk-search');
-            StockScanner.onDetected((event) => {
-              console.log('[StockEntry] Code scanner:', event.code);
-              scannerOpen = false;
-              scannerHost.style.display = 'none';
-              searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-            });
-          } else {
-            StockScanner.stop();
-            scannerHost.style.display = 'none';
-          }
-        });
-      }
-
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const search = searchInput.value.trim();
-        const qty = qtyInput.value.trim();
-        const movementType = typeSelect.value;
-        const reason = reasonSelect.value;
-        const location = locationSelect.value;
-        const prixAchat = form.querySelector('#stk-prix')?.value || '';
-        const ddm = form.querySelector('#stk-ddm')?.value || '';
-        const numLot = form.querySelector('#stk-lot')?.value || '';
-        
-        if (!currentProduct && !search) {
-          alert('Veuillez entrer un EAN ou une référence');
-          return;
-        }
-        if (!qty || parseInt(qty, 10) === 0) {
-          alert('Veuillez entrer une quantité non-nulle');
-          return;
-        }
-        if (!reason) {
-          alert('Veuillez sélectionner une raison');
-          return;
-        }
-        
-        const ean = currentProduct?.ean || '';
-        const ref = currentProduct?.code || search;
-        const name = currentProduct?.libelle || search;
-        
-        const ok = await saveEntry(ean, ref, qty, name, movementType, reason, location, prixAchat, ddm, numLot);
-        if (ok) {
-          form.reset();
-          resultDiv.innerHTML = '';
-          currentProduct = null;
-          updateReasons();
-          const msg = document.createElement('div');
-          msg.className = 'stk-success';
-          msg.textContent = `✓ ${name} — ${qty} pcs (${reason})`;
-          form.prepend(msg);
-          setTimeout(() => msg.remove(), 3000);
-          await loadHistory();
-        } else {
-          alert('Erreur lors de l\'enregistrement');
-        }
-      });
 
   const exportStockToPDF = async () => {
     if (!stockHistory || stockHistory.length === 0) {
@@ -566,132 +207,38 @@ const StockEntry = (() => {
     }
 
     try {
-      // Charger jsPDF
       const jsPDF = window.jspdf.jsPDF;
       if (!jsPDF) {
-        alert('⚠️ jsPDF non disponible. Veuillez vérifier la connexion.');
+        alert('⚠️ jsPDF non disponible');
         return;
       }
 
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-      const pageHeight = doc.internal.pageSize.height;
-      const pageWidth = doc.internal.pageSize.width;
       let yPos = 10;
 
-      // En-tête
       doc.setFontSize(16);
-      doc.setTextColor(22, 163, 74);
-      doc.text('📦 RAPPORT ENTRÉE STOCK', pageWidth / 2, yPos, { align: 'center' });
-      
-      yPos += 8;
+      doc.text('📦 RAPPORT ENTRÉE STOCK', 105, yPos, { align: 'center' });
+      yPos += 10;
       doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, pageWidth / 2, yPos, { align: 'center' });
-      doc.text(`Utilisateur: ${currentUser?.email || 'unknown'}`, pageWidth / 2, yPos + 5, { align: 'center' });
-      
+      doc.text(`${new Date().toLocaleString('fr-FR')} | ${currentUser?.email}`, 105, yPos, { align: 'center' });
       yPos += 15;
 
-      // Grouper par date
-      const byDate = {};
-      stockHistory.forEach(e => {
-        const d = e.date || e.createdAt?.toDate?.().toISOString().split('T')[0] || '?';
-        if (!byDate[d]) byDate[d] = [];
-        byDate[d].push(e);
+      stockHistory.forEach((e, idx) => {
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 10;
+        }
+        
+        const movType = MOVEMENT_TYPES.find(m => m.value === e.movementType)?.label || e.movementType;
+        doc.text(`${e.productName} (${e.code})`, 10, yPos);
+        doc.setFontSize(8);
+        doc.text(`${movType} | ${e.reason} | Qty: ${e.qty} | €${e.prixAchat || '-'} | DDM: ${e.ddm || '-'} | LOT: ${e.numLot || '-'}`, 10, yPos + 5);
+        doc.setFontSize(10);
+        yPos += 10;
       });
 
-      // Tableau pour chaque date
-      Object.entries(byDate)
-        .sort((a, b) => b[0].localeCompare(a[0]))
-        .forEach(([date, items]) => {
-          // Vérifier si on a besoin d'une nouvelle page
-          if (yPos > pageHeight - 40) {
-            doc.addPage();
-            yPos = 10;
-          }
-
-          // Titre de la date
-          doc.setFontSize(11);
-          doc.setTextColor(33, 150, 243);
-          doc.setFont(undefined, 'bold');
-          doc.text(`📅 ${date}`, 10, yPos);
-          yPos += 7;
-
-          // En-têtes du tableau
-          doc.setFontSize(9);
-          doc.setTextColor(50, 50, 50);
-          doc.setFont(undefined, 'bold');
-          const cols = [
-            { header: 'Produit', x: 10, width: 35 },
-            { header: 'Code', x: 47, width: 18 },
-            { header: 'Type', x: 67, width: 18 },
-            { header: 'Raison', x: 87, width: 30 },
-            { header: 'Qty', x: 119, width: 12 },
-            { header: 'Prix €', x: 133, width: 16 },
-            { header: 'DDM', x: 151, width: 20 },
-            { header: 'LOT', x: 173, width: 25 }
-          ];
-
-          cols.forEach(col => {
-            doc.text(col.header, col.x, yPos, { maxWidth: col.width });
-          });
-
-          yPos += 6;
-          doc.setDrawColor(200, 200, 200);
-          doc.line(10, yPos, pageWidth - 10, yPos);
-          yPos += 3;
-
-          // Lignes du tableau
-          doc.setFont(undefined, 'normal');
-          doc.setFontSize(8);
-          items.forEach(e => {
-            if (yPos > pageHeight - 20) {
-              doc.addPage();
-              yPos = 10;
-            }
-
-            const movType = MOVEMENT_TYPES.find(m => m.value === e.movementType)?.label || e.movementType;
-            const prixDisplay = e.prixAchat ? e.prixAchat.toFixed(2) : '—';
-            const ddmDisplay = e.ddm || '—';
-            const lotDisplay = e.numLot || '—';
-
-            // Colorer les lignes en fonction du type
-            if (e.qty > 0) {
-              doc.setTextColor(22, 163, 74); // Vert
-            } else {
-              doc.setTextColor(255, 152, 0); // Orange
-            }
-
-            doc.text(e.productName.substring(0, 20), 10, yPos, { maxWidth: 35 });
-            doc.text(e.code || e.ean || '?', 47, yPos, { maxWidth: 18 });
-            doc.text(movType.substring(0, 12), 67, yPos, { maxWidth: 18 });
-            doc.text((e.reason || '–').substring(0, 15), 87, yPos, { maxWidth: 30 });
-            doc.text(`${e.qty > 0 ? '+' : ''}${e.qty}`, 119, yPos, { maxWidth: 12, align: 'right' });
-            
-            doc.setTextColor(22, 163, 74);
-            doc.text(prixDisplay, 133, yPos, { maxWidth: 16, align: 'right' });
-            
-            doc.setTextColor(33, 150, 243);
-            doc.text(ddmDisplay, 151, yPos, { maxWidth: 20 });
-            
-            doc.setTextColor(255, 152, 0);
-            doc.text(lotDisplay, 173, yPos, { maxWidth: 25 });
-
-            yPos += 5;
-          });
-
-          yPos += 3;
-        });
-
-      // Pied de page
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(`Rapport généré automatiquement - BIONTRUFFE CRM v2.2`, pageWidth / 2, pageHeight - 5, { align: 'center' });
-
-      // Télécharger
       doc.save(`stock-rapport-${new Date().toISOString().split('T')[0]}.pdf`);
-      console.log('✅ PDF généré et téléchargé');
     } catch (e) {
-      console.error('❌ Erreur export PDF:', e);
       alert('❌ Erreur: ' + e.message);
     }
   };
@@ -702,38 +249,87 @@ const StockEntry = (() => {
       return;
     }
 
-    try {
-      let csv = 'Date,Produit,Code,Type,Raison,Quantité,Prix €,DDM,LOT\n';
-      
-      stockHistory.forEach(e => {
-        const date = e.date || e.createdAt?.toDate?.().toISOString().split('T')[0] || '?';
-        const movType = MOVEMENT_TYPES.find(m => m.value === e.movementType)?.label || e.movementType;
-        const prixDisplay = e.prixAchat ? e.prixAchat.toFixed(2) : '';
-        const ddmDisplay = e.ddm || '';
-        const lotDisplay = e.numLot || '';
-        
-        csv += `"${date}","${e.productName}","${e.code || e.ean || ''}","${movType}","${e.reason || ''}","${e.qty}","${prixDisplay}","${ddmDisplay}","${lotDisplay}"\n`;
-      });
+    let csv = 'Date,Produit,Code,Type,Raison,Quantité,Prix,DDM,LOT\n';
+    stockHistory.forEach(e => {
+      csv += `"${e.date}","${e.productName}","${e.code}","${e.movementType}","${e.reason}","${e.qty}","${e.prixAchat || ''}","${e.ddm || ''}","${e.numLot || ''}"\n`;
+    });
 
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `stock-export-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      console.log('✅ CSV généré et téléchargé');
-    } catch (e) {
-      console.error('❌ Erreur export CSV:', e);
-      alert('❌ Erreur: ' + e.message);
-    }
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `stock-export-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
-    setUser,
-    setBrand,
+  return {
+    mount(selector, fb, usr, brand) {
+      hostEl = typeof selector === 'string' ? document.querySelector(selector) : selector;
+      if (!hostEl) {
+        console.error('[StockEntry] Host not found');
+        return;
+      }
+      if (fb) db = fb;
+      if (usr) currentUser = usr;
+      if (brand) currentBrand = brand;
+
+      hostEl.innerHTML = `
+        <div class="stk-container">
+          <div class="stk-form-panel" id="stk-form-host"></div>
+          <div class="stk-summary-panel">
+            <h3>📊 Totaux</h3>
+            <div id="stk-summary"></div>
+          </div>
+          <div class="stk-history-panel">
+            <h3>📋 Historique</h3>
+            <div id="stk-history"></div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('stk-form-host').appendChild(renderForm());
+      
+      const typeSelect = hostEl.querySelector('#stk-type');
+      typeSelect?.addEventListener('change', () => {
+        const reason = hostEl.querySelector('#stk-reason');
+        const type = typeSelect.value;
+        reason.innerHTML = '<option>--</option>' + 
+          (MOVEMENT_REASONS[type] || []).map(r => `<option>${r}</option>`).join('');
+      });
+
+      const submitBtn = hostEl.querySelector('.stk-submit');
+      submitBtn?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const search = hostEl.querySelector('#stk-search').value.trim();
+        const qty = hostEl.querySelector('#stk-qty').value;
+        const reason = hostEl.querySelector('#stk-reason').value;
+        const prixAchat = hostEl.querySelector('#stk-prix').value;
+        const ddm = hostEl.querySelector('#stk-ddm').value;
+        const numLot = hostEl.querySelector('#stk-lot').value;
+        const movementType = hostEl.querySelector('#stk-type').value;
+
+        if (!search || !qty || !reason || !movementType) {
+          alert('❌ Remplissez tous les champs obligatoires');
+          return;
+        }
+
+        const ok = await saveEntry(search, search, qty, search, movementType, reason, 'Central', prixAchat, ddm, numLot);
+        if (ok) {
+          hostEl.querySelector('.stk-form').reset();
+          await loadHistory();
+        }
+      });
+
+      // Charger au démarrage
+      loadHistory();
+    },
+
+    setDb(fb) { db = fb; },
+    setUser(usr) { currentUser = usr; },
+    setBrand(brand) { currentBrand = brand; },
     setLocations(locs) { LOCATIONS = locs || LOCATIONS; },
     setMovementReasons(reasons) { Object.assign(MOVEMENT_REASONS, reasons); },
     onStockSync(callback) { onStockSync = callback; },
