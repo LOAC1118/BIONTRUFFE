@@ -3740,6 +3740,7 @@ function bdcCloseScan() {
   bdcScanActive = false;
   document.getElementById('bdc-scan-modal').classList.add('hidden');
   bdcStopCamera();
+  window.SCAN_ON_RESULT = null;
 }
 
 function bdcSetScanStatus(msg) {
@@ -3835,6 +3836,7 @@ function bdcOnCodeDetected(code) {
   if (code === bdcScanLastCode && (now - bdcScanLastTime) < 2000) return;
   bdcScanLastCode = code;
   bdcScanLastTime = now;
+  if (typeof window.SCAN_ON_RESULT === 'function') { try { window.SCAN_ON_RESULT(code); } catch(e){} return; }
   bdcAddByEan(code);
 }
 
@@ -15899,7 +15901,10 @@ window.StockEntry = (function () {
     +   '<div class="stk-card stk-form">'
     +     '<h3>Nouveau mouvement</h3>'
     +     '<label class="stk-lb">Code EAN / Référence</label>'
-    +     '<input id="stk-ean" class="stk-in" placeholder="Scanner ou saisir…" autocomplete="off">'
+    +     '<div style="display:flex;gap:.5rem;align-items:stretch;">'
+    +       '<input id="stk-ean" class="stk-in" placeholder="Scanner ou saisir…" autocomplete="off" style="flex:1;">'
+    +       '<button type="button" class="stk-btn p" style="flex:0 0 auto;padding:0 14px;font-size:1.15rem;" onclick="StockEntry.scan()" title="Scanner un code-barres">📷</button>'
+    +     '</div>'
     +     '<div id="stk-hit"></div>'
     +     '<div class="stk-row">'
     +       '<div><label class="stk-lb">Type de mouvement</label>'
@@ -16043,6 +16048,22 @@ window.StockEntry = (function () {
     var e = document.getElementById('stk-ean'); if (e) e.focus();
   }
 
+  function scan() {
+    if (typeof bdcOpenScan !== 'function') { toast('Scanner indisponible sur cet appareil.', 'err'); return; }
+    window.SCAN_ON_RESULT = function (code) {
+      var el = document.getElementById('stk-ean'); if (el) el.value = code;
+      onLookup();
+      if (typeof bdcCloseScan === 'function') bdcCloseScan();
+      if (found) {
+        toast('✅ ' + (found.libelle || found.code));
+        var q = document.getElementById('stk-qty'); if (q) { q.focus(); if (q.select) q.select(); }
+      } else {
+        toast('Code ' + code + ' introuvable au catalogue', 'err');
+      }
+    };
+    bdcOpenScan();
+  }
+
   function refresh() { renderTotals(); renderHistory(); }
 
   function mount(sel) {
@@ -16061,7 +16082,7 @@ window.StockEntry = (function () {
     renderHistory();
   }
 
-  return { mount: mount, save: save, reset: reset, refresh: refresh };
+  return { mount: mount, save: save, reset: reset, refresh: refresh, scan: scan };
 })();
 </script>
 
