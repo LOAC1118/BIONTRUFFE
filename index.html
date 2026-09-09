@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>MDM CRM — Bio N Truffe</title>
+<title>Bio N Truffe CRM</title>
 
 <!-- ═══ PWA ═══ -->
 <link rel="manifest" href="manifest.json">
@@ -11,11 +11,11 @@
 <!-- iOS / Safari -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="MDM CRM">
+<meta name="apple-mobile-web-app-title" content="Bio N Truffe">
 <!-- Android / Chrome -->
 <meta name="theme-color" content="#1e3a5f">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="application-name" content="MDM CRM">
+<meta name="application-name" content="Bio N Truffe">
 
 <!-- Favicon -->
 <!-- SEO / Description -->
@@ -1550,7 +1550,7 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
       <button class="t-item" data-sec="ia" onclick="tnavGo('ia')"><span class="t-item-ico">🤖</span>Assistant IA</button>
       <button class="t-item" data-sec="rgpd" onclick="tnavGo('rgpd')"><span class="t-item-ico">⚖️</span>Conformité</button>
       <div class="t-sep"></div>
-      <button class="t-item hidden" id="t-tab-comptes" data-sec="comptes" onclick="tnavGo('comptes')"><span class="t-item-ico">🔑</span>Comptes</button>
+      <button class="t-item hidden" id="t-tab-comptes" data-sec="admin" onclick="tnavGo('admin')"><span class="t-item-ico">⚙️</span>Administration</button>
       </div>
     </div>
   </div>
@@ -1670,9 +1670,9 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5v13M3 4.5h10M5 4.5L3 9h4zM11 4.5L9 9h4z"/></svg>
       Conformité
     </div>
-    <div class="nav-item hidden" id="nav-item-comptes" onclick="showSection('comptes',null,this)">
-      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5.5" cy="5.5" r="2.5"/><circle cx="11" cy="6" r="2"/><path d="M1 14c0-2.5 1.8-4.5 4.5-4.5S10 11.5 10 14"/><path d="M9.5 9.7c2 .2 3.5 1.8 3.5 4.3"/></svg>
-      Comptes
+    <div class="nav-item hidden" id="nav-item-comptes" onclick="showSection('admin',null,this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4"/></svg>
+      Administration
     </div>
     <div class="nav-item hidden" id="nav-item-equipe" onclick="showSection('equipe',null,this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2.4"/><path d="M2.5 14c0-3 2.4-5 5.5-5s5.5 2 5.5 5"/><path d="M13.5 6.5l1.2 1.2 2-2"/></svg>
@@ -2097,6 +2097,11 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
   </div>
 
   <!-- TROUS D'ASSORTIMENT (module 2) -->
+  <!-- ADMINISTRATION — BIO N TRUFFE -->
+  <div id="sec-admin" class="hidden" style="padding:1.75rem 2rem;overflow-y:auto;flex:1;background:var(--bg);box-sizing:border-box;">
+    <div id="admin-host"></div>
+  </div>
+
   <!-- ENTRÉE EN STOCK — BIO N TRUFFE -->
   <div id="sec-stockentry" class="hidden" style="padding:1.75rem 2rem;overflow-y:auto;flex:1;background:var(--bg);box-sizing:border-box;">
     <div id="stockentry-host"></div>
@@ -3425,9 +3430,9 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
     <span class="mmenu-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5v13M3 4.5h10M5 4.5L3 9h4zM11 4.5L9 9h4z"/></svg></span>
     <span class="mmenu-label">Conformité</span>
   </button>
-  <button class="mmenu-item hidden" id="mtab-comptes" role="menuitem" data-sec="comptes" onclick="mnavGo('comptes')">
-    <span class="mmenu-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5.5" cy="5.5" r="2.5"/><circle cx="11" cy="6" r="2"/><path d="M1 14c0-2.5 1.8-4.5 4.5-4.5S10 11.5 10 14"/><path d="M9.5 9.7c2 .2 3.5 1.8 3.5 4.3"/></svg></span>
-    <span class="mmenu-label">Comptes</span>
+  <button class="mmenu-item hidden" id="mtab-comptes" role="menuitem" data-sec="admin" onclick="mnavGo('admin')">
+    <span class="mmenu-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4"/></svg></span>
+    <span class="mmenu-label">Administration</span>
   </button>
   <button class="mmenu-item hidden" id="mtab-equipe" role="menuitem" data-sec="equipe" onclick="mnavGo('equipe')">
     <span class="mmenu-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2.4"/><path d="M2.5 14c0-3 2.4-5 5.5-5s5.5 2 5.5 5"/><path d="M13.5 6.5l1.2 1.2 2-2"/></svg></span>
@@ -4423,8 +4428,36 @@ function initAdminAccountsUI() {
 function isManagerUser() {
   try {
     if (typeof isAdminUser === 'function' && isAdminUser()) return true;
+    if (window.CURRENT_PROFILE_ROLE === 'manager') return true;
     return !!(window.Equipe && Equipe.roleForCurrent && Equipe.roleForCurrent() === 'manager');
   } catch(e) { return false; }
+}
+
+// ─── Configuration centrale du CRM (réglages admin, globale) ───
+window.CRM_CONFIG = null;
+var CRM_CONFIG_DEFAULTS = {
+  bdcRecipient: 'contact@biontruffe.fr',
+  web3formsKey: '',
+  senderName: 'Bio N Truffe CRM',
+  subjectPrefix: 'Bon de commande Bio N Truffe'
+};
+function crmCfg(k) {
+  try {
+    if (window.CRM_CONFIG && window.CRM_CONFIG[k] != null && window.CRM_CONFIG[k] !== '') return window.CRM_CONFIG[k];
+  } catch (e) {}
+  return CRM_CONFIG_DEFAULTS[k];
+}
+function crmConfigLoad(cb) {
+  if (typeof db === 'undefined' || !db) { if (cb) cb(); return; }
+  db.collection('crm_config').doc('main').get().then(function (d) {
+    window.CRM_CONFIG = d.exists ? (d.data() || {}) : {};
+    if (cb) cb();
+  }).catch(function (e) { console.warn('[Config] lecture', e.code || e.message); window.CRM_CONFIG = window.CRM_CONFIG || {}; if (cb) cb(); });
+}
+function crmConfigSave(obj) {
+  if (typeof db === 'undefined' || !db) return Promise.reject(new Error('base indisponible'));
+  window.CRM_CONFIG = Object.assign(window.CRM_CONFIG || {}, obj);
+  return db.collection('crm_config').doc('main').set(window.CRM_CONFIG, { merge: true });
 }
 
 // Rôle viewer : lecture seule. Récupéré depuis le profil Firestore chargé au login.
@@ -4610,11 +4643,11 @@ async function comptesToggleActif(uid, currentlyActive) {
 
 async function comptesEditRole(uid, currentRole) {
   if (!isAdminUser()) return;
-  var newRole = prompt('Rôle pour ce compte :\n\n- admin : accès complet (gestion comptes, tout voir/modifier)\n- commercial : ses clients + commandes\n- viewer : lecture seule (aucune modification)', currentRole || 'commercial');
+  var newRole = prompt('Rôle pour ce compte :\n\n- admin : accès complet (administration, tout voir/modifier)\n- manager : voit toute l\'équipe et tous les clients\n- commercial : ses clients + commandes\n- viewer : lecture seule (aucune modification)', currentRole || 'commercial');
   if (newRole === null) return;
   newRole = newRole.trim().toLowerCase();
-  if (newRole !== 'admin' && newRole !== 'commercial' && newRole !== 'viewer') {
-    toast('Rôle invalide — utilisez "admin", "commercial" ou "viewer"', 'err');
+  if (newRole !== 'admin' && newRole !== 'manager' && newRole !== 'commercial' && newRole !== 'viewer') {
+    toast('Rôle invalide — admin, manager, commercial ou viewer', 'err');
     return;
   }
   try {
@@ -4858,6 +4891,7 @@ async function showApp() {
     const profil = await db.collection('profils').doc(currentUser.uid).get();
     const role = profil.exists ? (profil.data().role || 'commercial') : 'commercial';
     window.CURRENT_PROFILE_ROLE = role;
+    try { crmConfigLoad(); } catch(e){}
     s2('sb-role', role.charAt(0).toUpperCase()+role.slice(1));
     s2('menu-role-lbl', role==='admin' ? '👑 Administrateur' : (role==='viewer' ? '👁️ Viewer (lecture seule)' : '👤 Commercial'));
     // Mode lecture seule : ajoute une classe sur <body> qui masque les actions.
@@ -5029,7 +5063,7 @@ if (typeof cdbPageSize  === 'undefined') window.cdbPageSize  = 50;
 // ═══════════════════════════════════════════════
 //  NAVIGATION
 // ═══════════════════════════════════════════════
-const SECTIONS = ['dashboard','radar','tournees','visites','recherche','rgpd','bdc','frais','contacts-db','commissions','comptes','mailing','accords','promos','top100','cadencier','ia','assortiment','alertes','equipe','stockentry'];
+const SECTIONS = ['dashboard','radar','tournees','visites','recherche','rgpd','bdc','frais','contacts-db','commissions','comptes','mailing','accords','promos','top100','cadencier','ia','assortiment','alertes','equipe','stockentry','admin'];
 // ═══════════════════════════════════════════════
 //  MENUS DEROULANTS DE LA BARRE DU HAUT
 // ═══════════════════════════════════════════════
@@ -5069,7 +5103,7 @@ document.addEventListener('keydown', function(e) {
 });
 
 function showSection(name, tabEl, sideEl) {
-  if (name === 'comptes' && !isAdminUser()) {
+  if ((name === 'comptes' || name === 'admin') && !isAdminUser()) {
     toast('Accès réservé.', 'err');
     name = 'dashboard';
   }
@@ -5111,6 +5145,7 @@ function showSection(name, tabEl, sideEl) {
   if (name==='top100') { setTimeout(function(){ if (typeof top100Init === 'function') top100Init(); }, 80); }
   if (name==='cadencier') { setTimeout(function(){ if (typeof cadInit === 'function') cadInit(); }, 80); }
   if (name==='stockentry') { setTimeout(function(){ if (window.StockEntry) StockEntry.mount('#stockentry-host'); }, 80); }
+  if (name==='admin') { setTimeout(function(){ if (window.AdminPanel) AdminPanel.mount('#admin-host'); }, 60); }
   if (name==='ia') { setTimeout(function(){ if (typeof iaInit === 'function') iaInit(); }, 80); }
   // Démonter le générateur quand on quitte l'onglet Promos
   if (name !== 'promos' && typeof promoUnmount === 'function') promoUnmount();
@@ -8943,8 +8978,8 @@ function bdcHistResend(id) {
   if (cmd.commentaire) { lines.push(''); lines.push('Commentaire : ' + cmd.commentaire); }
   var body = lines.join('\n');
 
-  var subject = 'Bon de commande MDM 2026 — ' + (cmd.clientNom||'') + ' — ' + date;
-  var mailtoUrl = 'mailto:' + encodeURIComponent('commande@moulindesmoines.com') + '?subject=' + encodeURIComponent(subject);
+  var subject = (crmCfg('subjectPrefix')+' — ') + (cmd.clientNom||'') + ' — ' + date;
+  var mailtoUrl = 'mailto:' + encodeURIComponent(crmCfg('bdcRecipient')) + '?subject=' + encodeURIComponent(subject);
 
   // Ouvrir le client mail de façon synchrone
   var a = document.createElement('a'); a.href = mailtoUrl; a.style.display='none';
@@ -9034,7 +9069,7 @@ function bdcHistExportPDF(id) {
     // Pied de page
     var pageH = doc.internal.pageSize.height;
     doc.setFontSize(8); doc.setTextColor(148,163,184);
-    doc.text('MDM CRM 2026 · LOAC DEV Solutions', 12, pageH-8);
+    doc.text('Bio N Truffe CRM 2026 - LOAC DEV Solutions', 12, pageH-8);
     doc.text('Page 1', 198, pageH-8, {align:'right'});
 
     doc.save(fname);
@@ -9519,7 +9554,7 @@ function bdcBuildHtml() {
     '<tr><td style="padding:20px 28px 28px;text-align:center;">' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e6efe6;"><tr><td style="padding-top:16px;text-align:center;">' +
       '<div style="font-size:11px;color:#94a3b8;">' +
-        'Ce bon de commande a \u00e9t\u00e9 transmis via MDM CRM 2026 \u00b7 R\u00e9alis\u00e9 par <strong style="color:#FF4D1C;">LOAC DEV Solutions</strong>' +
+        'Ce bon de commande a \u00e9t\u00e9 transmis via Bio N Truffe CRM 2026 \u00b7 R\u00e9alis\u00e9 par <strong style="color:#FF4D1C;">LOAC DEV Solutions</strong>' +
       '</div>' +
       '</td></tr></table>' +
     '</td></tr>' +
@@ -9559,7 +9594,7 @@ function bdcOpenOutlook() {
   if (!hasOrder)  { bdcShowAlert('Aucun article commandé.', 'err'); return; }
 
   var today = new Date().toLocaleDateString('fr-FR');
-  var subject = 'Bon de commande MDM 2026 — ' + mag + ' — ' + today;
+  var subject = (crmCfg('subjectPrefix')+' — ') + mag + ' — ' + today;
 
   // Construire le corps en texte brut (même format que bdcBuildText)
   var body = bdcBuildText();
@@ -9568,7 +9603,7 @@ function bdcOpenOutlook() {
   // être très long pour les grosses commandes, est copié dans le presse-papiers
   // séparément pour éviter de dépasser la limite de longueur des liens mailto:
   // (environ 2000 caractères sur Windows, parfois bien moins selon le client mail).
-  var mailtoUrl = 'mailto:' + encodeURIComponent('commande@moulindesmoines.com')
+  var mailtoUrl = 'mailto:' + encodeURIComponent(crmCfg('bdcRecipient'))
     + '?subject=' + encodeURIComponent(subject);
 
   // Ouvrir eM Client de façon SYNCHRONE (dans le geste utilisateur direct)
@@ -9623,7 +9658,7 @@ function bdcSendOrder() {
 
   var today=new Date().toLocaleDateString('fr-FR');
   var payload={
-    _subject:'Bon de commande MDM 2026 — '+mag+' — '+today,
+    _subject:(crmCfg('subjectPrefix')+' — ')+mag+' — '+today,
     _captcha:'false', magasin:mag, email:mail,
     // Web3Forms liste chaque champ comme texte brut dans son propre template
     // (il ne permet pas d'injecter du HTML personnalisé comme corps du mail) :
@@ -9648,9 +9683,13 @@ function bdcSendOrder() {
   }
 
   // Envoi email via Web3Forms
-  payload.access_key = 'c25bd306-bfaf-4a71-ac6d-36658c0df2ed';
-  payload.from_name  = 'MDM CRM';
-  payload.email      = 'cspoto@moulindesmoines.com';
+  payload.access_key = crmCfg('web3formsKey');
+  payload.from_name  = crmCfg('senderName');
+  payload.email      = crmCfg('bdcRecipient');
+  if (!payload.access_key) {
+    bdcShowAlert('Aucune clé d\'envoi configurée. Allez dans Administration > Envoi des bons de commande pour la renseigner.', 'err');
+    btn.disabled = false; spinner.style.display = 'none'; s2('bdc-send-label', 'Envoyer'); return;
+  }
   fetch('https://api.web3forms.com/submit',{
     method:'POST',
     headers:{'Content-Type':'application/json','Accept':'application/json'},
@@ -16017,6 +16056,201 @@ window.StockEntry = (function () {
   }
 
   return { mount: mount, save: save, reset: reset, refresh: refresh };
+})();
+</script>
+
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   MODULE ADMINISTRATION — BIO N TRUFFE
+   3 onglets : Comptes & rôles · Envoi des bons de commande · Général.
+   Réservé aux administrateurs. S'appuie sur : db, currentUser,
+   isAdminUser(), toast(), crmCfg()/crmConfigSave().
+   ══════════════════════════════════════════════════════════════════ */
+window.AdminPanel = (function () {
+  var tab = 'accounts';
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[m]; }); }
+  function roleLabel(r) {
+    return r === 'admin' ? '👑 Admin' : r === 'manager' ? '🧭 Manager' : r === 'viewer' ? '👁️ Viewer' : '👤 Commercial';
+  }
+  function fmtDate(ts) {
+    try { var d = ts && ts.toDate ? ts.toDate() : (ts ? new Date(ts) : null); return d ? d.toLocaleDateString('fr-FR') : '—'; }
+    catch (e) { return '—'; }
+  }
+
+  function shell() {
+    return ''
+    + '<style>'
+    + '.adm-tabs{display:flex;gap:.4rem;border-bottom:1px solid var(--border-med,#e2e6dd);margin-bottom:1.25rem;flex-wrap:wrap;}'
+    + '.adm-tab{padding:.6rem 1rem;border:none;background:transparent;font-size:.86rem;font-weight:600;color:var(--g600,#5b6157);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}'
+    + '.adm-tab.on{color:var(--blue-p700,#FF4D1C);border-bottom-color:var(--blue-p600,#FF4D1C);}'
+    + '.adm-card{background:var(--surface,#fff);border:1px solid var(--border-med,#e2e6dd);border-radius:12px;padding:1.2rem 1.25rem;max-width:920px;}'
+    + '.adm-card h3{margin:0 0 .3rem;font-size:1rem;color:var(--g900,#1a1c1a);}'
+    + '.adm-card .sub{font-size:.8rem;color:var(--g600,#5b6157);margin-bottom:1rem;}'
+    + '.adm-tbl{width:100%;border-collapse:collapse;font-size:.83rem;}'
+    + '.adm-tbl th{text-align:left;padding:.55rem .7rem;color:var(--g600,#5b6157);font-weight:600;border-bottom:1px solid var(--border-med,#e6e9e0);}'
+    + '.adm-tbl td{padding:.55rem .7rem;border-bottom:1px solid var(--bg2,#f0f1ec);vertical-align:middle;}'
+    + '.adm-in{width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--border-med,#d8dcd4);border-radius:8px;font-size:.86rem;background:#fff;}'
+    + '.adm-in:focus{outline:none;border-color:var(--blue-p500,#FF4D1C);box-shadow:0 0 0 3px rgba(255,77,28,.12);}'
+    + '.adm-lb{display:block;font-size:.72rem;font-weight:600;color:var(--g600,#5b6157);text-transform:uppercase;letter-spacing:.02em;margin:.9rem 0 .3rem;}'
+    + '.adm-sel{padding:6px 8px;border:1px solid var(--border-med,#d8dcd4);border-radius:7px;font-size:.8rem;background:#fff;}'
+    + '.adm-btn{padding:10px 16px;border:none;border-radius:9px;font-size:.86rem;font-weight:600;cursor:pointer;}'
+    + '.adm-btn.p{background:var(--blue-p600,#FF4D1C);color:#fff;}'
+    + '.adm-btn.g{background:var(--bg2,#f0f1ec);color:var(--g700,#3f453b);}'
+    + '.adm-mini{font-size:.72rem;padding:.25rem .55rem;border-radius:6px;border:1px solid var(--border-med,#d8dcd4);background:#fff;cursor:pointer;}'
+    + '.adm-note{font-size:.76rem;color:var(--g600,#5b6157);line-height:1.6;background:var(--bg,#fbfbf9);border:1px solid var(--border-med,#e6e9e0);border-radius:9px;padding:.7rem .8rem;margin-top:1rem;}'
+    + '</style>'
+    + '<div class="page-header"><div>'
+    +   '<div class="page-title">⚙️ Administration</div>'
+    +   '<div class="page-sub">Comptes, rôles et réglages du CRM Bio N Truffe.</div>'
+    + '</div></div>'
+    + '<div class="adm-tabs">'
+    +   '<button class="adm-tab" data-t="accounts" onclick="AdminPanel.go(\'accounts\')">Comptes & rôles</button>'
+    +   '<button class="adm-tab" data-t="email" onclick="AdminPanel.go(\'email\')">Envoi des bons de commande</button>'
+    +   '<button class="adm-tab" data-t="general" onclick="AdminPanel.go(\'general\')">Général</button>'
+    + '</div>'
+    + '<div id="adm-body"></div>';
+  }
+
+  // ── Onglet Comptes ──
+  function accountsView() {
+    return '<div class="adm-card">'
+      + '<h3>Comptes & rôles</h3>'
+      + '<div class="sub">Attribuez un rôle à chaque compte. Les comptes se créent via "Créer un compte" sur l\'écran de connexion.</div>'
+      + '<div style="overflow-x:auto;"><table class="adm-tbl"><thead><tr>'
+      + '<th>Nom</th><th>Email</th><th>Rôle</th><th>Créé le</th><th>Statut</th><th style="text-align:right;">Actions</th>'
+      + '</tr></thead><tbody id="adm-acc-tbody"><tr><td colspan="6" style="color:var(--g500);padding:1rem;">Chargement…</td></tr></tbody></table></div>'
+      + '<div class="adm-note">👑 <b>Admin</b> : accès complet + administration · 🧭 <b>Manager</b> : voit toute l\'équipe et tous les clients · 👤 <b>Commercial</b> : ses clients et commandes · 👁️ <b>Viewer</b> : lecture seule.</div>'
+      + '</div>';
+  }
+  function accountsRender() {
+    var tb = document.getElementById('adm-acc-tbody'); if (!tb) return;
+    if (typeof db === 'undefined' || !db) { tb.innerHTML = '<tr><td colspan="6">Connexion requise.</td></tr>'; return; }
+    db.collection('profils').get().then(function (snap) {
+      if (snap.empty) { tb.innerHTML = '<tr><td colspan="6" style="color:var(--g500);padding:1rem;">Aucun compte.</td></tr>'; return; }
+      var rows = [];
+      snap.forEach(function (doc) {
+        var r = doc.data() || {}; r.id = doc.id;
+        var role = r.role || 'commercial';
+        var actif = r.actif !== false;
+        var sel = '<select class="adm-sel" onchange="AdminPanel.setRole(\'' + r.id + '\',this.value)">'
+          + ['admin', 'manager', 'commercial', 'viewer'].map(function (o) {
+              return '<option value="' + o + '"' + (o === role ? ' selected' : '') + '>' + roleLabel(o).replace(/^[^ ]+ /, '') + '</option>';
+            }).join('') + '</select>';
+        rows.push('<tr>'
+          + '<td>' + esc(r.nom || '—') + '</td>'
+          + '<td style="color:var(--g600);">' + esc(r.email || '') + '</td>'
+          + '<td>' + sel + '</td>'
+          + '<td style="color:var(--g500);">' + fmtDate(r.createdAt) + '</td>'
+          + '<td>' + (actif ? '<span style="color:#1f7a34;font-weight:600;">Actif</span>' : '<span style="color:#b02020;font-weight:600;">Désactivé</span>') + '</td>'
+          + '<td style="text-align:right;white-space:nowrap;">'
+          +   '<button class="adm-mini" onclick="AdminPanel.toggle(\'' + r.id + '\',' + actif + ')">' + (actif ? 'Désactiver' : 'Réactiver') + '</button> '
+          +   '<button class="adm-mini" style="color:#b02020;" onclick="AdminPanel.del(\'' + r.id + '\',\'' + esc((r.nom || r.email || '')).replace(/'/g, "\\'") + '\')">Supprimer</button>'
+          + '</td></tr>');
+      });
+      tb.innerHTML = rows.join('');
+    }).catch(function (e) { tb.innerHTML = '<tr><td colspan="6" style="color:#b02020;">Erreur : ' + esc(e.message || e) + '</td></tr>'; });
+  }
+  function setRole(uid, role) {
+    if (!isAdminUser()) return;
+    db.collection('profils').doc(uid).update({ role: role }).then(function () {
+      if (currentUser && currentUser.uid === uid) window.CURRENT_PROFILE_ROLE = role;
+      toast('✅ Rôle mis à jour : ' + role); accountsRender();
+    }).catch(function (e) { toast('Erreur : ' + (e.message || e), 'err'); });
+  }
+  function toggle(uid, cur) {
+    if (!isAdminUser()) return;
+    db.collection('profils').doc(uid).update({ actif: !cur }).then(function () {
+      toast(cur ? '🚫 Compte désactivé' : '✅ Compte réactivé'); accountsRender();
+    }).catch(function (e) { toast('Erreur : ' + (e.message || e), 'err'); });
+  }
+  function del(uid, label) {
+    if (!isAdminUser()) return;
+    if (!confirm('Retirer "' + label + '" de la liste des comptes ?\n\nLe profil est supprimé du CRM. Le compte de connexion (email/mot de passe) reste dans Firebase Authentication et doit être supprimé séparément depuis la console si besoin.')) return;
+    db.collection('profils').doc(uid).delete().then(function () { toast('🗑️ Profil supprimé'); accountsRender(); })
+      .catch(function (e) { toast('Erreur : ' + (e.message || e), 'err'); });
+  }
+
+  // ── Onglet Envoi BDC ──
+  function emailView() {
+    return '<div class="adm-card">'
+      + '<h3>Envoi des bons de commande</h3>'
+      + '<div class="sub">Ces réglages déterminent où arrivent les bons de commande envoyés depuis le CRM.</div>'
+      + '<label class="adm-lb">Adresse destinataire des commandes</label>'
+      + '<input id="adm-recipient" class="adm-in" placeholder="contact@biontruffe.fr">'
+      + '<label class="adm-lb">Clé d\'envoi Web3Forms</label>'
+      + '<input id="adm-key" class="adm-in" placeholder="Collez ici votre access key Web3Forms">'
+      + '<label class="adm-lb">Nom de l\'expéditeur</label>'
+      + '<input id="adm-sender" class="adm-in" placeholder="Bio N Truffe CRM">'
+      + '<label class="adm-lb">Préfixe du sujet</label>'
+      + '<input id="adm-subject" class="adm-in" placeholder="Bon de commande Bio N Truffe">'
+      + '<div style="margin-top:1.1rem;display:flex;gap:.6rem;">'
+      +   '<button class="adm-btn g" onclick="AdminPanel.emailReset()">Annuler</button>'
+      +   '<button class="adm-btn p" onclick="AdminPanel.emailSave()">Enregistrer</button>'
+      + '</div>'
+      + '<div class="adm-note"><b>Comment recevoir les commandes chez vous :</b><br>'
+      +   '1. Créez un compte gratuit sur <b>web3forms.com</b> avec l\'adresse <b>contact@biontruffe.fr</b>.<br>'
+      +   '2. Copiez la clé « Access Key » qu\'ils vous donnent.<br>'
+      +   '3. Collez-la dans le champ ci-dessus et enregistrez.<br>'
+      +   'Sans cette clé, l\'envoi direct est bloqué (un message le rappelle au commercial).</div>'
+      + '</div>';
+  }
+  function emailFill() {
+    var m = { 'adm-recipient': 'bdcRecipient', 'adm-key': 'web3formsKey', 'adm-sender': 'senderName', 'adm-subject': 'subjectPrefix' };
+    Object.keys(m).forEach(function (id) {
+      var el = document.getElementById(id); if (!el) return;
+      var v = (window.CRM_CONFIG && window.CRM_CONFIG[m[id]]) ? window.CRM_CONFIG[m[id]] : '';
+      el.value = v;
+      if (!v && typeof CRM_CONFIG_DEFAULTS !== 'undefined') el.placeholder = CRM_CONFIG_DEFAULTS[m[id]] || el.placeholder;
+    });
+  }
+  function emailSave() {
+    if (!isAdminUser()) return;
+    var obj = {
+      bdcRecipient: (document.getElementById('adm-recipient') || {}).value || '',
+      web3formsKey: (document.getElementById('adm-key') || {}).value || '',
+      senderName: (document.getElementById('adm-sender') || {}).value || '',
+      subjectPrefix: (document.getElementById('adm-subject') || {}).value || ''
+    };
+    crmConfigSave(obj).then(function () { toast('✅ Réglages d\'envoi enregistrés'); })
+      .catch(function (e) { toast('Erreur : ' + (e.message || e), 'err'); });
+  }
+  function emailReset() { if (window.crmConfigLoad) crmConfigLoad(emailFill); else emailFill(); }
+
+  // ── Onglet Général ──
+  function generalView() {
+    return '<div class="adm-card">'
+      + '<h3>Général</h3>'
+      + '<div class="sub">Informations de l\'espace.</div>'
+      + '<table class="adm-tbl"><tbody>'
+      +   '<tr><td style="width:200px;color:var(--g600);">Marque</td><td>Bio N Truffe</td></tr>'
+      +   '<tr><td style="color:var(--g600);">Base de données</td><td>Firestore — projet <code>bio-n-truffe</code></td></tr>'
+      +   '<tr><td style="color:var(--g600);">Administrateur connecté</td><td>' + esc((currentUser && currentUser.email) || '—') + '</td></tr>'
+      +   '<tr><td style="color:var(--g600);">TVA produits</td><td>5,5 %</td></tr>'
+      +   '<tr><td style="color:var(--g600);">Franco (défaut)</td><td>450 € HT ou 5 colis</td></tr>'
+      + '</tbody></table>'
+      + '<div class="adm-note">Réalisé par LOAC DEV Solutions. Les données clients, commandes et stock sont stockées dans votre projet Firebase.</div>'
+      + '</div>';
+  }
+
+  function go(t) {
+    tab = t;
+    var body = document.getElementById('adm-body'); if (!body) return;
+    document.querySelectorAll('.adm-tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-t') === t); });
+    if (t === 'accounts') { body.innerHTML = accountsView(); accountsRender(); }
+    else if (t === 'email') { body.innerHTML = emailView(); if (window.crmConfigLoad) crmConfigLoad(emailFill); else emailFill(); }
+    else { body.innerHTML = generalView(); }
+  }
+
+  function mount(sel) {
+    var host = document.querySelector(sel || '#admin-host'); if (!host) return;
+    if (typeof isAdminUser === 'function' && !isAdminUser()) { host.innerHTML = '<div class="adm-card">Accès réservé aux administrateurs.</div>'; return; }
+    host.innerHTML = shell();
+    go(tab || 'accounts');
+  }
+
+  return { mount: mount, go: go, setRole: setRole, toggle: toggle, del: del, emailSave: emailSave, emailReset: emailReset };
 })();
 </script>
 
