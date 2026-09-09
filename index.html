@@ -33,7 +33,7 @@
   --fmono: 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
 
   /* ═══════════════════════════════════════════════════════════
-     THÈME MOULIN DES MOINES — blanc & vert (maquette validée).
+     THEME BIO N TRUFFE.
      Fond clair chaud, accent vert sapin du logo, gris chauds.
      Noms de variables conservés (--blue-p700, --g900…) : seules
      les VALEURS changent, pour ne pas toucher les 14 000 lignes.
@@ -3525,6 +3525,7 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
     <div class="form-row"><label>Accord commercial</label><select id="c-accord"><option value="">— Aucun —</option></select></div>
     <div class="form-row-2"><div><label>SIRET</label><input type="text" id="c-siret" placeholder="123 456 789 00012"></div><div><label>N° TVA</label><input type="text" id="c-tva" placeholder="FR00123456789"></div></div>
     <div class="form-row"><label>Notes</label><textarea id="c-notes" placeholder="Conditions, historique…"></textarea></div>
+    <div id="client-fiche-orders" style="display:none;margin-top:.5rem;border-top:1px solid var(--border-med,#e5e5e5);padding-top:.75rem;"></div>
   </div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('client')">Annuler</button><button class="btn btn-primary" onclick="saveClient()">Enregistrer</button></div>
 </div></div>
@@ -4445,7 +4446,11 @@ var CRM_CONFIG_DEFAULTS = {
   bdcTitle: 'BON DE COMMANDE - BIO N TRUFFE 2026',
   bdcIntro: '',
   bdcFooter: '',
-  themeColor: '#FF4D1C'
+  themeColor: '#FF4D1C',
+  companyName: 'BIO N TRUFFE',
+  companyAddr: '65 Allee des Oliviers II, 84290 CAIRANNE',
+  companyContact: 'Pierre BAUDIN - 06 99 19 58 65 - contact@biontruffe.fr',
+  companyLegal: 'ERIDAN BNT SARL au capital de 10 000 EUR - SIRET 917 968 448 00014 - APE 4639B - TVA FR 84 917968448'
 };
 function crmCfg(k) {
   try {
@@ -6591,6 +6596,7 @@ function openModal(type) {
     s('c-edit-id',''); document.getElementById('modal-client-title').textContent='Nouveau client';
     ['c-raison','c-contact','c-tel','c-email','c-ville','c-cp','c-siret','c-tva','c-notes'].forEach(id=>s(id,''));
     s('c-remise','0');
+    try { ficheRenderOrders(); } catch(e){}
   }
   if (type==='commande') {
     s('o-edit-id',''); document.getElementById('modal-commande-title').textContent='Nouvelle commande';
@@ -7658,6 +7664,70 @@ function editClient(id) {
   var accSel = document.getElementById('c-accord');
   if (accSel) accSel.value = c.accord || '';
   document.getElementById('modal-client').classList.remove('hidden');
+  try { ficheRenderOrders(); } catch(e){}
+}
+
+// ─── Fiche client : commandes + génération BL / Facture ───
+function ficheRenderOrders() {
+  var host = document.getElementById('client-fiche-orders'); if (!host) return;
+  var cid = g('c-edit-id');
+  if (!cid) { host.style.display='none'; host.innerHTML=''; return; }
+  var c = cache.clients.find(function(x){ return x.id === cid; });
+  if (!c) { host.style.display='none'; return; }
+  var raison = (c.raison||'').trim().toLowerCase();
+  var orders = cache.commandes.filter(function(o){
+    return o.clientId === cid || (raison && (o.clientNom||'').trim().toLowerCase() === raison);
+  });
+  orders.sort(function(a,b){ var ta=(a.createdAt&&a.createdAt.seconds)?a.createdAt.seconds:0, tb=(b.createdAt&&b.createdAt.seconds)?b.createdAt.seconds:0; return tb-ta; });
+  host.style.display='block';
+  if (!orders.length) {
+    host.innerHTML = '<label style="font-size:.75rem;font-weight:600;color:var(--g600,#5b6157);text-transform:uppercase;">Commandes du client</label><div style="font-size:.82rem;color:var(--g500);padding:.5rem 0;">Aucune commande enregistrée pour ce client.</div>';
+    return;
+  }
+  var rows = orders.map(function(o){
+    var d = o.createdAt ? new Date(o.createdAt.seconds ? o.createdAt.seconds*1000 : o.createdAt).toLocaleDateString('fr-FR') : '—';
+    var mnt = (o.montant||0).toLocaleString('fr-FR',{minimumFractionDigits:2})+' €';
+    var hasLines = o.lignes && o.lignes.length;
+    var btns = hasLines
+      ? '<button class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.72rem;" onclick="ficheClientBL(\''+o.id+'\')" title="Bon de livraison">📦 BL</button>'
+        + '<button class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.72rem;" onclick="ficheClientFacture(\''+o.id+'\')" title="Facture">🧾 Facture</button>'
+      : '<span style="font-size:.7rem;color:var(--g400);">détail indisponible</span>';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.45rem 0;border-bottom:1px solid var(--bg2,#f0f1ec);">'
+      + '<div style="font-size:.8rem;"><b>'+d+'</b> · '+mnt+(o.statut?' · <span style="color:var(--g500);">'+o.statut+'</span>':'')+'</div>'
+      + '<div style="display:flex;gap:.35rem;flex-wrap:wrap;">'+btns+'</div></div>';
+  }).join('');
+  host.innerHTML = '<label style="font-size:.75rem;font-weight:600;color:var(--g600,#5b6157);text-transform:uppercase;">Commandes du client — bons de livraison & factures</label>'
+    + '<div style="max-height:220px;overflow-y:auto;margin-top:.4rem;">'+rows+'</div>';
+}
+
+function ficheClientBL(orderId) {
+  var cmd = cache.commandes.find(function(o){ return o.id === orderId; });
+  if (!cmd) { toast('Commande introuvable','err'); return; }
+  if (!cmd.lignes || !cmd.lignes.length) { toast('Cette commande n\'a pas de lignes détaillées (créée hors bon de commande).','err'); return; }
+  if (cmd.blNum) { bdcBuildBL(cmd, cmd.blNum, cmd.blDate); return; }
+  bdcNextSeq('blSeq', function(seq){
+    var year=new Date().getFullYear();
+    var num=seq?('BL-'+year+'-'+String(seq).padStart(4,'0')):('BL-'+year+'-'+orderId.slice(-4).toUpperCase());
+    var dateStr=new Date().toLocaleDateString('fr-FR');
+    if (typeof bcol==='function' && db) { bcol('commandes').doc(orderId).update({blNum:num,blDate:dateStr}).catch(function(){}); }
+    cmd.blNum=num; cmd.blDate=dateStr;
+    bdcBuildBL(cmd, num, dateStr);
+  });
+}
+
+function ficheClientFacture(orderId) {
+  var cmd = cache.commandes.find(function(o){ return o.id === orderId; });
+  if (!cmd) { toast('Commande introuvable','err'); return; }
+  if (!cmd.lignes || !cmd.lignes.length) { toast('Cette commande n\'a pas de lignes détaillées (créée hors bon de commande).','err'); return; }
+  if (cmd.factureNum) { bdcBuildFacture(cmd, cmd.factureNum, cmd.factureDate); return; }
+  bdcNextSeq('factureSeq', function(seq){
+    var year=new Date().getFullYear();
+    var num=seq?('FA-'+year+'-'+String(seq).padStart(4,'0')):('FA-'+year+'-'+orderId.slice(-4).toUpperCase());
+    var dateStr=new Date().toLocaleDateString('fr-FR');
+    if (typeof bcol==='function' && db) { bcol('commandes').doc(orderId).update({factureNum:num,factureDate:dateStr}).catch(function(){}); }
+    cmd.factureNum=num; cmd.factureDate=dateStr;
+    bdcBuildFacture(cmd, num, dateStr);
+  });
 }
 
 // ═══════════════════════════════════════════════
@@ -8957,6 +9027,8 @@ function bdcHistRender() {
         '<button class="btn btn-ghost" onclick="bdcHistResend(\''+cmd._id+'\')" title="Réenvoyer par mail" style="font-size:.72rem;padding:.3rem .5rem;">✉️</button>' +
         '<button class="btn btn-ghost" onclick="bdcHistExportPDF(\''+cmd._id+'\')" title="Télécharger en PDF" style="font-size:.72rem;padding:.3rem .5rem;">📄</button>' +
         '<button class="btn btn-ghost" onclick="bdcHistExportXLS(\''+cmd._id+'\')" title="Télécharger en Excel" style="font-size:.72rem;padding:.3rem .5rem;">📊</button>' +
+        '<button class="btn btn-ghost" onclick="bdcHistBL(\''+cmd._id+'\')" title="Bon de livraison" style="font-size:.72rem;padding:.3rem .5rem;">📦</button>' +
+        '<button class="btn btn-ghost" onclick="bdcHistFacture(\''+cmd._id+'\')" title="Facture" style="font-size:.72rem;padding:.3rem .5rem;">🧾</button>' +
         '<button class="btn btn-ghost" onclick="bdcHistDelete(\''+cmd._id+'\')" title="Supprimer" style="font-size:.72rem;padding:.3rem .5rem;color:#b0402f;">🗑</button>' +
       '</div>' +
     '</div>';
@@ -9008,7 +9080,7 @@ function bdcHistResend(id) {
 
   // Reconstruit le texte de la commande depuis les lignes sauvegardées
   var date = new Date().toLocaleDateString('fr-FR');
-  var lines = ['BON DE COMMANDE — ' + (CURRENT_BRAND==='naturaline'?'BIO N TRUFFE':'MOULIN DES MOINES'), ''];
+  var lines = ['BON DE COMMANDE — BIO N TRUFFE', ''];
   if (cmd.clientNom) lines.push('Client : ' + cmd.clientNom);
   if (cmd.numClient) lines.push('N° Client : ' + cmd.numClient);
   if (cmd.contact) lines.push('Contact : ' + cmd.contact);
@@ -9052,7 +9124,7 @@ function bdcHistExportPDF(id) {
 
   withJsPdf(function() {
     var doc = new window.jspdf.jsPDF({ unit:'mm', format:'a4' });
-    var brand = CURRENT_BRAND === 'naturaline' ? 'BIO N TRUFFE' : 'MOULIN DES MOINES';
+    var brand = 'BIO N TRUFFE';
     var date = cmd.createdAt ? new Date(cmd.createdAt.seconds ? cmd.createdAt.seconds*1000 : cmd.createdAt).toLocaleDateString('fr-FR') : '—';
     var fname = 'BDC_' + (cmd.clientNom||'client').replace(/[^a-zA-Z0-9]/g,'_') + '_' + date.replace(/\//g,'-') + '.pdf';
 
@@ -9126,6 +9198,177 @@ function bdcHistExportPDF(id) {
   });
 }
 
+// ─── Numérotation séquentielle (facture / BL) via crm_config ───
+function bdcNextSeq(field, cb) {
+  if (typeof db === 'undefined' || !db) { cb(null); return; }
+  var ref = db.collection('crm_config').doc('main');
+  db.runTransaction(function (tx) {
+    return tx.get(ref).then(function (d) {
+      var cur = (d.exists && d.data()[field]) ? d.data()[field] : 0;
+      var next = cur + 1;
+      var patch = {}; patch[field] = next;
+      tx.set(ref, patch, { merge: true });
+      return next;
+    });
+  }).then(function (next) { cb(next); }).catch(function (e) { console.warn('[seq]', e); cb(null); });
+}
+
+// ─── Bon de livraison ───
+function bdcHistBL(id) {
+  var cmd = bdcHistCache.find(function (c) { return c._id === id; });
+  if (!cmd) { toast('Commande introuvable', 'err'); return; }
+  if (!cmd.lignes || !cmd.lignes.length) { toast('Cette commande n\'a pas de lignes détaillées', 'err'); return; }
+  if (cmd.blNum) { bdcBuildBL(cmd, cmd.blNum, cmd.blDate); return; }
+  bdcNextSeq('blSeq', function (seq) {
+    var year = new Date().getFullYear();
+    var num = seq ? ('BL-' + year + '-' + String(seq).padStart(4, '0')) : ('BL-' + year + '-' + id.slice(-4).toUpperCase());
+    var dateStr = new Date().toLocaleDateString('fr-FR');
+    if (typeof bcol === 'function' && db && cmd._id) { bcol('commandes').doc(cmd._id).update({ blNum: num, blDate: dateStr }).catch(function () {}); }
+    cmd.blNum = num; cmd.blDate = dateStr;
+    bdcBuildBL(cmd, num, dateStr);
+  });
+}
+
+function bdcBuildBL(cmd, num, dateStr) {
+  withJsPdf(function () {
+    try {
+      var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+      var HDR = [255, 77, 28];
+      doc.setTextColor(20, 20, 20); doc.setFont('helvetica', 'bold'); doc.setFontSize(17);
+      doc.text(crmCfg('companyName'), 14, 18);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(90, 90, 90);
+      doc.text(crmCfg('companyAddr'), 14, 24);
+      doc.text(crmCfg('companyContact'), 14, 28.5);
+      doc.setTextColor(HDR[0], HDR[1], HDR[2]); doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
+      doc.text('BON DE LIVRAISON', 196, 18, { align: 'right' });
+      doc.setTextColor(60, 60, 60); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      doc.text('N° ' + num, 196, 25, { align: 'right' });
+      doc.text('Date : ' + dateStr, 196, 30, { align: 'right' });
+      if (cmd.datelivraison) doc.text('Livraison : ' + cmd.datelivraison, 196, 35, { align: 'right' });
+
+      var y = 44;
+      doc.setDrawColor(220, 220, 220); doc.setFillColor(248, 248, 246); doc.rect(120, y, 76, 28, 'FD');
+      doc.setTextColor(120, 120, 120); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+      doc.text('LIVRER A', 124, y + 5);
+      doc.setTextColor(30, 30, 30); doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+      doc.text(cmd.clientNom || '-', 124, y + 11);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(70, 70, 70);
+      var cy = y + 16;
+      if (cmd.numClient) { doc.text('Client n° ' + cmd.numClient, 124, cy); cy += 4; }
+      if (cmd.contact) { doc.text(String(cmd.contact), 124, cy); cy += 4; }
+      if (cmd.tel) { doc.text('Tel : ' + cmd.tel, 124, cy); cy += 4; }
+
+      var rows = (cmd.lignes || []).map(function (l) {
+        var colis = l.qty || 0, pcb = l.pcb || 1, units = colis * pcb;
+        return [l.code || '', l.libelle || '', String(colis), String(pcb), String(units)];
+      });
+      doc.autoTable({
+        startY: 78,
+        head: [['Code', 'Désignation', 'Colis', 'PCB', 'Qté UVC']],
+        body: rows,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak', textColor: [40, 40, 40] },
+        headStyles: { fillColor: HDR, textColor: 255, fontStyle: 'bold', halign: 'center' },
+        alternateRowStyles: { fillColor: [253, 245, 242] },
+        columnStyles: { 0: { cellWidth: 28 }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 20, halign: 'center' }, 3: { cellWidth: 18, halign: 'center' }, 4: { cellWidth: 24, halign: 'center', fontStyle: 'bold' } },
+        margin: { left: 14, right: 14 }
+      });
+      var yEnd = doc.lastAutoTable.finalY + 14;
+      doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.3);
+      doc.setFontSize(9); doc.setTextColor(60, 60, 60); doc.setFont('helvetica', 'normal');
+      doc.line(20, yEnd + 16, 80, yEnd + 16); doc.text('Livré le / Signature', 20, yEnd + 21);
+      doc.line(120, yEnd + 16, 190, yEnd + 16); doc.text('Reçu le / Signature client', 120, yEnd + 21);
+
+      var pageH = doc.internal.pageSize.height;
+      doc.setFontSize(7); doc.setTextColor(120, 120, 120);
+      doc.text(crmCfg('companyLegal'), 14, pageH - 9, { maxWidth: 182 });
+      doc.save('BL_' + num + '_' + (cmd.clientNom || 'client').replace(/[^a-zA-Z0-9]/g, '_') + '.pdf');
+      toast('📦 Bon de livraison généré', 'ok');
+    } catch (e) { console.error('[BL]', e); toast('Erreur BL : ' + (e.message || e), 'err'); }
+  });
+}
+
+// ─── Facture ───
+function bdcHistFacture(id) {
+  var cmd = bdcHistCache.find(function (c) { return c._id === id; });
+  if (!cmd) { toast('Commande introuvable', 'err'); return; }
+  if (!cmd.lignes || !cmd.lignes.length) { toast('Cette commande n\'a pas de lignes détaillées', 'err'); return; }
+  if (cmd.factureNum) { bdcBuildFacture(cmd, cmd.factureNum, cmd.factureDate); return; }
+  bdcNextSeq('factureSeq', function (seq) {
+    var year = new Date().getFullYear();
+    var num = seq ? ('FA-' + year + '-' + String(seq).padStart(4, '0')) : ('FA-' + year + '-' + id.slice(-4).toUpperCase());
+    var dateStr = new Date().toLocaleDateString('fr-FR');
+    if (typeof bcol === 'function' && db && cmd._id) { bcol('commandes').doc(cmd._id).update({ factureNum: num, factureDate: dateStr }).catch(function () {}); }
+    cmd.factureNum = num; cmd.factureDate = dateStr;
+    bdcBuildFacture(cmd, num, dateStr);
+  });
+}
+
+function bdcBuildFacture(cmd, num, dateStr) {
+  withJsPdf(function () {
+    try {
+      var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+      var HDR = [255, 77, 28];
+      doc.setTextColor(20, 20, 20); doc.setFont('helvetica', 'bold'); doc.setFontSize(17);
+      doc.text(crmCfg('companyName'), 14, 18);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(90, 90, 90);
+      doc.text(crmCfg('companyAddr'), 14, 24);
+      doc.text(crmCfg('companyContact'), 14, 28.5);
+      doc.setTextColor(HDR[0], HDR[1], HDR[2]); doc.setFont('helvetica', 'bold'); doc.setFontSize(20);
+      doc.text('FACTURE', 196, 18, { align: 'right' });
+      doc.setTextColor(60, 60, 60); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      doc.text('N° ' + num, 196, 25, { align: 'right' });
+      doc.text('Date : ' + dateStr, 196, 30, { align: 'right' });
+
+      var y = 42;
+      doc.setDrawColor(220, 220, 220); doc.setFillColor(248, 248, 246); doc.rect(120, y, 76, 30, 'FD');
+      doc.setTextColor(120, 120, 120); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+      doc.text('FACTURER A', 124, y + 5);
+      doc.setTextColor(30, 30, 30); doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+      doc.text(cmd.clientNom || '-', 124, y + 11);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(70, 70, 70);
+      var cy = y + 16;
+      if (cmd.numClient) { doc.text('Client n° ' + cmd.numClient, 124, cy); cy += 4; }
+      if (cmd.contact) { doc.text(String(cmd.contact), 124, cy); cy += 4; }
+      if (cmd.tel) { doc.text('Tel : ' + cmd.tel, 124, cy); cy += 4; }
+
+      var rows = (cmd.lignes || []).map(function (l) {
+        var colis = l.qty || 0, pcb = l.pcb || 1, units = colis * pcb;
+        var pu = l.pu_ht || 0, tot = l.total_ht || (pu * units) || 0;
+        return [l.code || '', l.libelle || '', String(units), pu.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €', tot.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €'];
+      });
+      doc.autoTable({
+        startY: 78,
+        head: [['Code', 'Désignation', 'Qté UVC', 'PU HT', 'Total HT']],
+        body: rows,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak', textColor: [40, 40, 40] },
+        headStyles: { fillColor: HDR, textColor: 255, fontStyle: 'bold', halign: 'center' },
+        alternateRowStyles: { fillColor: [253, 245, 242] },
+        columnStyles: { 0: { cellWidth: 26 }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 22, halign: 'center' }, 3: { cellWidth: 26, halign: 'right' }, 4: { cellWidth: 28, halign: 'right', fontStyle: 'bold' } },
+        margin: { left: 14, right: 14 }
+      });
+
+      var yEnd = doc.lastAutoTable.finalY + 8;
+      var ht = cmd.montant || 0, tva = ht * 0.055, ttc = ht * 1.055;
+      var bx = 130;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(70, 70, 70);
+      doc.text('Total HT', bx, yEnd); doc.text(ht.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €', 196, yEnd, { align: 'right' }); yEnd += 5.5;
+      doc.text('TVA 5,5 %', bx, yEnd); doc.text(tva.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €', 196, yEnd, { align: 'right' }); yEnd += 7;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(HDR[0], HDR[1], HDR[2]);
+      doc.text('TOTAL TTC', bx, yEnd); doc.text(ttc.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €', 196, yEnd, { align: 'right' });
+
+      var pageH = doc.internal.pageSize.height;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(120, 120, 120);
+      doc.text(crmCfg('companyLegal'), 14, pageH - 14, { maxWidth: 182 });
+      doc.text('TVA 5,5 % sur tous les produits. Paiement a reception sauf accord. Penalites de retard : 3x le taux legal. Pas d\'escompte pour paiement anticipe.', 14, pageH - 9, { maxWidth: 182 });
+      doc.save('Facture_' + num + '_' + (cmd.clientNom || 'client').replace(/[^a-zA-Z0-9]/g, '_') + '.pdf');
+      toast('🧾 Facture générée', 'ok');
+    } catch (e) { console.error('[Facture]', e); toast('Erreur facture : ' + (e.message || e), 'err'); }
+  });
+}
+
 // ─── Export Excel d'une commande historique ────────────────────────────────
 function bdcHistExportXLS(id) {
   var cmd = bdcHistCache.find(function(c){ return c._id === id; });
@@ -9137,7 +9380,7 @@ function bdcHistExportXLS(id) {
 
     // Feuille 1 : détail articles
     var rows = [
-      ['BON DE COMMANDE — ' + (CURRENT_BRAND==='naturaline'?'BIO N TRUFFE':'MOULIN DES MOINES')],
+      ['BON DE COMMANDE — BIO N TRUFFE'],
       [],
       ['Client', cmd.clientNom||'—'],
       ['N° Client', cmd.numClient||''],
