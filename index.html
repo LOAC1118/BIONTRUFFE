@@ -1530,6 +1530,7 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
       <button class="t-item" data-sec="tournees" onclick="tnavGo('tournees')"><span class="t-item-ico">🗺️</span>Tournées</button>
       <button class="t-item" data-sec="visites" onclick="tnavGo('visites')"><span class="t-item-ico">📝</span>Visites</button>
       <button class="t-item" data-sec="cadencier" onclick="tnavGo('cadencier')"><span class="t-item-ico">🗓️</span>Cadencier</button>
+      <button class="t-item" data-sec="stockentry" onclick="tnavGo('stockentry')"><span class="t-item-ico">📦</span>Entrée Stock</button>
       <button class="t-item" data-sec="accords" onclick="tnavGo('accords')"><span class="t-item-ico">🤝</span>Accords commerciaux</button>
       </div>
     </div>
@@ -1600,6 +1601,10 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
     <div class="nav-item" onclick="showSection('recherche',null,this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="m11 11 3.5 3.5"/></svg>
       Recherche produit
+    </div>
+    <div class="nav-item" onclick="showSection('stockentry',null,this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4.5 8 1.5l6 3v7L8 14.5 2 11.5z"/><path d="M2 4.5 8 7.5l6-3M8 7.5v7"/></svg>
+      Entrée Stock
     </div>
     <div class="nav-item" onclick="showSection('tournees',null,this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5c-2.2 0-4 1.8-4 4 0 3 4 9 4 9s4-6 4-9c0-2.2-1.8-4-4-4z"/><circle cx="8" cy="5.5" r="1.5"/></svg>
@@ -2092,6 +2097,11 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
   </div>
 
   <!-- TROUS D'ASSORTIMENT (module 2) -->
+  <!-- ENTRÉE EN STOCK — BIO N TRUFFE -->
+  <div id="sec-stockentry" class="hidden" style="padding:1.75rem 2rem;overflow-y:auto;flex:1;background:var(--bg);box-sizing:border-box;">
+    <div id="stockentry-host"></div>
+  </div>
+
   <div id="sec-assortiment" class="hidden" style="padding:1.75rem 2rem;overflow-y:auto;flex:1;background:var(--bg);box-sizing:border-box;">
     <div id="asr-host"></div>
   </div>
@@ -3367,6 +3377,10 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
     <span class="mmenu-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="3" width="13" height="11.5" rx="1.5"/><path d="M1.5 6.5h13M5 1.5v3M11 1.5v3"/><path d="M4.5 9h2M4.5 11.5h2M9.5 9h2M9.5 11.5h2"/></svg></span>
     <span class="mmenu-label">Cadencier</span>
   </button>
+  <button class="mmenu-item" role="menuitem" data-sec="stockentry" onclick="mnavGo('stockentry')">
+    <span class="mmenu-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4.5 8 1.5l6 3v7L8 14.5 2 11.5z"/><path d="M2 4.5 8 7.5l6-3M8 7.5v7"/></svg></span>
+    <span class="mmenu-label">Entrée Stock</span>
+  </button>
   <button class="mmenu-item" role="menuitem" data-sec="accords" onclick="mnavGo('accords')">
     <span class="mmenu-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8l3 3 9-9"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg></span>
     <span class="mmenu-label">Accords</span>
@@ -3915,7 +3929,7 @@ let db = null, auth = null, currentUser = null, fbFunctions = null;
 // Les collections listées ici sont dupliquées par marque ET par commercial
 // (suffixe _<marque>_<uid>). 'profils' reste commun et global (compte Firebase
 // Auth, indépendant de la marque et déjà identifié par son propre uid).
-var BRAND_SCOPED_COLLECTIONS = ['clients','contacts','prospects','commandes','commandes_meta','commandes_stats','frais','notes_frais','activite','objectifs_ca','config','cadenciers','visites','visites_photos'];
+var BRAND_SCOPED_COLLECTIONS = ['clients','contacts','prospects','commandes','commandes_meta','commandes_stats','frais','notes_frais','activite','objectifs_ca','config','cadenciers','visites','visites_photos','stock_entries'];
 
 // ═══ BASCULE MODÈLE ÉQUIPE EN PROD (migration) ═══════════════════════════
 // PROD_TEAM_MODE       : en prod, lire/écrire les collections PARTAGÉES
@@ -5015,7 +5029,7 @@ if (typeof cdbPageSize  === 'undefined') window.cdbPageSize  = 50;
 // ═══════════════════════════════════════════════
 //  NAVIGATION
 // ═══════════════════════════════════════════════
-const SECTIONS = ['dashboard','radar','tournees','visites','recherche','rgpd','bdc','frais','contacts-db','commissions','comptes','mailing','accords','promos','top100','cadencier','ia','assortiment','alertes','equipe'];
+const SECTIONS = ['dashboard','radar','tournees','visites','recherche','rgpd','bdc','frais','contacts-db','commissions','comptes','mailing','accords','promos','top100','cadencier','ia','assortiment','alertes','equipe','stockentry'];
 // ═══════════════════════════════════════════════
 //  MENUS DEROULANTS DE LA BARRE DU HAUT
 // ═══════════════════════════════════════════════
@@ -5096,6 +5110,7 @@ function showSection(name, tabEl, sideEl) {
   if (name==='promos') { setTimeout(function(){ if (typeof promoInit === 'function') promoInit(); }, 80); }
   if (name==='top100') { setTimeout(function(){ if (typeof top100Init === 'function') top100Init(); }, 80); }
   if (name==='cadencier') { setTimeout(function(){ if (typeof cadInit === 'function') cadInit(); }, 80); }
+  if (name==='stockentry') { setTimeout(function(){ if (window.StockEntry) StockEntry.mount('#stockentry-host'); }, 80); }
   if (name==='ia') { setTimeout(function(){ if (typeof iaInit === 'function') iaInit(); }, 80); }
   // Démonter le générateur quand on quitte l'onglet Promos
   if (name !== 'promos' && typeof promoUnmount === 'function') promoUnmount();
@@ -7976,9 +7991,9 @@ window.addEventListener('load', function() {
 // ═══════════════════════════════════════════════
 //  BON DE COMMANDE — CATALOGUE MDM
 // ═══════════════════════════════════════════════
-var PRODUCTS_MDM = [{"code":"TARTUFFADE80","ean":"3770028175086","libelle":"TARTUFFADE a la Truffe Noire 2% Bio","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.50,"certif":"BIO","origine":"France","stock":null},{"code":"CEPES80","ean":"3770028175079","libelle":"DELICE DE CEPES et Truffe Noire 2% Bio","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.50,"certif":"BIO","origine":"France","stock":null},{"code":"SAUCE80","ean":"3770028175062","libelle":"SAUCE CREMEE a la Truffe Noire 1,5% Bio","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.50,"certif":"BIO","origine":"France","stock":null},{"code":"PARMESAN80","ean":"3770028175055","libelle":"CREME DE PARMESAN et Truffe Noire 1,5%","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.50,"certif":"BIO","origine":"France","stock":null},{"code":"BALSAMIQUE150","ean":"3770028175017","libelle":"CREME DE BALSAMIQUE Truffe Noire 1,1% - 150ml","poids":0.15,"pcb":12,"tva":5.5,"pu_ht":10.50,"certif":"BIO","origine":"France","stock":null},{"code":"BALSAMIQUE100","ean":"3770028175147","libelle":"CREME DE BALSAMIQUE Truffe Noire 1,1% - 100ml","poids":0.10,"pcb":12,"tva":5.5,"pu_ht":10.50,"certif":"BIO","origine":"France","stock":null},{"code":"HUILE250","ean":"3770028175109","libelle":"HUILE OLIVE VIERGE EXTRA Truffe Noire Bio AOP Nyons - 250ml","poids":0.25,"pcb":12,"tva":5.5,"pu_ht":19.00,"certif":"BIO","origine":"France","stock":null},{"code":"HUILE100","ean":"3770028175116","libelle":"HUILE OLIVE VIERGE EXTRA Truffe Noire Bio AOP Nyons - 100ml","poids":0.10,"pcb":12,"tva":5.5,"pu_ht":11.00,"certif":"BIO","origine":"France","stock":null},{"code":"MIEL100","ean":"3770028175000","libelle":"MIEL ACCACIA a la Truffe Noire 1,1% Bio - 100g","poids":0.10,"pcb":12,"tva":5.5,"pu_ht":10.50,"certif":"BIO","origine":"France","stock":null},{"code":"TRUFFE20BROSS","ean":"3770028175130","libelle":"TRUFFES NOIRES Brossees 1ere Cuisson Bio - 20g","poids":0.02,"pcb":6,"tva":5.5,"pu_ht":25.00,"certif":"BIO","origine":"France","stock":null},{"code":"TRUFFE20BRISURES","ean":"3770028175123","libelle":"TRUFFE NOIRE Brisures 1ere Cuisson Bio - 20g","poids":0.02,"pcb":6,"tva":5.5,"pu_ht":20.00,"certif":"BIO","origine":"France","stock":null},{"code":"DUO_CAJOU_AMANDE","ean":"3770028175161","libelle":"DUO CAJOU AMANDE Truffe Ete 1,4% Bio","poids":0.10,"pcb":6,"tva":5.5,"pu_ht":9.50,"certif":"BIO","origine":"France","stock":null},{"code":"CHIPS_PDT","ean":"3770028175154","libelle":"CHIPS ARTISANALES Truffe Ete 1% Bio","poids":0.10,"pcb":16,"tva":5.5,"pu_ht":3.90,"certif":"BIO","origine":"France","stock":null}];
+var PRODUCTS_MDM = [{"code":"TARTUFFADE80","ean":"3770028175086","libelle":"TARTUFFADE A LA TRUFFE NOIRE 2% BIO","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.5,"certif":"BIO","origine":"France","stock":null},{"code":"CEPES80","ean":"3770028175079","libelle":"DELICE DE CEPES ET TRUFFE NOIRE 2% BIO","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.5,"certif":"BIO","origine":"France","stock":null},{"code":"SAUCE80","ean":"3770028175062","libelle":"SAUCE CREMEE A LA TRUFFE NOIRE 1.5% BIO","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.5,"certif":"BIO","origine":"France","stock":null},{"code":"PARMESAN80","ean":"3770028175055","libelle":"CREME DE PARMESAN ET TRUFFE NOIRE 1.5% BIO","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.5,"certif":"BIO","origine":"France","stock":null},{"code":"BALSAMIQUE150","ean":"3770028175017","libelle":"CREME DE BALSAMIQUE A LA TRUFFE NOIRE 1.1% BIO 150ml","poids":0.15,"pcb":12,"tva":5.5,"pu_ht":10.5,"certif":"BIO","origine":"France","stock":null},{"code":"BALSAMIQUE100","ean":"3770028175147","libelle":"CREME DE BALSAMIQUE A LA TRUFFE NOIRE 1.1% BIO 100ml","poids":0.1,"pcb":12,"tva":5.5,"pu_ht":10.5,"certif":"BIO","origine":"France","stock":null},{"code":"HUILE250","ean":"3770028175109","libelle":"HUILE D'OLIVE VIERGE EXTRA Aromatisee a la TRUFFE NOIRE BIO 250ml","poids":0.25,"pcb":12,"tva":5.5,"pu_ht":19.0,"certif":"BIO","origine":"France","stock":null},{"code":"HUILE100","ean":"3770028175116","libelle":"HUILE D'OLIVE VIERGE EXTRA Aromatisee a la TRUFFE NOIRE BIO 100ml","poids":0.1,"pcb":12,"tva":5.5,"pu_ht":11.0,"certif":"BIO","origine":"France","stock":null},{"code":"MIEL100","ean":"3770028175000","libelle":"MIEL D'ACCACIA A LA TRUFFE NOIRE 1.1% BIO","poids":0.1,"pcb":12,"tva":5.5,"pu_ht":10.5,"certif":"BIO","origine":"France","stock":null},{"code":"TRUFFE20BROSS","ean":"3770028175130","libelle":"TRUFFES NOIRES TUBER MELANO BROSSEES 1ERE CUISSON BIO","poids":0.02,"pcb":6,"tva":5.5,"pu_ht":25.0,"certif":"BIO","origine":"France","stock":null},{"code":"TRUFFE20BRISURES","ean":"3770028175123","libelle":"TRUFFE NOIRE TUBER MELANO BRISURES 1ERE CUISSON BIO","poids":0.02,"pcb":6,"tva":5.5,"pu_ht":20.0,"certif":"BIO","origine":"France","stock":null},{"code":"DUO_CAJOU_AMANDE","ean":"3770028175161","libelle":"DUO CAJOU AMANDE A LA TRUFFE D'ETE 1,4% BIO","poids":0.1,"pcb":6,"tva":5.5,"pu_ht":9.5,"certif":"BIO","origine":"France","stock":null},{"code":"CHIPS_PDT","ean":"3770028175154","libelle":"CHIPS ARTISANALES A LA TRUFFE D'ETE 1% BIO (Pomme de Terre France)","poids":0.1,"pcb":16,"tva":5.5,"pu_ht":3.9,"certif":"BIO","origine":"France","stock":null},{"code":"COFFRET","ean":"3770028175093","libelle":"COFFRET FESTIF AIDES CULINAIRES A LA TRUFFE (cadeaux clients / seminaires / CSE - sur devis)","poids":null,"pcb":1,"tva":5.5,"pu_ht":0,"certif":"BIO","origine":"France","stock":null}];
 
-var PRODUCTS_NATURALINE = [{"code":"TARTUFFADE80","ean":"3770028175086","libelle":"TARTUFFADE a la Truffe Noire 2% Bio","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.50,"certif":"BIO","origine":"France","stock":null},{"code":"CEPES80","ean":"3770028175079","libelle":"DELICE DE CEPES et Truffe Noire 2% Bio","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.50,"certif":"BIO","origine":"France","stock":null},{"code":"SAUCE80","ean":"3770028175062","libelle":"SAUCE CREMEE a la Truffe Noire 1,5% Bio","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.50,"certif":"BIO","origine":"France","stock":null},{"code":"PARMESAN80","ean":"3770028175055","libelle":"CREME DE PARMESAN et Truffe Noire 1,5%","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.50,"certif":"BIO","origine":"France","stock":null},{"code":"BALSAMIQUE150","ean":"3770028175017","libelle":"CREME DE BALSAMIQUE Truffe Noire 1,1% - 150ml","poids":0.15,"pcb":12,"tva":5.5,"pu_ht":10.50,"certif":"BIO","origine":"France","stock":null},{"code":"BALSAMIQUE100","ean":"3770028175147","libelle":"CREME DE BALSAMIQUE Truffe Noire 1,1% - 100ml","poids":0.10,"pcb":12,"tva":5.5,"pu_ht":10.50,"certif":"BIO","origine":"France","stock":null},{"code":"HUILE250","ean":"3770028175109","libelle":"HUILE OLIVE VIERGE EXTRA Truffe Noire Bio AOP Nyons - 250ml","poids":0.25,"pcb":12,"tva":5.5,"pu_ht":19.00,"certif":"BIO","origine":"France","stock":null},{"code":"HUILE100","ean":"3770028175116","libelle":"HUILE OLIVE VIERGE EXTRA Truffe Noire Bio AOP Nyons - 100ml","poids":0.10,"pcb":12,"tva":5.5,"pu_ht":11.00,"certif":"BIO","origine":"France","stock":null},{"code":"MIEL100","ean":"3770028175000","libelle":"MIEL ACCACIA a la Truffe Noire 1,1% Bio - 100g","poids":0.10,"pcb":12,"tva":5.5,"pu_ht":10.50,"certif":"BIO","origine":"France","stock":null},{"code":"TRUFFE20BROSS","ean":"3770028175130","libelle":"TRUFFES NOIRES Brossees 1ere Cuisson Bio - 20g","poids":0.02,"pcb":6,"tva":5.5,"pu_ht":25.00,"certif":"BIO","origine":"France","stock":null},{"code":"TRUFFE20BRISURES","ean":"3770028175123","libelle":"TRUFFE NOIRE Brisures 1ere Cuisson Bio - 20g","poids":0.02,"pcb":6,"tva":5.5,"pu_ht":20.00,"certif":"BIO","origine":"France","stock":null},{"code":"DUO_CAJOU_AMANDE","ean":"3770028175161","libelle":"DUO CAJOU AMANDE Truffe Ete 1,4% Bio","poids":0.10,"pcb":6,"tva":5.5,"pu_ht":9.50,"certif":"BIO","origine":"France","stock":null},{"code":"CHIPS_PDT","ean":"3770028175154","libelle":"CHIPS ARTISANALES Truffe Ete 1% Bio","poids":0.10,"pcb":16,"tva":5.5,"pu_ht":3.90,"certif":"BIO","origine":"France","stock":null}];
+var PRODUCTS_NATURALINE = [{"code":"TARTUFFADE80","ean":"3770028175086","libelle":"TARTUFFADE A LA TRUFFE NOIRE 2% BIO","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.5,"certif":"BIO","origine":"France","stock":null},{"code":"CEPES80","ean":"3770028175079","libelle":"DELICE DE CEPES ET TRUFFE NOIRE 2% BIO","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.5,"certif":"BIO","origine":"France","stock":null},{"code":"SAUCE80","ean":"3770028175062","libelle":"SAUCE CREMEE A LA TRUFFE NOIRE 1.5% BIO","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.5,"certif":"BIO","origine":"France","stock":null},{"code":"PARMESAN80","ean":"3770028175055","libelle":"CREME DE PARMESAN ET TRUFFE NOIRE 1.5% BIO","poids":0.08,"pcb":12,"tva":5.5,"pu_ht":8.5,"certif":"BIO","origine":"France","stock":null},{"code":"BALSAMIQUE150","ean":"3770028175017","libelle":"CREME DE BALSAMIQUE A LA TRUFFE NOIRE 1.1% BIO 150ml","poids":0.15,"pcb":12,"tva":5.5,"pu_ht":10.5,"certif":"BIO","origine":"France","stock":null},{"code":"BALSAMIQUE100","ean":"3770028175147","libelle":"CREME DE BALSAMIQUE A LA TRUFFE NOIRE 1.1% BIO 100ml","poids":0.1,"pcb":12,"tva":5.5,"pu_ht":10.5,"certif":"BIO","origine":"France","stock":null},{"code":"HUILE250","ean":"3770028175109","libelle":"HUILE D'OLIVE VIERGE EXTRA Aromatisee a la TRUFFE NOIRE BIO 250ml","poids":0.25,"pcb":12,"tva":5.5,"pu_ht":19.0,"certif":"BIO","origine":"France","stock":null},{"code":"HUILE100","ean":"3770028175116","libelle":"HUILE D'OLIVE VIERGE EXTRA Aromatisee a la TRUFFE NOIRE BIO 100ml","poids":0.1,"pcb":12,"tva":5.5,"pu_ht":11.0,"certif":"BIO","origine":"France","stock":null},{"code":"MIEL100","ean":"3770028175000","libelle":"MIEL D'ACCACIA A LA TRUFFE NOIRE 1.1% BIO","poids":0.1,"pcb":12,"tva":5.5,"pu_ht":10.5,"certif":"BIO","origine":"France","stock":null},{"code":"TRUFFE20BROSS","ean":"3770028175130","libelle":"TRUFFES NOIRES TUBER MELANO BROSSEES 1ERE CUISSON BIO","poids":0.02,"pcb":6,"tva":5.5,"pu_ht":25.0,"certif":"BIO","origine":"France","stock":null},{"code":"TRUFFE20BRISURES","ean":"3770028175123","libelle":"TRUFFE NOIRE TUBER MELANO BRISURES 1ERE CUISSON BIO","poids":0.02,"pcb":6,"tva":5.5,"pu_ht":20.0,"certif":"BIO","origine":"France","stock":null},{"code":"DUO_CAJOU_AMANDE","ean":"3770028175161","libelle":"DUO CAJOU AMANDE A LA TRUFFE D'ETE 1,4% BIO","poids":0.1,"pcb":6,"tva":5.5,"pu_ht":9.5,"certif":"BIO","origine":"France","stock":null},{"code":"CHIPS_PDT","ean":"3770028175154","libelle":"CHIPS ARTISANALES A LA TRUFFE D'ETE 1% BIO (Pomme de Terre France)","poids":0.1,"pcb":16,"tva":5.5,"pu_ht":3.9,"certif":"BIO","origine":"France","stock":null},{"code":"COFFRET","ean":"3770028175093","libelle":"COFFRET FESTIF AIDES CULINAIRES A LA TRUFFE (cadeaux clients / seminaires / CSE - sur devis)","poids":null,"pcb":1,"tva":5.5,"pu_ht":0,"certif":"BIO","origine":"France","stock":null}];
 // CURRENT_BRAND déjà défini en haut du script (avant tout usage)
 var PRODUCTS = (CURRENT_BRAND === 'naturaline') ? PRODUCTS_NATURALINE : PRODUCTS_MDM;
 
@@ -15759,5 +15774,251 @@ if ('serviceWorker' in navigator) {
 })();
 </script>
 <!-- ═══ COHOR-SWITCH-END ═══ -->
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   MODULE ENTRÉE STOCK — BIO N TRUFFE
+   Saisie par EAN / référence + quantité, types de mouvement,
+   historique daté, synchro avec le stock affiché dans le BDC.
+   S'appuie sur : PRODUCTS, bdcStockMap, stockPushCloud(), bcol(),
+   currentUser, toast(), buildTable(), RechercheProduit.
+   ══════════════════════════════════════════════════════════════════ */
+window.StockEntry = (function () {
+  var mounted = false, hostSel = null, found = null;
+
+  function catalogue() {
+    try { return (typeof PRODUCTS !== 'undefined' && PRODUCTS && PRODUCTS.length) ? PRODUCTS : []; }
+    catch (e) { return []; }
+  }
+  function curStock(code) {
+    try {
+      if (typeof bdcStockMap !== 'undefined' && bdcStockMap && bdcStockMap[code] !== undefined && bdcStockMap[code] !== null)
+        return bdcStockMap[code];
+    } catch (e) {}
+    return null;
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[m]; }); }
+
+  // Recherche produit : EAN d'abord, puis code/référence, puis libellé
+  function findProduct(term) {
+    term = (term || '').trim().toUpperCase();
+    if (!term) return null;
+    var list = catalogue();
+    var p = list.find(function (x) { return (x.ean || '').toUpperCase() === term; });
+    if (p) return p;
+    p = list.find(function (x) { return (x.code || '').toUpperCase() === term; });
+    if (p) return p;
+    p = list.find(function (x) { return (x.code || '').toUpperCase().indexOf(term) === 0; });
+    if (p) return p;
+    return list.find(function (x) { return (x.libelle || '').toUpperCase().indexOf(term) !== -1; }) || null;
+  }
+
+  function html() {
+    return ''
+    + '<style>'
+    + '.stk-wrap{display:grid;grid-template-columns:360px 1fr;gap:1.25rem;align-items:start;}'
+    + '@media(max-width:900px){.stk-wrap{grid-template-columns:1fr;}}'
+    + '.stk-card{background:var(--surface,#fff);border:1px solid var(--border-med,#e2e6dd);border-radius:12px;padding:1.1rem 1.15rem;}'
+    + '.stk-card h3{margin:0 0 .8rem;font-size:.95rem;color:var(--g900,#1a1c1a);}'
+    + '.stk-form{position:sticky;top:1rem;}'
+    + '.stk-lb{display:block;font-size:.72rem;font-weight:600;color:var(--g600,#5b6157);text-transform:uppercase;letter-spacing:.02em;margin:.7rem 0 .3rem;}'
+    + '.stk-in{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border-med,#d8dcd4);border-radius:9px;font-size:.9rem;background:#fff;}'
+    + '.stk-in:focus{outline:none;border-color:var(--blue-p500,#FF4D1C);box-shadow:0 0 0 3px rgba(255,77,28,.12);}'
+    + '.stk-hit{margin-top:.6rem;padding:.6rem .7rem;border-radius:9px;font-size:.82rem;line-height:1.35;}'
+    + '.stk-hit.ok{background:rgba(34,150,60,.08);border:1px solid rgba(34,150,60,.25);color:#1f7a34;}'
+    + '.stk-hit.no{background:rgba(200,40,40,.06);border:1px solid rgba(200,40,40,.22);color:#b02020;}'
+    + '.stk-row{display:flex;gap:.6rem;}.stk-row>div{flex:1;}'
+    + '.stk-btns{display:flex;gap:.6rem;margin-top:1rem;}'
+    + '.stk-btn{flex:1;padding:11px 14px;border:none;border-radius:9px;font-size:.88rem;font-weight:600;cursor:pointer;}'
+    + '.stk-btn.p{background:var(--blue-p600,#FF4D1C);color:#fff;}'
+    + '.stk-btn.g{background:var(--bg2,#f0f1ec);color:var(--g700,#3f453b);}'
+    + '.stk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.6rem;}'
+    + '.stk-tot{background:var(--bg,#fbfbf9);border:1px solid var(--border-med,#e6e9e0);border-radius:10px;padding:.6rem .7rem;}'
+    + '.stk-tot .n{font-size:.75rem;color:var(--g600,#5b6157);line-height:1.2;margin-bottom:.25rem;min-height:2.1em;}'
+    + '.stk-tot .v{font-size:1.35rem;font-weight:700;}'
+    + '.stk-tot .c{font-size:.68rem;color:var(--g500,#8a8f84);}'
+    + '.stk-hist{width:100%;border-collapse:collapse;font-size:.82rem;}'
+    + '.stk-hist th{text-align:left;padding:.45rem .6rem;color:var(--g600,#5b6157);font-weight:600;border-bottom:1px solid var(--border-med,#e6e9e0);}'
+    + '.stk-hist td{padding:.45rem .6rem;border-bottom:1px solid var(--bg2,#f0f1ec);}'
+    + '.stk-date{font-size:.76rem;font-weight:700;color:var(--g700,#3f453b);margin:1rem 0 .4rem;}'
+    + '.stk-badge{display:inline-block;padding:.12rem .5rem;border-radius:999px;font-size:.7rem;font-weight:600;}'
+    + '.stk-b-in{background:rgba(34,150,60,.12);color:#1f7a34;}'
+    + '.stk-b-out{background:rgba(220,120,20,.14);color:#b5651d;}'
+    + '.stk-b-inv{background:rgba(60,110,200,.12);color:#2b5ba8;}'
+    + '</style>'
+    + '<div class="page-header"><div>'
+    +   '<div class="page-title">📦 Entrée en stock</div>'
+    +   '<div class="page-sub">Saisie par EAN ou référence — met à jour le stock disponible du catalogue.</div>'
+    + '</div><button class="btn" onclick="StockEntry.refresh()">🔄 Actualiser</button></div>'
+    + '<div class="stk-wrap">'
+    +   '<div class="stk-card stk-form">'
+    +     '<h3>Nouveau mouvement</h3>'
+    +     '<label class="stk-lb">Code EAN / Référence</label>'
+    +     '<input id="stk-ean" class="stk-in" placeholder="Scanner ou saisir…" autocomplete="off">'
+    +     '<div id="stk-hit"></div>'
+    +     '<div class="stk-row">'
+    +       '<div><label class="stk-lb">Type de mouvement</label>'
+    +         '<select id="stk-type" class="stk-in">'
+    +           '<option value="in">Réception (+)</option>'
+    +           '<option value="out">Sortie (−)</option>'
+    +           '<option value="inv">Inventaire (=)</option>'
+    +         '</select></div>'
+    +       '<div><label class="stk-lb">Quantité</label>'
+    +         '<input id="stk-qty" class="stk-in" type="number" min="0" step="1" value="1"></div>'
+    +     '</div>'
+    +     '<label class="stk-lb">Note (facultatif)</label>'
+    +     '<input id="stk-note" class="stk-in" placeholder="Ex : livraison fournisseur, lot…" autocomplete="off">'
+    +     '<div class="stk-btns">'
+    +       '<button class="stk-btn g" onclick="StockEntry.reset()">Réinitialiser</button>'
+    +       '<button class="stk-btn p" onclick="StockEntry.save()">Enregistrer</button>'
+    +     '</div>'
+    +   '</div>'
+    +   '<div style="display:flex;flex-direction:column;gap:1.25rem;">'
+    +     '<div class="stk-card"><h3>Stock actuel par produit</h3><div id="stk-totals" class="stk-grid"></div></div>'
+    +     '<div class="stk-card"><h3>Historique des mouvements</h3><div id="stk-history"></div></div>'
+    +   '</div>'
+    + '</div>';
+  }
+
+  function renderHit() {
+    var box = document.getElementById('stk-hit'); if (!box) return;
+    if (!found) { box.innerHTML = ''; return; }
+    var stk = curStock(found.code);
+    box.className = 'stk-hit ok';
+    box.innerHTML = '<b>' + esc(found.libelle) + '</b><br>Code : ' + esc(found.code)
+      + (found.ean ? ' · EAN ' + esc(found.ean) : '')
+      + '<br>Stock actuel : <b>' + (stk === null ? '—' : stk) + '</b>';
+  }
+
+  function onLookup() {
+    var v = (document.getElementById('stk-ean') || {}).value || '';
+    found = findProduct(v);
+    var box = document.getElementById('stk-hit');
+    if (v.trim() && !found && box) { box.className = 'stk-hit no'; box.innerHTML = 'Produit introuvable dans le catalogue.'; return; }
+    renderHit();
+  }
+
+  function renderTotals() {
+    var host = document.getElementById('stk-totals'); if (!host) return;
+    var list = catalogue();
+    if (!list.length) { host.innerHTML = '<div style="color:var(--g500);font-size:.85rem;">Catalogue vide.</div>'; return; }
+    host.innerHTML = list.map(function (p) {
+      var stk = curStock(p.code);
+      var col = stk === null ? 'var(--g400,#9aa093)' : (stk <= 0 ? '#c0392b' : (stk <= 5 ? '#b5651d' : '#1f7a34'));
+      return '<div class="stk-tot"><div class="n">' + esc(p.libelle) + '</div>'
+        + '<div class="v" style="color:' + col + '">' + (stk === null ? '—' : stk) + '</div>'
+        + '<div class="c">' + esc(p.code) + '</div></div>';
+    }).join('');
+  }
+
+  function fmtDate(ts) {
+    try {
+      var d = ts && ts.toDate ? ts.toDate() : (ts ? new Date(ts) : null);
+      if (!d) return '—';
+      return d.toISOString().slice(0, 10);
+    } catch (e) { return '—'; }
+  }
+  function fmtTime(ts) {
+    try {
+      var d = ts && ts.toDate ? ts.toDate() : (ts ? new Date(ts) : null);
+      if (!d) return '';
+      return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    } catch (e) { return ''; }
+  }
+
+  function renderHistory() {
+    var host = document.getElementById('stk-history'); if (!host) return;
+    if (typeof bcol !== 'function' || typeof db === 'undefined' || !db) { host.innerHTML = '<div style="color:var(--g500);font-size:.85rem;">Connexion requise.</div>'; return; }
+    host.innerHTML = '<div style="color:var(--g500);font-size:.85rem;">Chargement…</div>';
+    bcol('stock_entries').orderBy('at', 'desc').limit(200).get().then(function (snap) {
+      if (snap.empty) { host.innerHTML = '<div style="color:var(--g500);font-size:.85rem;">Aucun mouvement enregistré.</div>'; return; }
+      var groups = {};
+      snap.forEach(function (doc) {
+        var r = doc.data() || {}; var day = fmtDate(r.at);
+        (groups[day] = groups[day] || []).push(r);
+      });
+      var days = Object.keys(groups).sort().reverse();
+      host.innerHTML = days.map(function (day) {
+        var rows = groups[day].map(function (r) {
+          var badge = r.type === 'in' ? '<span class="stk-badge stk-b-in">Réception</span>'
+            : r.type === 'out' ? '<span class="stk-badge stk-b-out">Sortie</span>'
+            : '<span class="stk-badge stk-b-inv">Inventaire</span>';
+          var q = r.type === 'in' ? '+' + r.qty : r.type === 'out' ? '−' + r.qty : '=' + r.qty;
+          var qcol = r.type === 'in' ? '#1f7a34' : r.type === 'out' ? '#b5651d' : '#2b5ba8';
+          return '<tr><td>' + fmtTime(r.at) + '</td><td>' + esc(r.libelle || '') + '</td>'
+            + '<td style="color:var(--g500);">' + esc(r.code || '') + '</td>'
+            + '<td>' + badge + '</td>'
+            + '<td style="text-align:right;font-weight:700;color:' + qcol + '">' + q + '</td>'
+            + '<td style="text-align:right;color:var(--g600);">' + (r.stockAfter == null ? '' : r.stockAfter) + '</td></tr>';
+        }).join('');
+        return '<div class="stk-date">' + day + '</div>'
+          + '<table class="stk-hist"><thead><tr><th>Heure</th><th>Produit</th><th>Code</th><th>Type</th><th style="text-align:right;">Mvt</th><th style="text-align:right;">Stock</th></tr></thead><tbody>' + rows + '</tbody></table>';
+      }).join('');
+    }).catch(function (e) {
+      host.innerHTML = '<div style="color:#b02020;font-size:.85rem;">Erreur : ' + esc(e.message || e) + '</div>';
+    });
+  }
+
+  function save() {
+    if (!found) { toast('Sélectionnez d\'abord un produit (EAN ou référence).', 'err'); return; }
+    var type = (document.getElementById('stk-type') || {}).value || 'in';
+    var qty = parseInt((document.getElementById('stk-qty') || {}).value, 10);
+    if (isNaN(qty) || qty < 0) { toast('Quantité invalide.', 'err'); return; }
+    var note = (document.getElementById('stk-note') || {}).value || '';
+    var code = found.code;
+    var before = curStock(code); if (before === null) before = 0;
+    var after = type === 'in' ? before + qty : type === 'out' ? Math.max(0, before - qty) : qty;
+
+    try { if (typeof bdcStockMap === 'undefined' || !bdcStockMap) window.bdcStockMap = {}; } catch (e) {}
+    bdcStockMap[code] = after;
+    try { if (typeof stockPushCloud === 'function') stockPushCloud(); } catch (e) {}
+    try { if (typeof buildTable === 'function' && typeof bdcInitDone !== 'undefined' && bdcInitDone) buildTable(); } catch (e) {}
+    try { if (typeof RechercheProduit !== 'undefined' && RechercheProduit.majStock) RechercheProduit.majStock(); } catch (e) {}
+
+    var rec = {
+      code: code, libelle: found.libelle || '', ean: found.ean || '',
+      type: type, qty: qty, stockBefore: before, stockAfter: after, note: note,
+      byEmail: (typeof currentUser !== 'undefined' && currentUser) ? (currentUser.email || '') : '',
+      at: (window.firebase && firebase.firestore) ? firebase.firestore.FieldValue.serverTimestamp() : Date.now()
+    };
+    try {
+      bcol('stock_entries').add(rec).then(function () {
+        toast('✅ Mouvement enregistré — stock ' + code + ' : ' + after);
+        reset(); renderTotals(); renderHistory();
+      }).catch(function (e) { toast('Erreur enregistrement : ' + (e.message || e), 'err'); });
+    } catch (e) { toast('Erreur : ' + (e.message || e), 'err'); }
+  }
+
+  function reset() {
+    found = null;
+    ['stk-ean', 'stk-note'].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
+    var q = document.getElementById('stk-qty'); if (q) q.value = '1';
+    var t = document.getElementById('stk-type'); if (t) t.value = 'in';
+    var box = document.getElementById('stk-hit'); if (box) box.innerHTML = '';
+    var e = document.getElementById('stk-ean'); if (e) e.focus();
+  }
+
+  function refresh() { renderTotals(); renderHistory(); }
+
+  function mount(sel) {
+    hostSel = sel || '#stockentry-host';
+    var host = document.querySelector(hostSel); if (!host) return;
+    host.innerHTML = html();
+    var ean = document.getElementById('stk-ean');
+    if (ean) {
+      ean.addEventListener('input', onLookup);
+      ean.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') { ev.preventDefault(); onLookup(); var q = document.getElementById('stk-qty'); if (found && q) q.focus(); }
+      });
+    }
+    mounted = true;
+    renderTotals();
+    renderHistory();
+  }
+
+  return { mount: mount, save: save, reset: reset, refresh: refresh };
+})();
+</script>
+
 </body>
 </html>
