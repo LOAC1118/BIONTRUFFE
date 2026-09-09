@@ -15640,18 +15640,24 @@ function syncApplyStk() {
   </div>
 </div>
 
-<!-- ═══ Service Worker PWA ═══ -->
+<!-- ═══ Service Worker désactivé — évite les anciennes versions en cache ═══ -->
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('sw.js', { scope: '/BIONTRUFFE/' })
-      .then(function(reg) {
-        console.log('[PWA] Service Worker enregistré, scope:', reg.scope);
-      })
-      .catch(function(err) {
-        console.warn('[PWA] Service Worker non enregistré :', err);
-      });
-  });
+  // On retire tout Service Worker déjà installé (ancienne PWA) et on vide ses
+  // caches : le CRM charge ainsi TOUJOURS la dernière version déployée.
+  try {
+    navigator.serviceWorker.getRegistrations().then(function (regs) {
+      regs.forEach(function (r) { r.unregister(); });
+    }).catch(function () {});
+  } catch (e) {}
+  try {
+    if (window.caches && caches.keys) {
+      caches.keys().then(function (keys) {
+        keys.forEach(function (k) { caches.delete(k); });
+      }).catch(function () {});
+    }
+  } catch (e) {}
+  console.log('[PWA] Service Worker desactive (chargement toujours a jour).');
 }
 </script>
 
