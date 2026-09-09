@@ -16191,10 +16191,12 @@ window.AdminPanel = (function () {
       + '<input id="adm-sender" class="adm-in" placeholder="Bio N Truffe CRM">'
       + '<label class="adm-lb">Préfixe du sujet</label>'
       + '<input id="adm-subject" class="adm-in" placeholder="Bon de commande Bio N Truffe">'
-      + '<div style="margin-top:1.1rem;display:flex;gap:.6rem;">'
+      + '<div style="margin-top:1.1rem;display:flex;gap:.6rem;flex-wrap:wrap;">'
       +   '<button class="adm-btn g" onclick="AdminPanel.emailReset()">Annuler</button>'
       +   '<button class="adm-btn p" onclick="AdminPanel.emailSave()">Enregistrer</button>'
+      +   '<button class="adm-btn g" onclick="AdminPanel.emailTest()">✉️ Envoyer un email de test</button>'
       + '</div>'
+      + '<div id="adm-email-status" style="margin-top:.9rem;font-size:.83rem;line-height:1.5;"></div>'
       + '<div class="adm-note"><b>Comment recevoir les commandes chez vous :</b><br>'
       +   '1. Créez un compte gratuit sur <b>web3forms.com</b> avec l\'adresse <b>contact@biontruffe.fr</b>.<br>'
       +   '2. Copiez la clé « Access Key » qu\'ils vous donnent.<br>'
@@ -16211,6 +16213,11 @@ window.AdminPanel = (function () {
       if (!v && typeof CRM_CONFIG_DEFAULTS !== 'undefined') el.placeholder = CRM_CONFIG_DEFAULTS[m[id]] || el.placeholder;
     });
   }
+  function emailStatus(msg, kind) {
+    var el = document.getElementById('adm-email-status'); if (!el) return;
+    var col = kind === 'err' ? '#b02020' : kind === 'ok' ? '#1f7a34' : 'var(--g600,#5b6157)';
+    el.style.color = col; el.innerHTML = msg;
+  }
   function emailSave() {
     if (!isAdminUser()) return;
     var obj = {
@@ -16219,8 +16226,48 @@ window.AdminPanel = (function () {
       senderName: (document.getElementById('adm-sender') || {}).value || '',
       subjectPrefix: (document.getElementById('adm-subject') || {}).value || ''
     };
-    crmConfigSave(obj).then(function () { toast('✅ Réglages d\'envoi enregistrés'); })
-      .catch(function (e) { toast('Erreur : ' + (e.message || e), 'err'); });
+    emailStatus('Enregistrement en cours...', 'info');
+    crmConfigSave(obj).then(function () {
+      var t = new Date().toLocaleTimeString('fr-FR');
+      toast('✅ Réglages enregistrés');
+      emailStatus('✅ <b>Enregistré à ' + t + '.</b> Destinataire : <b>' + esc(obj.bdcRecipient || CRM_CONFIG_DEFAULTS.bdcRecipient) + '</b>. '
+        + (obj.web3formsKey
+            ? 'Clé d\'envoi renseignée — cliquez sur « Envoyer un email de test » pour vérifier.'
+            : '<b style="color:#b02020;">Aucune clé d\'envoi</b> : l\'envoi direct des bons de commande restera bloqué tant qu\'elle n\'est pas renseignée.'),
+        obj.web3formsKey ? 'ok' : 'err');
+    }).catch(function (e) {
+      toast('Erreur : ' + (e.message || e), 'err');
+      emailStatus('❌ <b>Échec de l\'enregistrement :</b> ' + esc(e.message || e)
+        + '<br><span style="color:var(--g600);">Souvent lié aux règles de sécurité Firestore sur la collection crm_config. Signalez-le si le message persiste.</span>', 'err');
+    });
+  }
+  function emailTest() {
+    if (!isAdminUser()) return;
+    var key  = (document.getElementById('adm-key') || {}).value || crmCfg('web3formsKey');
+    var to   = (document.getElementById('adm-recipient') || {}).value || crmCfg('bdcRecipient');
+    var from = (document.getElementById('adm-sender') || {}).value || crmCfg('senderName');
+    if (!key) { emailStatus('❌ Renseignez d\'abord la clé Web3Forms, puis réessayez.', 'err'); return; }
+    emailStatus('✉️ Envoi d\'un email de test à <b>' + esc(to) + '</b>...', 'info');
+    fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        access_key: key,
+        from_name: from || 'Bio N Truffe CRM',
+        email: to,
+        _subject: 'Test de configuration - CRM Bio N Truffe',
+        message: 'Ceci est un email de test envoye depuis la page Administration du CRM Bio N Truffe. Si vous le recevez, la configuration d envoi des bons de commande fonctionne correctement.'
+      })
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      if (data && (data.success === true || data.success === 'true')) {
+        emailStatus('✅ <b>Email de test envoyé à ' + esc(to) + '.</b><br>Vérifiez votre boîte de réception (pensez aux spams). Si vous le recevez, tout est bon.', 'ok');
+      } else {
+        emailStatus('❌ <b>Le service a refusé l\'envoi :</b> ' + esc((data && data.message) || 'clé invalide ?')
+          + '<br>Vérifiez que la clé Web3Forms est exacte (recopiée sans espace).', 'err');
+      }
+    }).catch(function (e) {
+      emailStatus('❌ <b>Échec réseau :</b> ' + esc(e.message || e), 'err');
+    });
   }
   function emailReset() { if (window.crmConfigLoad) crmConfigLoad(emailFill); else emailFill(); }
 
@@ -16256,7 +16303,7 @@ window.AdminPanel = (function () {
     go(tab || 'accounts');
   }
 
-  return { mount: mount, go: go, setRole: setRole, toggle: toggle, del: del, emailSave: emailSave, emailReset: emailReset };
+  return { mount: mount, go: go, setRole: setRole, toggle: toggle, del: del, emailSave: emailSave, emailReset: emailReset, emailTest: emailTest };
 })();
 </script>
 
