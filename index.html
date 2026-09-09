@@ -4441,7 +4441,10 @@ var CRM_CONFIG_DEFAULTS = {
   bdcRecipient: 'contact@biontruffe.fr',
   web3formsKey: '',
   senderName: 'Bio N Truffe CRM',
-  subjectPrefix: 'Bon de commande Bio N Truffe'
+  subjectPrefix: 'Bon de commande Bio N Truffe',
+  bdcTitle: 'BON DE COMMANDE - BIO N TRUFFE 2026',
+  bdcIntro: '',
+  bdcFooter: ''
 };
 function crmCfg(k) {
   try {
@@ -9568,7 +9571,10 @@ function bdcBuildText() {
   var mag  = g('bdc-magasin'), mail = g('bdc-email'), nc = g('bdc-numclient');
   var ct   = g('bdc-contact'), tel  = g('bdc-tel'),   dl = g('bdc-datelivraison'), com = g('bdc-comment');
   var today = new Date().toLocaleDateString('fr-FR');
-  var lines = ['BON DE COMMANDE - MOULIN DES MOINES 2026','Magasin : '+mag];
+  var lines = [];
+  var _bdcIntro = (typeof crmCfg === 'function') ? crmCfg('bdcIntro') : '';
+  if (_bdcIntro) { lines.push(_bdcIntro, ''); }
+  lines.push((typeof crmCfg === 'function' ? crmCfg('bdcTitle') : 'BON DE COMMANDE - BIO N TRUFFE 2026'), 'Magasin : '+mag);
   if(nc) lines.push('N° Client : '+nc);
   if(ct) lines.push('Contact : '+ct);
   lines.push('Email : '+mail);
@@ -9585,6 +9591,8 @@ function bdcBuildText() {
     lines.push(p.code+' — '+p.libelle+' | '+(q*pcb)+' UVC | PU HT net : '+bdcFmt(pN)+' | Total HT : '+bdcFmt(tot));
   });
   lines.push('','TOTAL : '+nbR+' ref. | '+nbC+' colis | '+bdcFmt(tN)+' HT');
+  var _bdcFooter = (typeof crmCfg === 'function') ? crmCfg('bdcFooter') : '';
+  if (_bdcFooter) { lines.push('', _bdcFooter); }
   return lines.join('\n');
 }
 
@@ -16351,6 +16359,13 @@ window.AdminPanel = (function () {
       + '<input id="adm-sender" class="adm-in" placeholder="Bio N Truffe CRM">'
       + '<label class="adm-lb">Préfixe du sujet</label>'
       + '<input id="adm-subject" class="adm-in" placeholder="Bon de commande Bio N Truffe">'
+      + '<div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border-med,#e2e6dd);font-size:.8rem;font-weight:700;color:var(--g800,#1a1c1a);">Mise en forme du texte envoyé</div>'
+      + '<label class="adm-lb">Titre du bon de commande</label>'
+      + '<input id="adm-bdctitle" class="adm-in" placeholder="BON DE COMMANDE - BIO N TRUFFE 2026">'
+      + '<label class="adm-lb">Texte d\'introduction (en haut du message)</label>'
+      + '<textarea id="adm-bdcintro" class="adm-in" rows="3" style="resize:vertical;" placeholder="Ex : Bonjour, veuillez trouver ci-dessous notre bon de commande."></textarea>'
+      + '<label class="adm-lb">Signature / pied de message</label>'
+      + '<textarea id="adm-bdcfooter" class="adm-in" rows="3" style="resize:vertical;" placeholder="Ex : Bio N Truffe - Pierre BAUDIN - 06 99 19 58 65 - contact@biontruffe.fr"></textarea>'
       + '<div style="margin-top:1.1rem;display:flex;gap:.6rem;flex-wrap:wrap;">'
       +   '<button class="adm-btn g" onclick="AdminPanel.emailReset()">Annuler</button>'
       +   '<button class="adm-btn p" onclick="AdminPanel.emailSave()">Enregistrer</button>'
@@ -16365,7 +16380,7 @@ window.AdminPanel = (function () {
       + '</div>';
   }
   function emailFill() {
-    var m = { 'adm-recipient': 'bdcRecipient', 'adm-key': 'web3formsKey', 'adm-sender': 'senderName', 'adm-subject': 'subjectPrefix' };
+    var m = { 'adm-recipient': 'bdcRecipient', 'adm-key': 'web3formsKey', 'adm-sender': 'senderName', 'adm-subject': 'subjectPrefix', 'adm-bdctitle': 'bdcTitle', 'adm-bdcintro': 'bdcIntro', 'adm-bdcfooter': 'bdcFooter' };
     Object.keys(m).forEach(function (id) {
       var el = document.getElementById(id); if (!el) return;
       var v = (window.CRM_CONFIG && window.CRM_CONFIG[m[id]]) ? window.CRM_CONFIG[m[id]] : '';
@@ -16384,7 +16399,10 @@ window.AdminPanel = (function () {
       bdcRecipient: (document.getElementById('adm-recipient') || {}).value || '',
       web3formsKey: (document.getElementById('adm-key') || {}).value || '',
       senderName: (document.getElementById('adm-sender') || {}).value || '',
-      subjectPrefix: (document.getElementById('adm-subject') || {}).value || ''
+      subjectPrefix: (document.getElementById('adm-subject') || {}).value || '',
+      bdcTitle: (document.getElementById('adm-bdctitle') || {}).value || '',
+      bdcIntro: (document.getElementById('adm-bdcintro') || {}).value || '',
+      bdcFooter: (document.getElementById('adm-bdcfooter') || {}).value || ''
     };
     emailStatus('Enregistrement en cours...', 'info');
     crmConfigSave(obj).then(function () {
