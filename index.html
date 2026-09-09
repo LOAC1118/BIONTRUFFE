@@ -3936,7 +3936,7 @@ let db = null, auth = null, currentUser = null, fbFunctions = null;
 // Les collections listées ici sont dupliquées par marque ET par commercial
 // (suffixe _<marque>_<uid>). 'profils' reste commun et global (compte Firebase
 // Auth, indépendant de la marque et déjà identifié par son propre uid).
-var BRAND_SCOPED_COLLECTIONS = ['clients','contacts','prospects','commandes','commandes_meta','commandes_stats','frais','notes_frais','activite','objectifs_ca','config','cadenciers','visites','visites_photos','stock_entries'];
+var BRAND_SCOPED_COLLECTIONS = ['clients','contacts','prospects','commandes','commandes_meta','commandes_stats','frais','notes_frais','activite','objectifs_ca','config','cadenciers','visites','visites_photos','stock_entries','stock_reports'];
 
 // ═══ BASCULE MODÈLE ÉQUIPE EN PROD (migration) ═══════════════════════════
 // PROD_TEAM_MODE       : en prod, lire/écrire les collections PARTAGÉES
@@ -15896,7 +15896,7 @@ window.StockEntry = (function () {
     + '<div class="page-header"><div>'
     +   '<div class="page-title">📦 Entrée en stock</div>'
     +   '<div class="page-sub">Saisie par EAN ou référence — met à jour le stock disponible du catalogue.</div>'
-    + '</div><button class="btn" onclick="StockEntry.refresh()">🔄 Actualiser</button></div>'
+    + '</div><div style="display:flex;gap:.5rem;"><button class="btn" onclick="StockEntry.exportPdf()">📄 Exporter en PDF</button><button class="btn" onclick="StockEntry.refresh()">🔄 Actualiser</button></div></div>'
     + '<div class="stk-wrap">'
     +   '<div class="stk-card stk-form">'
     +     '<h3>Nouveau mouvement</h3>'
@@ -15926,6 +15926,7 @@ window.StockEntry = (function () {
     +   '<div style="display:flex;flex-direction:column;gap:1.25rem;">'
     +     '<div class="stk-card"><h3>Stock actuel par produit</h3><div id="stk-totals" class="stk-grid"></div></div>'
     +     '<div class="stk-card"><h3>Historique des mouvements</h3><div id="stk-history"></div></div>'
+    +     '<div class="stk-card"><h3>Archives PDF des états de stock</h3><div id="stk-archives"></div></div>'
     +   '</div>'
     + '</div>';
   }
@@ -16064,7 +16065,144 @@ window.StockEntry = (function () {
     bdcOpenScan();
   }
 
-  function refresh() { renderTotals(); renderHistory(); }
+  // ── Export PDF + archivage Firestore ──
+  function stockSnapshotBuild(cb) {
+    var list = catalogue();
+    var stock = list.map(function (p) {
+      var s = curStock(p.code);
+      return { code: p.code, libelle: p.libelle || '', ean: p.ean || '', stock: (s === null ? null : s) };
+    });
+    var nbRupture = stock.filter(function (r) { return r.stock !== null && r.stock <= 0; }).length;
+    var snap = { genAt: Date.now(), byEmail: (typeof currentUser !== 'undefined' && currentUser) ? (currentUser.email || '') : '', stock: stock, nbRefs: stock.length, nbRupture: nbRupture, movements: [] };
+    // Récupérer les derniers mouvements pour les inclure
+    if (typeof bcol === 'function' && typeof db !== 'undefined' && db) {
+      bcol('stock_entries').orderBy('at', 'desc').limit(200).get().then(function (s) {
+        s.forEach(function (doc) {
+          var r = doc.data() || {};
+          var ms = 0; try { ms = r.at && r.at.toDate ? r.at.toDate().getTime() : (r.at ? new Date(r.at).getTime() : 0); } catch (e) {}
+          snap.movements.push({ atMs: ms, code: r.code || '', libelle: r.libelle || '', type: r.type || '', qty: r.qty || 0, stockAfter: (r.stockAfter == null ? null : r.stockAfter) });
+        });
+        cb(snap);
+      }).catch(function () { cb(snap); });
+    } else { cb(snap); }
+  }
+
+  function stockBuildPdf(snap) {
+    if (typeof withJsPdf !== 'function') { toast('Génération PDF indisponible.', 'err'); return; }
+    withJsPdf(function () {
+      try {
+        var doc = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        if (typeof doc.autoTable !== 'function') { toast('Plugin PDF non chargé — réessayez', 'err'); return; }
+        var W = doc.internal.pageSize.getWidth();
+        var HDR = [255, 77, 28];
+        var d = new Date(snap.genAt || Date.now());
+        var dateStr = d.toLocaleDateString('fr-FR') + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+        doc.setFillColor(HDR[0], HDR[1], HDR[2]); doc.rect(0, 0, W, 26, 'F');
+        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+        doc.text('Etat du stock — Bio N Truffe', 14, 12);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+        doc.text('Edite le ' + dateStr + (snap.byEmail ? ('  •  par ' + snap.byEmail) : ''), 14, 19);
+        doc.setTextColor(90, 90, 90); doc.setFontSize(8.5);
+        doc.text(snap.nbRefs + ' references  •  ' + snap.nbRupture + ' en rupture', 14, 33);
+
+        doc.autoTable({
+          startY: 38,
+          head: [['Produit', 'Code', 'EAN', 'Stock']],
+          body: (snap.stock || []).map(function (r) { return [r.libelle, r.code, r.ean || '—', (r.stock === null ? '—' : String(r.stock))]; }),
+          theme: 'grid',
+          styles: { font: 'helvetica', fontSize: 8, cellPadding: 1.8, overflow: 'linebreak', textColor: [40, 40, 40] },
+          headStyles: { fillColor: HDR, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8, halign: 'center' },
+          alternateRowStyles: { fillColor: [253, 245, 242] },
+          columnStyles: { 0: { cellWidth: 92 }, 1: { cellWidth: 34 }, 2: { cellWidth: 36, halign: 'center' }, 3: { cellWidth: 20, halign: 'right', fontStyle: 'bold' } },
+          margin: { left: 14, right: 14, bottom: 16 }
+        });
+
+        var movs = snap.movements || [];
+        if (movs.length) {
+          var y = doc.lastAutoTable.finalY + 10;
+          doc.setTextColor(30, 30, 30); doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+          doc.text('Derniers mouvements', 14, y);
+          var typeLbl = function (t) { return t === 'in' ? 'Reception' : t === 'out' ? 'Sortie' : 'Inventaire'; };
+          var sign = function (m) { return m.type === 'in' ? '+' + m.qty : m.type === 'out' ? '-' + m.qty : '=' + m.qty; };
+          doc.autoTable({
+            startY: y + 3,
+            head: [['Date', 'Produit', 'Code', 'Type', 'Mvt', 'Stock']],
+            body: movs.map(function (m) {
+              var dd = m.atMs ? new Date(m.atMs) : null;
+              var ds = dd ? (dd.toLocaleDateString('fr-FR') + ' ' + ('0' + dd.getHours()).slice(-2) + ':' + ('0' + dd.getMinutes()).slice(-2)) : '—';
+              return [ds, m.libelle, m.code, typeLbl(m.type), sign(m), (m.stockAfter == null ? '' : String(m.stockAfter))];
+            }),
+            theme: 'grid',
+            styles: { font: 'helvetica', fontSize: 7.5, cellPadding: 1.5, overflow: 'linebreak', textColor: [40, 40, 40] },
+            headStyles: { fillColor: [90, 90, 90], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.5, halign: 'center' },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
+            columnStyles: { 0: { cellWidth: 30 }, 1: { cellWidth: 74 }, 2: { cellWidth: 28 }, 3: { cellWidth: 22, halign: 'center' }, 4: { cellWidth: 16, halign: 'right' }, 5: { cellWidth: 16, halign: 'right' } },
+            margin: { left: 14, right: 14, bottom: 16 }
+          });
+        }
+
+        doc.setFontSize(7.5); doc.setTextColor(140, 140, 140);
+        var H = doc.internal.pageSize.getHeight();
+        doc.text('Bio N Truffe CRM — LOAC DEV Solutions', 14, H - 8);
+        doc.save('Etat_stock_Bio_N_Truffe_' + new Date(snap.genAt || Date.now()).toISOString().slice(0, 10) + '.pdf');
+        toast('PDF généré', 'ok');
+      } catch (e) { console.error('[Stock PDF]', e); toast('Erreur PDF : ' + (e.message || e), 'err'); }
+    });
+  }
+
+  function exportPdf() {
+    stockSnapshotBuild(function (snap) {
+      stockBuildPdf(snap);
+      // Archiver dans Firestore
+      if (typeof bcol === 'function' && typeof db !== 'undefined' && db) {
+        var rec = Object.assign({}, snap);
+        rec.at = (window.firebase && firebase.firestore) ? firebase.firestore.FieldValue.serverTimestamp() : Date.now();
+        bcol('stock_reports').add(rec).then(function () { renderArchives(); })
+          .catch(function (e) { console.warn('[Stock] archive', e); toast('PDF généré mais non archivé : ' + (e.message || e), 'err'); });
+      }
+    });
+  }
+
+  function renderArchives() {
+    var host = document.getElementById('stk-archives'); if (!host) return;
+    if (typeof bcol !== 'function' || typeof db === 'undefined' || !db) { host.innerHTML = '<div style="color:var(--g500);font-size:.85rem;">Connexion requise.</div>'; return; }
+    host.innerHTML = '<div style="color:var(--g500);font-size:.85rem;">Chargement…</div>';
+    bcol('stock_reports').orderBy('at', 'desc').limit(60).get().then(function (snap) {
+      if (snap.empty) { host.innerHTML = '<div style="color:var(--g500);font-size:.85rem;">Aucun état archivé. Cliquez sur « Exporter en PDF » pour en créer un.</div>'; return; }
+      var rows = [];
+      snap.forEach(function (doc) {
+        var r = doc.data() || {}; var id = doc.id;
+        var d = new Date(r.genAt || (r.at && r.at.toDate ? r.at.toDate().getTime() : Date.now()));
+        var ds = d.toLocaleDateString('fr-FR') + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+        rows.push('<tr>'
+          + '<td style="padding:.45rem .6rem;">' + ds + '</td>'
+          + '<td style="padding:.45rem .6rem;color:var(--g600);">' + (r.nbRefs || 0) + ' réf.' + (r.nbRupture ? ' · ' + r.nbRupture + ' rupt.' : '') + '</td>'
+          + '<td style="padding:.45rem .6rem;color:var(--g500);font-size:.76rem;">' + esc(r.byEmail || '') + '</td>'
+          + '<td style="padding:.45rem .6rem;text-align:right;white-space:nowrap;">'
+          +   '<button class="stk-btn p" style="padding:.3rem .7rem;font-size:.75rem;" onclick="StockEntry.downloadReport(\'' + id + '\')">📄 Télécharger</button> '
+          +   '<button class="adm-mini" style="color:#b02020;" onclick="StockEntry.deleteReport(\'' + id + '\')">🗑️</button>'
+          + '</td></tr>');
+      });
+      host.innerHTML = '<table class="stk-hist"><thead><tr><th>Date</th><th>Contenu</th><th>Par</th><th></th></tr></thead><tbody>' + rows.join('') + '</tbody></table>';
+    }).catch(function (e) { host.innerHTML = '<div style="color:#b02020;font-size:.85rem;">Erreur : ' + esc(e.message || e) + '</div>'; });
+  }
+
+  function downloadReport(id) {
+    if (typeof bcol !== 'function' || !db) return;
+    bcol('stock_reports').doc(id).get().then(function (d) {
+      if (!d.exists) { toast('Archive introuvable', 'err'); return; }
+      stockBuildPdf(d.data() || {});
+    }).catch(function (e) { toast('Erreur : ' + (e.message || e), 'err'); });
+  }
+
+  function deleteReport(id) {
+    if (typeof bcol !== 'function' || !db) return;
+    if (!confirm('Supprimer cet état de stock archivé ?')) return;
+    bcol('stock_reports').doc(id).delete().then(function () { toast('🗑️ Archive supprimée'); renderArchives(); })
+      .catch(function (e) { toast('Erreur : ' + (e.message || e), 'err'); });
+  }
+
+  function refresh() { renderTotals(); renderHistory(); renderArchives(); }
 
   function mount(sel) {
     hostSel = sel || '#stockentry-host';
@@ -16080,9 +16218,10 @@ window.StockEntry = (function () {
     mounted = true;
     renderTotals();
     renderHistory();
+    renderArchives();
   }
 
-  return { mount: mount, save: save, reset: reset, refresh: refresh, scan: scan };
+  return { mount: mount, save: save, reset: reset, refresh: refresh, scan: scan, exportPdf: exportPdf, downloadReport: downloadReport, deleteReport: deleteReport };
 })();
 </script>
 
