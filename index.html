@@ -9675,7 +9675,7 @@ function bdcSendOrder() {
     // on envoie donc la version texte, structurée et lisible, plutôt que le HTML.
     commande:bdcBuildText()
   };
-  if(mail.toLowerCase()!=='cspoto@moulindesmoines.com') payload._replyto=mail;
+  if(mail) payload._replyto=mail;   // adresse de reponse = email du client
 
   // Sauvegarder dans Firebase (sans await)
   if(db && currentUser){
