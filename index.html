@@ -2556,6 +2556,7 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
 
       <!-- Tab CA -->
       <div id="cdb-tab-ca" style="display:none;padding:1.25rem;">
+        <div id="cdb-crm-orders"></div>
         <div id="cdb-edit-ca-content">
           <div style="text-align:center;padding:2rem;color:var(--g400);font-size:.85rem;">
             Importez un fichier de commandes depuis le Dashboard pour voir le CA de ce client.
@@ -13891,8 +13892,43 @@ function cdbOpenEdit(id) {
 
   // Construire le bloc CA si on a des données
   cdbBuildCATab(c);
+  try { cdbRenderCrmOrders(c); } catch(e){}
 
   modalEl.classList.remove('hidden');
+}
+
+function cdbRenderCrmOrders(c) {
+  var host = document.getElementById('cdb-crm-orders'); if (!host) return;
+  if (!c) { host.innerHTML = ''; return; }
+  var normName = function(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim(); };
+  var code = String(c.numClient||'').trim();
+  var nom = normName(c.nom);
+  var src = (typeof cache !== 'undefined' && cache.commandes) ? cache.commandes : [];
+  var orders = src.filter(function(o){
+    if (code && String(o.numClient||'').trim() === code) return true;
+    if (nom && normName(o.clientNom) === nom) return true;
+    return false;
+  });
+  orders.sort(function(a,b){ var ta=(a.createdAt&&a.createdAt.seconds)?a.createdAt.seconds:0, tb=(b.createdAt&&b.createdAt.seconds)?b.createdAt.seconds:0; return tb-ta; });
+  if (!orders.length) {
+    host.innerHTML = '<div style="margin-bottom:1.25rem;padding:.75rem;background:var(--bg,#fbfbf9);border:1px solid var(--border-med,#e6e9e0);border-radius:10px;font-size:.8rem;color:var(--g500);">Aucun bon de commande CRM pour ce client.<br/><span style="font-size:.72rem;">Les commandes envoyées depuis le module Bon de commande apparaissent ici pour générer les BL et les factures.</span></div>';
+    return;
+  }
+  var rows = orders.map(function(o){
+    var d = o.createdAt ? new Date(o.createdAt.seconds ? o.createdAt.seconds*1000 : o.createdAt).toLocaleDateString('fr-FR') : '—';
+    var mnt = (o.montant||0).toLocaleString('fr-FR',{minimumFractionDigits:2})+' €';
+    var hasLines = o.lignes && o.lignes.length;
+    var btns = hasLines
+      ? '<button class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.72rem;" onclick="ficheClientBL(\'' + o.id + '\')" title="Bon de livraison">📦 BL</button>'
+        + '<button class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.72rem;" onclick="ficheClientFacture(\'' + o.id + '\')" title="Facture">🧾 Facture</button>'
+      : '<span style="font-size:.7rem;color:var(--g400);">détail indisponible</span>';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.45rem .2rem;border-bottom:1px solid var(--bg2,#f0f1ec);">'
+      + '<div style="font-size:.8rem;"><b>' + d + '</b> · ' + mnt + (o.statut ? ' · <span style="color:var(--g500);">' + o.statut + '</span>' : '') + '</div>'
+      + '<div style="display:flex;gap:.35rem;flex-wrap:wrap;">' + btns + '</div></div>';
+  }).join('');
+  host.innerHTML = '<div style="margin-bottom:1.25rem;">'
+    + '<div style="font-size:.75rem;font-weight:700;color:var(--g700,#3f453b);text-transform:uppercase;letter-spacing:.03em;margin-bottom:.4rem;">🧾 Bons de commande CRM — BL & factures</div>'
+    + '<div style="border:1px solid var(--border-med,#e6e9e0);border-radius:10px;padding:.2rem .6rem;">' + rows + '</div></div>';
 }
 
 function cdbBuildCATab(c) {
