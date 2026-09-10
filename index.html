@@ -16155,7 +16155,7 @@ if ('serviceWorker' in navigator) {
    currentUser, toast(), buildTable(), RechercheProduit.
    ══════════════════════════════════════════════════════════════════ */
 window.StockEntry = (function () {
-  var mounted = false, hostSel = null, found = null;
+  var mounted = false, hostSel = null, found = null, editId = null, editCode = null;
 
   function catalogue() {
     try { return (typeof PRODUCTS !== 'undefined' && PRODUCTS && PRODUCTS.length) ? PRODUCTS : []; }
@@ -16237,14 +16237,15 @@ window.StockEntry = (function () {
     +           '<option value="out">Sortie (−)</option>'
     +           '<option value="inv">Inventaire (=)</option>'
     +         '</select></div>'
-    +       '<div><label class="stk-lb">Quantité</label>'
+    +       '<div><label class="stk-lb">Quantité (unités)</label>'
     +         '<input id="stk-qty" class="stk-in" type="number" min="0" step="1" value="1"></div>'
     +     '</div>'
     +     '<label class="stk-lb">Note (facultatif)</label>'
     +     '<input id="stk-note" class="stk-in" placeholder="Ex : livraison fournisseur, lot…" autocomplete="off">'
+    +     '<div id="stk-edit-banner" style="display:none;margin-top:.8rem;padding:.5rem .7rem;border-radius:8px;background:#eef4ff;border:1px solid #cfe0ff;font-size:.78rem;color:#2b5ba8;">✏️ Modification d\'un mouvement en cours. <a href="#" onclick="StockEntry.cancelEdit();return false;" style="color:#2b5ba8;font-weight:600;">Annuler</a></div>'
     +     '<div class="stk-btns">'
     +       '<button class="stk-btn g" onclick="StockEntry.reset()">Réinitialiser</button>'
-    +       '<button class="stk-btn p" onclick="StockEntry.save()">Enregistrer</button>'
+    +       '<button class="stk-btn p" id="stk-save-btn" onclick="StockEntry.save()">Enregistrer</button>'
     +     '</div>'
     +   '</div>'
     +   '<div style="display:flex;flex-direction:column;gap:1.25rem;">'
@@ -16262,7 +16263,7 @@ window.StockEntry = (function () {
     box.className = 'stk-hit ok';
     box.innerHTML = '<b>' + esc(found.libelle) + '</b><br>Code : ' + esc(found.code)
       + (found.ean ? ' · EAN ' + esc(found.ean) : '')
-      + '<br>Stock actuel : <b>' + (stk === null ? '—' : stk) + '</b>';
+      + '<br>Stock actuel : <b>' + (stk === null ? '—' : stk) + '</b>' + (stk !== null && found.pcb ? ' (' + Math.floor(stk / found.pcb) + ' colis)' : '');
   }
 
   function onLookup() {
@@ -16309,7 +16310,7 @@ window.StockEntry = (function () {
       if (snap.empty) { host.innerHTML = '<div style="color:var(--g500);font-size:.85rem;">Aucun mouvement enregistré.</div>'; return; }
       var groups = {};
       snap.forEach(function (doc) {
-        var r = doc.data() || {}; var day = fmtDate(r.at);
+        var r = doc.data() || {}; r._id = doc.id; var day = fmtDate(r.at);
         (groups[day] = groups[day] || []).push(r);
       });
       var days = Object.keys(groups).sort().reverse();
@@ -16324,10 +16325,14 @@ window.StockEntry = (function () {
             + '<td style="color:var(--g500);">' + esc(r.code || '') + '</td>'
             + '<td>' + badge + '</td>'
             + '<td style="text-align:right;font-weight:700;color:' + qcol + '">' + q + '</td>'
-            + '<td style="text-align:right;color:var(--g600);">' + (r.stockAfter == null ? '' : r.stockAfter) + '</td></tr>';
+            + '<td style="text-align:right;color:var(--g600);">' + (r.stockAfter == null ? '' : r.stockAfter) + '</td>'
+            + '<td style="text-align:right;white-space:nowrap;">'
+            +   '<button title="Modifier" onclick="StockEntry.edit(\'' + r._id + '\')" style="border:none;background:none;cursor:pointer;font-size:.85rem;padding:2px 4px;">✏️</button>'
+            +   '<button title="Supprimer" onclick="StockEntry.remove(\'' + r._id + '\',\'' + esc(r.code || '') + '\')" style="border:none;background:none;cursor:pointer;font-size:.85rem;padding:2px 4px;color:#b02020;">🗑</button>'
+            + '</td></tr>';
         }).join('');
         return '<div class="stk-date">' + day + '</div>'
-          + '<table class="stk-hist"><thead><tr><th>Heure</th><th>Produit</th><th>Code</th><th>Type</th><th style="text-align:right;">Mvt</th><th style="text-align:right;">Stock</th></tr></thead><tbody>' + rows + '</tbody></table>';
+          + '<table class="stk-hist"><thead><tr><th>Heure</th><th>Produit</th><th>Code</th><th>Type</th><th style="text-align:right;">Mvt</th><th style="text-align:right;">Stock</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
       }).join('');
     }).catch(function (e) {
       host.innerHTML = '<div style="color:#b02020;font-size:.85rem;">Erreur : ' + esc(e.message || e) + '</div>';
@@ -16341,11 +16346,28 @@ window.StockEntry = (function () {
     if (isNaN(qty) || qty < 0) { toast('Quantité invalide.', 'err'); return; }
     var note = (document.getElementById('stk-note') || {}).value || '';
     var code = found.code;
+
+    if (editId) {
+      var oldCode = editCode;
+      bcol('stock_entries').doc(editId).update({ code: code, libelle: found.libelle || '', ean: found.ean || '', type: type, qty: qty, note: note }).then(function () {
+        toast('✅ Mouvement modifié');
+        editId = null; editCode = null;
+        var b1 = document.getElementById('stk-save-btn'); if (b1) b1.textContent = 'Enregistrer';
+        var bn = document.getElementById('stk-edit-banner'); if (bn) bn.style.display = 'none';
+        stockRecompute(code, function () {
+          if (oldCode && oldCode !== code) { stockRecompute(oldCode, function () { reset(); renderTotals(); renderHistory(); }); }
+          else { reset(); renderTotals(); renderHistory(); }
+        });
+      }).catch(function (e) { toast('Erreur : ' + (e.message || e), 'err'); });
+      return;
+    }
+
     var before = curStock(code); if (before === null) before = 0;
     var after = type === 'in' ? before + qty : type === 'out' ? Math.max(0, before - qty) : qty;
 
     try { if (typeof bdcStockMap === 'undefined' || !bdcStockMap) window.bdcStockMap = {}; } catch (e) {}
     bdcStockMap[code] = after;
+    try { localStorage.setItem(BDC_STOCK_KEY(), JSON.stringify(bdcStockMap)); } catch (e) {}
     try { if (typeof stockPushCloud === 'function') stockPushCloud(); } catch (e) {}
     try { if (typeof buildTable === 'function' && typeof bdcInitDone !== 'undefined' && bdcInitDone) buildTable(); } catch (e) {}
     try { if (typeof RechercheProduit !== 'undefined' && RechercheProduit.majStock) RechercheProduit.majStock(); } catch (e) {}
@@ -16363,6 +16385,69 @@ window.StockEntry = (function () {
       }).catch(function (e) { toast('Erreur enregistrement : ' + (e.message || e), 'err'); });
     } catch (e) { toast('Erreur : ' + (e.message || e), 'err'); }
   }
+
+  function stockRecompute(code, cb) {
+    if (typeof bcol !== 'function' || typeof db === 'undefined' || !db) { if (cb) cb(); return; }
+    bcol('stock_entries').where('code', '==', code).get().then(function (snap) {
+      var movs = [];
+      snap.forEach(function (d) {
+        var r = d.data() || {}; var ms = 0;
+        try { ms = r.at && r.at.toDate ? r.at.toDate().getTime() : (r.at ? new Date(r.at).getTime() : 0); } catch (e) {}
+        movs.push({ ms: ms, type: r.type, qty: r.qty || 0, stockBefore: (r.stockBefore == null ? null : r.stockBefore) });
+      });
+      movs.sort(function (a, b) { return a.ms - b.ms; });
+      var running;
+      if (!movs.length) { running = 0; }
+      else {
+        running = (movs[0].stockBefore != null ? movs[0].stockBefore : 0);
+        movs.forEach(function (m) {
+          if (m.type === 'in') running += m.qty;
+          else if (m.type === 'out') running = Math.max(0, running - m.qty);
+          else running = m.qty;
+        });
+      }
+      try { if (typeof bdcStockMap === 'undefined' || !bdcStockMap) window.bdcStockMap = {}; } catch (e) {}
+      bdcStockMap[code] = running;
+      try { localStorage.setItem(BDC_STOCK_KEY(), JSON.stringify(bdcStockMap)); } catch (e) {}
+      try { if (typeof stockPushCloud === 'function') stockPushCloud(); } catch (e) {}
+      try { if (typeof buildTable === 'function' && typeof bdcInitDone !== 'undefined' && bdcInitDone) buildTable(); } catch (e) {}
+      if (cb) cb();
+    }).catch(function (e) { toast('Erreur recalcul : ' + (e.message || e), 'err'); if (cb) cb(); });
+  }
+
+  function remove(id, code) {
+    if (!id) return;
+    if (!confirm('Supprimer ce mouvement ?\n\nLe stock du produit sera recalcule a partir des mouvements restants.')) return;
+    bcol('stock_entries').doc(id).delete().then(function () {
+      toast('🗑️ Mouvement supprimé');
+      stockRecompute(code, function () { renderTotals(); renderHistory(); });
+    }).catch(function (e) { toast('Erreur : ' + (e.message || e), 'err'); });
+  }
+
+  function edit(id) {
+    if (!id) return;
+    bcol('stock_entries').doc(id).get().then(function (d) {
+      if (!d.exists) { toast('Mouvement introuvable', 'err'); return; }
+      var r = d.data() || {};
+      editId = id; editCode = r.code || '';
+      var ean = document.getElementById('stk-ean'); if (ean) ean.value = r.ean || r.code || '';
+      onLookup();
+      var t = document.getElementById('stk-type'); if (t) t.value = r.type || 'in';
+      var q = document.getElementById('stk-qty'); if (q) q.value = (r.qty != null ? r.qty : 1);
+      var nn = document.getElementById('stk-note'); if (nn) nn.value = r.note || '';
+      var btn = document.getElementById('stk-save-btn'); if (btn) btn.textContent = 'Mettre à jour';
+      var banner = document.getElementById('stk-edit-banner'); if (banner) banner.style.display = 'block';
+      if (ean && ean.scrollIntoView) ean.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }).catch(function (e) { toast('Erreur : ' + (e.message || e), 'err'); });
+  }
+
+  function cancelEdit() {
+    editId = null; editCode = null;
+    var btn = document.getElementById('stk-save-btn'); if (btn) btn.textContent = 'Enregistrer';
+    var banner = document.getElementById('stk-edit-banner'); if (banner) banner.style.display = 'none';
+    reset();
+  }
+
 
   function reset() {
     found = null;
@@ -16545,7 +16630,7 @@ window.StockEntry = (function () {
     renderArchives();
   }
 
-  return { mount: mount, save: save, reset: reset, refresh: refresh, scan: scan, exportPdf: exportPdf, downloadReport: downloadReport, deleteReport: deleteReport };
+  return { mount: mount, save: save, reset: reset, refresh: refresh, scan: scan, exportPdf: exportPdf, downloadReport: downloadReport, deleteReport: deleteReport, edit: edit, remove: remove, cancelEdit: cancelEdit };
 })();
 </script>
 
