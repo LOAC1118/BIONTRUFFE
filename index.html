@@ -1434,6 +1434,12 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
   body.cohor-commercial .cohor-import-only { display:none !important; }
 </style>
 <!-- ═══ COHOR-ROLE-END ═══ -->
+<style id="hide-inactive-nav">
+/* Sections non activees (modules absents) : entrees de menu masquees. */
+[data-sec="radar"], [data-sec="recherche"], [data-sec="tournees"], [data-sec="visites"],
+[data-sec="assortiment"], [data-sec="alertes"], [data-sec="promos"], [data-sec="rgpd"],
+[data-sec="equipe"] { display: none !important; }
+</style>
 </head>
 <body>
 <script>
@@ -1580,7 +1586,7 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
       Dashboard
     </div>
-    <div class="nav-item" onclick="showSection('radar',null,this)">
+    <div class="nav-item" data-sec="radar" onclick="showSection('radar',null,this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><circle cx="8" cy="8" r="2.8"/><path d="M8 8 13 3.5"/></svg>
       Radar
     </div>
@@ -1598,7 +1604,7 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
 
   <div class="nav-section">
     <div class="nav-label">Terrain</div>
-    <div class="nav-item" onclick="showSection('recherche',null,this)">
+    <div class="nav-item" data-sec="recherche" onclick="showSection('recherche',null,this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="m11 11 3.5 3.5"/></svg>
       Recherche produit
     </div>
@@ -1606,11 +1612,11 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4.5 8 1.5l6 3v7L8 14.5 2 11.5z"/><path d="M2 4.5 8 7.5l6-3M8 7.5v7"/></svg>
       Entrée Stock
     </div>
-    <div class="nav-item" onclick="showSection('tournees',null,this)">
+    <div class="nav-item" data-sec="tournees" onclick="showSection('tournees',null,this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5c-2.2 0-4 1.8-4 4 0 3 4 9 4 9s4-6 4-9c0-2.2-1.8-4-4-4z"/><circle cx="8" cy="5.5" r="1.5"/></svg>
       Tournées
     </div>
-    <div class="nav-item" onclick="showSection('visites',null,this)">
+    <div class="nav-item" data-sec="visites" onclick="showSection('visites',null,this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 1.5h7l3 3v10H3z"/><path d="M9.5 1.5v3.5h3.5M5.5 8h5M5.5 11h5"/></svg>
       Visites
     </div>
@@ -1640,11 +1646,11 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="10" rx="2"/><path d="M1 6h14"/><circle cx="5" cy="9.5" r="1"/></svg>
       Frais <span class="nav-badge" id="nb-frais">0</span>
     </div>
-    <div class="nav-item" onclick="showSection('assortiment',null,this)">
+    <div class="nav-item" data-sec="assortiment" onclick="showSection('assortiment',null,this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="1.5" width="5" height="5" rx="1"/><rect x="9.5" y="1.5" width="5" height="5" rx="1"/><rect x="1.5" y="9.5" width="5" height="5" rx="1"/><path d="M9.5 12h5M12 9.5v5"/></svg>
       Assortiment
     </div>
-    <div class="nav-item" onclick="showSection('alertes',null,this)">
+    <div class="nav-item" data-sec="alertes" onclick="showSection('alertes',null,this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5 15 14H1z"/><path d="M8 6.5v3.5"/><circle cx="8" cy="11.8" r=".7" fill="currentColor" stroke="none"/></svg>
       Alertes
     </div>
@@ -1658,7 +1664,7 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 4.5l7 5 7-5"/></svg>
       Mailing
     </div>
-    <div class="nav-item" onclick="showSection('promos',null,this)">
+    <div class="nav-item" data-sec="promos" onclick="showSection('promos',null,this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8.5 1.5H2v6.5l6.5 6.5 6.5-6.5z"/><circle cx="5" cy="5" r="1.1"/></svg>
       Promos
     </div>
@@ -1666,7 +1672,7 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="5.5" width="11" height="8" rx="2"/><path d="M8 5.5V3M6.5 2h3"/><circle cx="6" cy="9.5" r=".9" fill="currentColor" stroke="none"/><circle cx="10" cy="9.5" r=".9" fill="currentColor" stroke="none"/></svg>
       Assistant IA
     </div>
-    <div class="nav-item" onclick="showSection('rgpd',null,this)">
+    <div class="nav-item" data-sec="rgpd" onclick="showSection('rgpd',null,this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5v13M3 4.5h10M5 4.5L3 9h4zM11 4.5L9 9h4z"/></svg>
       Conformité
     </div>
@@ -1674,7 +1680,7 @@ thead th.ts-active { text-decoration:underline; text-underline-offset:3px; }
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4"/></svg>
       Administration
     </div>
-    <div class="nav-item hidden" id="nav-item-equipe" onclick="showSection('equipe',null,this)">
+    <div class="nav-item hidden" id="nav-item-equipe" data-sec="equipe" onclick="showSection('equipe',null,this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2.4"/><path d="M2.5 14c0-3 2.4-5 5.5-5s5.5 2 5.5 5"/><path d="M13.5 6.5l1.2 1.2 2-2"/></svg>
       Équipe
     </div>
@@ -16106,23 +16112,10 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 
-<!-- RADAR CLIENTS — module d'alertes commerciales -->
-<script src="radar.js?v=5"></script>
-<script src="tournees.js?v=4"></script>
-<script src="visites.js?v=2"></script>
-<script src="rgpd.js?v=1"></script>
-<script src="recherche.js?v=4"></script>
-
-<!-- Nouveaux modules : données partagées + objectifs, assortiment, fiche 360, hors-ligne -->
-<script src="crm-data.js?v=2"></script>
-<script src="assortiment.js?v=1"></script>
-<script src="bdc-suggest.js?v=1"></script>
-<script src="alertes.js?v=1"></script>
-<script src="paie-sim.js?v=1"></script>
-<script src="remises-accord.js?v=1"></script>
-<script src="equipe.js?v=13"></script>
-<script src="fiche360.js?v=1"></script>
-<script src="offline-status.js?v=1"></script>
+<!-- Modules externes retires : ils n'existaient qu'en stubs vides (non actives).
+     radar, tournees, visites, rgpd, recherche, crm-data, assortiment, bdc-suggest,
+     alertes, paie-sim, remises-accord, equipe, fiche360, offline-status.
+     Tous les appels a ces modules sont proteges (typeof ... !== 'undefined'). -->
 <script>
   // Badge d'état réseau (en ligne / hors ligne / synchro) — non bloquant.
   document.addEventListener('DOMContentLoaded', function(){
