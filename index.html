@@ -4459,6 +4459,10 @@ var CRM_CONFIG_DEFAULTS = {
   companyContact: 'Pierre BAUDIN - 06 99 19 58 65 - contact@biontruffe.fr',
   companyLegal: 'ERIDAN BNT SARL au capital de 10 000 EUR - SIRET 917 968 448 00014 - APE 4639B - TVA FR 84 917968448'
 };
+function bdcRecipientList() {
+  var raw = (typeof crmCfg === 'function' ? crmCfg('bdcRecipient') : '') || '';
+  return raw.split(/[;,\n]+/).map(function (s) { return s.trim(); }).filter(Boolean);
+}
 function crmCfg(k) {
   try {
     if (window.CRM_CONFIG && window.CRM_CONFIG[k] != null && window.CRM_CONFIG[k] !== '') return window.CRM_CONFIG[k];
@@ -9134,7 +9138,7 @@ function bdcHistResend(id) {
   var body = lines.join('\n');
 
   var subject = (crmCfg('subjectPrefix')+' — ') + (cmd.clientNom||'') + ' — ' + date;
-  var mailtoUrl = 'mailto:' + encodeURIComponent(crmCfg('bdcRecipient')) + '?subject=' + encodeURIComponent(subject);
+  var mailtoUrl = 'mailto:' + bdcRecipientList().map(encodeURIComponent).join(',') + '?subject=' + encodeURIComponent(subject);
 
   // Ouvrir le client mail de façon synchrone
   var a = document.createElement('a'); a.href = mailtoUrl; a.style.display='none';
@@ -9934,7 +9938,7 @@ function bdcOpenOutlook() {
   // être très long pour les grosses commandes, est copié dans le presse-papiers
   // séparément pour éviter de dépasser la limite de longueur des liens mailto:
   // (environ 2000 caractères sur Windows, parfois bien moins selon le client mail).
-  var mailtoUrl = 'mailto:' + encodeURIComponent(crmCfg('bdcRecipient'))
+  var mailtoUrl = 'mailto:' + bdcRecipientList().map(encodeURIComponent).join(',')
     + '?subject=' + encodeURIComponent(subject);
 
   // Ouvrir eM Client de façon SYNCHRONE (dans le geste utilisateur direct)
@@ -10016,7 +10020,9 @@ function bdcSendOrder() {
   // Envoi email via Web3Forms
   payload.access_key = crmCfg('web3formsKey');
   payload.from_name  = crmCfg('senderName');
-  payload.email      = crmCfg('bdcRecipient');
+  var _bdcRcpts = bdcRecipientList();
+  payload.email      = _bdcRcpts[0] || crmCfg('bdcRecipient');
+  if (_bdcRcpts.length > 1) payload.cc = _bdcRcpts.slice(1).join(';'); // CC = fonctionnalite Web3Forms Pro
   if (!payload.access_key) {
     bdcShowAlert('Aucune clé d\'envoi configurée. Allez dans Administration > Envoi des bons de commande pour la renseigner.', 'err');
     btn.disabled = false; spinner.style.display = 'none'; s2('bdc-send-label', 'Envoyer'); return;
@@ -16984,8 +16990,9 @@ window.AdminPanel = (function () {
     return '<div class="adm-card">'
       + '<h3>Envoi des bons de commande</h3>'
       + '<div class="sub">Ces réglages déterminent où arrivent les bons de commande envoyés depuis le CRM.</div>'
-      + '<label class="adm-lb">Adresse destinataire des commandes</label>'
-      + '<input id="adm-recipient" class="adm-in" placeholder="contact@biontruffe.fr">'
+      + '<label class="adm-lb">Adresse(s) destinataire(s) des commandes</label>'
+      + '<input id="adm-recipient" class="adm-in" placeholder="contact@biontruffe.fr ; autre@exemple.fr">'
+      + '<div style="font-size:.72rem;color:var(--g500,#8a8f84);margin-top:.25rem;">Pour plusieurs destinataires, séparez-les par un point-virgule ( ; ). L\'option « ouvrir dans le client mail » les enverra tous. L\'envoi direct met le 1er en destinataire et les suivants en copie (copie multiple = Web3Forms Pro).</div>'
       + '<label class="adm-lb">Clé d\'envoi Web3Forms</label>'
       + '<input id="adm-key" class="adm-in" placeholder="Collez ici votre access key Web3Forms">'
       + '<label class="adm-lb">Nom de l\'expéditeur</label>'
@@ -17055,7 +17062,7 @@ window.AdminPanel = (function () {
   function emailTest() {
     if (!isAdminUser()) return;
     var key  = (document.getElementById('adm-key') || {}).value || crmCfg('web3formsKey');
-    var to   = (document.getElementById('adm-recipient') || {}).value || crmCfg('bdcRecipient');
+    var to   = (((document.getElementById('adm-recipient') || {}).value || crmCfg('bdcRecipient') || '').split(/[;,\n]+/)[0] || '').trim();
     var from = (document.getElementById('adm-sender') || {}).value || crmCfg('senderName');
     if (!key) { emailStatus('❌ Renseignez d\'abord la clé Web3Forms, puis réessayez.', 'err'); return; }
     emailStatus('✉️ Envoi d\'un email de test à <b>' + esc(to) + '</b>...', 'info');
