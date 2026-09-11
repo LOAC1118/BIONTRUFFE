@@ -16273,8 +16273,16 @@ window.StockEntry = (function () {
     +       '<div><label class="stk-lb">N° de lot</label><input id="stk-lot" class="stk-in" placeholder="Lot" autocomplete="off"></div>'
     +       '<div><label class="stk-lb">DDM maximum</label><input id="stk-ddm" class="stk-in" type="date"></div>'
     +     '</div>'
-    +     '<label class="stk-lb">Prix d\'achat unitaire HT (€)</label>'
-    +     '<input id="stk-prix" class="stk-in" type="number" min="0" step="0.01" placeholder="0.00">'
+    +     '<div style="margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border-med,#e6e9e0);font-size:.72rem;font-weight:700;color:var(--g700,#3f453b);text-transform:uppercase;letter-spacing:.02em;">Calcul du prix de vente</div>'
+    +     '<label class="stk-lb">Prix d\'achat unitaire HT (PA)</label>'
+    +     '<input id="stk-prix" class="stk-in" type="number" min="0" step="0.01" placeholder="0.00 €" oninput="StockEntry.calc()">'
+    +     '<label class="stk-lb">Frais</label>'
+    +     '<div style="display:flex;gap:.4rem;"><input id="stk-frais" class="stk-in" type="number" min="0" step="0.01" placeholder="0" style="flex:1;" oninput="StockEntry.calc()"><select id="stk-frais-u" class="stk-in" style="width:66px;flex:0 0 auto;" onchange="StockEntry.calc()"><option value="eur">€</option><option value="pct">%</option></select></div>'
+    +     '<label class="stk-lb">Marge</label>'
+    +     '<div style="display:flex;gap:.4rem;"><input id="stk-marge" class="stk-in" type="number" min="0" step="0.01" placeholder="0" style="flex:1;" oninput="StockEntry.calc()"><select id="stk-marge-u" class="stk-in" style="width:66px;flex:0 0 auto;" onchange="StockEntry.calc()"><option value="pct">%</option><option value="eur">€</option></select></div>'
+    +     '<label class="stk-lb">Commission commercial</label>'
+    +     '<div style="display:flex;gap:.4rem;"><input id="stk-comm" class="stk-in" type="number" min="0" step="0.01" placeholder="0" style="flex:1;" oninput="StockEntry.calc()"><select id="stk-comm-u" class="stk-in" style="width:66px;flex:0 0 auto;" onchange="StockEntry.calc()"><option value="pct">%</option><option value="eur">€</option></select></div>'
+    +     '<div id="stk-price-calc" style="margin-top:.6rem;font-size:.78rem;"></div>'
     +     '<div id="stk-edit-banner" style="display:none;margin-top:.8rem;padding:.5rem .7rem;border-radius:8px;background:#eef4ff;border:1px solid #cfe0ff;font-size:.78rem;color:#2b5ba8;">✏️ Modification d\'un mouvement en cours. <a href="#" onclick="StockEntry.cancelEdit();return false;" style="color:#2b5ba8;font-weight:600;">Annuler</a></div>'
     +     '<div class="stk-btns">'
     +       '<button class="stk-btn g" onclick="StockEntry.reset()">Réinitialiser</button>'
@@ -16382,7 +16390,8 @@ window.StockEntry = (function () {
         var extra = [];
         if (r.lot) extra.push('Lot ' + esc(r.lot));
         if (r.ddm) extra.push('DDM ' + esc(fmtDMY(r.ddm)));
-        if (r.prixAchat != null && r.prixAchat !== '') extra.push(esc(String(r.prixAchat)) + ' €');
+        if (r.prixAchat != null && r.prixAchat !== '') extra.push('PA ' + esc(String(r.prixAchat)) + ' €');
+        if (r.pvTotal != null && r.pvTotal !== '') extra.push('PV total ' + (r.pvTotal).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €');
         var extraHtml = extra.length ? '<div style="font-size:.72rem;color:var(--g500);margin-top:1px;">' + extra.join(' · ') + '</div>' : '';
         return '<tr><td>' + fmtTime(r.at) + '</td><td>' + esc(r.libelle || '') + extraHtml + '</td>'
           + '<td style="color:var(--g500);">' + esc(r.code || '') + '</td>'
@@ -16414,13 +16423,13 @@ window.StockEntry = (function () {
     var note = (document.getElementById('stk-note') || {}).value || '';
     var lot = (document.getElementById('stk-lot') || {}).value || '';
     var ddm = (document.getElementById('stk-ddm') || {}).value || '';
-    var prixRaw = (document.getElementById('stk-prix') || {}).value || '';
-    var prixAchat = (prixRaw === '' ? null : parseFloat(prixRaw));
+    var pricing = computePricing();
+    var prixAchat = pricing.pa || null;
     var code = found.code;
 
     if (editId) {
       var oldCode = editCode;
-      bcol('stock_entries').doc(editId).update({ code: code, libelle: found.libelle || '', ean: found.ean || '', type: type, qty: qty, note: note, lot: lot, ddm: ddm, prixAchat: prixAchat }).then(function () {
+      bcol('stock_entries').doc(editId).update({ code: code, libelle: found.libelle || '', ean: found.ean || '', type: type, qty: qty, note: note, lot: lot, ddm: ddm, prixAchat: prixAchat, frais: pricing.frais, fraisU: pricing.fraisU, marge: pricing.marge, margeU: pricing.margeU, commission: pricing.commission, commissionU: pricing.commissionU, pr: pricing.pr, pvTheorique: pricing.pv, pvTotal: pricing.pvTotal }).then(function () {
         toast('✅ Mouvement modifié');
         editId = null; editCode = null;
         var b1 = document.getElementById('stk-save-btn'); if (b1) b1.textContent = 'Enregistrer';
@@ -16447,6 +16456,9 @@ window.StockEntry = (function () {
       code: code, libelle: found.libelle || '', ean: found.ean || '',
       type: type, qty: qty, stockBefore: before, stockAfter: after, note: note,
       lot: lot, ddm: ddm, prixAchat: prixAchat,
+      frais: pricing.frais, fraisU: pricing.fraisU, marge: pricing.marge, margeU: pricing.margeU,
+      commission: pricing.commission, commissionU: pricing.commissionU,
+      pr: pricing.pr, pvTheorique: pricing.pv, pvTotal: pricing.pvTotal,
       byEmail: (typeof currentUser !== 'undefined' && currentUser) ? (currentUser.email || '') : '',
       at: (window.firebase && firebase.firestore) ? firebase.firestore.FieldValue.serverTimestamp() : Date.now()
     };
@@ -16510,6 +16522,13 @@ window.StockEntry = (function () {
       var lo = document.getElementById('stk-lot'); if (lo) lo.value = r.lot || '';
       var dd = document.getElementById('stk-ddm'); if (dd) dd.value = r.ddm || '';
       var px = document.getElementById('stk-prix'); if (px) px.value = (r.prixAchat != null ? r.prixAchat : '');
+      var fr = document.getElementById('stk-frais'); if (fr) fr.value = (r.frais != null ? r.frais : '');
+      var fru = document.getElementById('stk-frais-u'); if (fru) fru.value = r.fraisU || 'eur';
+      var mg = document.getElementById('stk-marge'); if (mg) mg.value = (r.marge != null ? r.marge : '');
+      var mgu = document.getElementById('stk-marge-u'); if (mgu) mgu.value = r.margeU || 'pct';
+      var co = document.getElementById('stk-comm'); if (co) co.value = (r.commission != null ? r.commission : '');
+      var cou = document.getElementById('stk-comm-u'); if (cou) cou.value = r.commissionU || 'pct';
+      try { calc(); } catch(e){}
       var btn = document.getElementById('stk-save-btn'); if (btn) btn.textContent = 'Mettre à jour';
       var banner = document.getElementById('stk-edit-banner'); if (banner) banner.style.display = 'block';
       if (ean && ean.scrollIntoView) ean.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -16524,9 +16543,43 @@ window.StockEntry = (function () {
   }
 
 
+  function computePricing() {
+    var num = function (id) { var v = parseFloat((document.getElementById(id) || {}).value); return isNaN(v) ? 0 : v; };
+    var unit = function (id, def) { return (document.getElementById(id) || {}).value || def; };
+    var pa = num('stk-prix');
+    var f = num('stk-frais'), fu = unit('stk-frais-u', 'eur');
+    var m = num('stk-marge'), mu = unit('stk-marge-u', 'pct');
+    var cm = num('stk-comm'), cmu = unit('stk-comm-u', 'pct');
+    var fraisAmt = fu === 'pct' ? pa * f / 100 : f;
+    var pr = pa + fraisAmt;
+    var margeAmt = mu === 'pct' ? pr * m / 100 : m;
+    var pv = pr + margeAmt;
+    var commAmt = cmu === 'pct' ? pv * cm / 100 : cm;
+    var pvTotal = pv + commAmt;
+    return { pa: pa, frais: f, fraisU: fu, fraisAmt: fraisAmt, pr: pr, marge: m, margeU: mu, margeAmt: margeAmt, pv: pv, commission: cm, commissionU: cmu, commAmt: commAmt, pvTotal: pvTotal };
+  }
+
+  function calc() {
+    var host = document.getElementById('stk-price-calc'); if (!host) return;
+    var p = computePricing();
+    if (!p.pa && !p.frais && !p.marge && !p.commission) { host.innerHTML = ''; return; }
+    var e = function (v) { return (v || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'; };
+    host.innerHTML =
+      '<div style="background:var(--bg,#fbfbf9);border:1px solid var(--border-med,#e6e9e0);border-radius:9px;padding:.55rem .7rem;line-height:1.7;">'
+      + 'PA : <b>' + e(p.pa) + '</b><br>'
+      + '+ Frais : ' + e(p.fraisAmt) + (p.fraisU === 'pct' ? ' (' + p.frais + '%)' : '') + ' &rarr; PR : <b>' + e(p.pr) + '</b><br>'
+      + '+ Marge : ' + e(p.margeAmt) + (p.margeU === 'pct' ? ' (' + p.marge + '%)' : '') + ' &rarr; PV th&eacute;orique : <b>' + e(p.pv) + '</b><br>'
+      + '+ Commission : ' + e(p.commAmt) + (p.commissionU === 'pct' ? ' (' + p.commission + '%)' : '') + ' &rarr; <b style="color:var(--blue-p700,#FF4D1C);">PV TOTAL : ' + e(p.pvTotal) + '</b>'
+      + '</div>';
+  }
+
   function reset() {
     found = null;
-    ['stk-ean', 'stk-note', 'stk-lot', 'stk-ddm', 'stk-prix'].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
+    ['stk-ean', 'stk-note', 'stk-lot', 'stk-ddm', 'stk-prix', 'stk-frais', 'stk-marge', 'stk-comm'].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
+    var _fu = document.getElementById('stk-frais-u'); if (_fu) _fu.value = 'eur';
+    var _mu = document.getElementById('stk-marge-u'); if (_mu) _mu.value = 'pct';
+    var _cu = document.getElementById('stk-comm-u'); if (_cu) _cu.value = 'pct';
+    var _pc = document.getElementById('stk-price-calc'); if (_pc) _pc.innerHTML = '';
     var q = document.getElementById('stk-qty'); if (q) q.value = '1';
     var t = document.getElementById('stk-type'); if (t) t.value = 'in';
     var box = document.getElementById('stk-hit'); if (box) box.innerHTML = '';
@@ -16706,7 +16759,7 @@ window.StockEntry = (function () {
     try { if (typeof stockRebuildFromHistory === 'function') stockRebuildFromHistory(function(){ renderTotals(); }); } catch(e){}
   }
 
-  return { mount: mount, save: save, reset: reset, refresh: refresh, scan: scan, exportPdf: exportPdf, downloadReport: downloadReport, deleteReport: deleteReport, edit: edit, remove: remove, cancelEdit: cancelEdit, filter: filter, filterClear: filterClear };
+  return { mount: mount, save: save, reset: reset, refresh: refresh, scan: scan, exportPdf: exportPdf, downloadReport: downloadReport, deleteReport: deleteReport, edit: edit, remove: remove, cancelEdit: cancelEdit, filter: filter, filterClear: filterClear, calc: calc };
 })();
 </script>
 
