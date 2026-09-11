@@ -5026,6 +5026,7 @@ async function showApp() {
     try { if (typeof nfdSyncFromFirestore === 'function') nfdSyncFromFirestore(); } catch(e) { console.warn('nfdSync err:', e); }
     try { if (typeof dashCaLoadFromFirestore === 'function') dashCaLoadFromFirestore(); } catch(e) { console.warn('dashCaLoad err:', e); }
     try { if (typeof stockLoadCloud === 'function') stockLoadCloud(); } catch(e) { console.warn('stockLoadCloud err:', e); }
+    try { if (typeof stockRebuildFromHistory === 'function') setTimeout(stockRebuildFromHistory, 900); } catch(e) {}
   }, 500);
 }
 
@@ -5200,7 +5201,7 @@ function showSection(name, tabEl, sideEl) {
   if (name==='equipe') { setTimeout(function(){ if (window.Equipe) Equipe.mount('#equipe-host'); }, 80); }
   if (name !== 'tournees' && typeof Tournees !== 'undefined') Tournees.unmount();
   if (name==='frais') { if (typeof refreshFraisStats === 'function') { try{refreshFraisStats();}catch(e){} } if (typeof nfdRender === 'function') nfdRender(); }
-  if (name==='bdc') { if (!bdcInitDone) { buildTable(); bdcInitDone=true; } }
+  if (name==='bdc') { if (!bdcInitDone) { buildTable(); bdcInitDone=true; } if (typeof stockRebuildFromHistory === 'function') stockRebuildFromHistory(); }
   if (name==='commissions') { setTimeout(function(){ if (typeof commInit === 'function') commInit(); if (window.PaieSim) PaieSim.mount('#paie-sim-host'); }, 80); }
   if (name==='promos') { setTimeout(function(){ if (typeof promoInit === 'function') promoInit(); }, 80); }
   if (name==='top100') { setTimeout(function(){ if (typeof top100Init === 'function') top100Init(); }, 80); }
@@ -8214,6 +8215,32 @@ function loadStockMapFromCache() {
     var savedStockMap = localStorage.getItem(BDC_STOCK_KEY());
     if (savedStockMap) bdcStockMap = JSON.parse(savedStockMap);
   } catch(e) { console.warn('[Stock] lecture cache impossible', e); }
+}
+
+function stockRebuildFromHistory(cb) {
+  if (typeof db === 'undefined' || !db || typeof bcol !== 'function') { if (cb) cb(); return; }
+  bcol('stock_entries').get().then(function (snap) {
+    var byCode = {};
+    snap.forEach(function (d) {
+      var r = d.data() || {}; if (!r.code) return;
+      var ms = 0; try { ms = r.at && r.at.toDate ? r.at.toDate().getTime() : (r.at ? new Date(r.at).getTime() : 0); } catch (e) {}
+      (byCode[r.code] = byCode[r.code] || []).push({ ms: ms, type: r.type, qty: r.qty || 0, stockBefore: (r.stockBefore == null ? null : r.stockBefore) });
+    });
+    Object.keys(byCode).forEach(function (code) {
+      var movs = byCode[code].sort(function (a, b) { return a.ms - b.ms; });
+      var running = (movs[0].stockBefore != null ? movs[0].stockBefore : 0);
+      movs.forEach(function (m) {
+        if (m.type === 'in') running += m.qty;
+        else if (m.type === 'out') running = Math.max(0, running - m.qty);
+        else running = m.qty;
+      });
+      bdcStockMap[code] = running;
+    });
+    try { localStorage.setItem(BDC_STOCK_KEY(), JSON.stringify(bdcStockMap)); } catch (e) {}
+    try { if (typeof buildTable === 'function' && bdcInitDone) buildTable(); } catch (e) {}
+    console.log('[Stock] Reconstruit depuis historique : ' + Object.keys(byCode).length + ' produit(s), ' + snap.size + ' mouvement(s).');
+    if (cb) cb();
+  }).catch(function (e) { console.warn('[Stock] rebuild', e); if (cb) cb(); });
 }
 
 function bdcActivate() {
@@ -16628,6 +16655,7 @@ window.StockEntry = (function () {
     renderTotals();
     renderHistory();
     renderArchives();
+    try { if (typeof stockRebuildFromHistory === 'function') stockRebuildFromHistory(function(){ renderTotals(); }); } catch(e){}
   }
 
   return { mount: mount, save: save, reset: reset, refresh: refresh, scan: scan, exportPdf: exportPdf, downloadReport: downloadReport, deleteReport: deleteReport, edit: edit, remove: remove, cancelEdit: cancelEdit };
