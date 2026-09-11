@@ -16399,6 +16399,7 @@ window.StockEntry = (function () {
           + '<td style="text-align:right;font-weight:700;color:' + qcol + '">' + q + '</td>'
           + '<td style="text-align:right;color:var(--g600);">' + (r.stockAfter == null ? '' : r.stockAfter) + '</td>'
           + '<td style="text-align:right;white-space:nowrap;">'
+          +   '<button title="Télécharger le PDF" onclick="StockEntry.pdf(\'' + r._id + '\')" style="border:none;background:none;cursor:pointer;font-size:.85rem;padding:2px 4px;">📄</button>'
           +   '<button title="Modifier" onclick="StockEntry.edit(\'' + r._id + '\')" style="border:none;background:none;cursor:pointer;font-size:.85rem;padding:2px 4px;">✏️</button>'
           +   '<button title="Supprimer" onclick="StockEntry.remove(\'' + r._id + '\',\'' + esc(r.code || '') + '\')" style="border:none;background:none;cursor:pointer;font-size:.85rem;padding:2px 4px;color:#b02020;">🗑</button>'
           + '</td></tr>';
@@ -16571,6 +16572,107 @@ window.StockEntry = (function () {
       + '+ Marge : ' + e(p.margeAmt) + (p.margeU === 'pct' ? ' (' + p.marge + '%)' : '') + ' &rarr; PV th&eacute;orique : <b>' + e(p.pv) + '</b><br>'
       + '+ Commission : ' + e(p.commAmt) + (p.commissionU === 'pct' ? ' (' + p.commission + '%)' : '') + ' &rarr; <b style="color:var(--blue-p700,#FF4D1C);">PV TOTAL : ' + e(p.pvTotal) + '</b>'
       + '</div>';
+  }
+
+  function pdf(id) {
+    var rec = null;
+    for (var i = 0; i < histCache.length; i++) { if (histCache[i]._id === id) { rec = histCache[i]; break; } }
+    if (rec) { buildEntryPdf(rec); return; }
+    if (typeof bcol === 'function' && typeof db !== 'undefined' && db) {
+      bcol('stock_entries').doc(id).get().then(function (d) {
+        if (!d.exists) { toast('Mouvement introuvable', 'err'); return; }
+        var r = d.data() || {}; r._id = d.id; buildEntryPdf(r);
+      }).catch(function (e) { toast('Erreur : ' + (e.message || e), 'err'); });
+    }
+  }
+
+  function buildEntryPdf(r) {
+    if (typeof withJsPdf !== 'function') { toast('Génération PDF indisponible.', 'err'); return; }
+    withJsPdf(function () {
+      try {
+        var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+        var HDR = [255, 77, 28];
+        var money = function (v) { return (v == null || v === '') ? '—' : (Number(v) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'; };
+        var uLabel = function (u) { return u === 'pct' ? '%' : '€'; };
+        var typeLbl = r.type === 'in' ? 'Réception (+)' : r.type === 'out' ? 'Sortie (−)' : 'Inventaire (=)';
+        var d = null; try { d = r.at && r.at.toDate ? r.at.toDate() : (r.at ? new Date(r.at) : null); } catch (e) {}
+        var dateStr = d ? (d.toLocaleDateString('fr-FR') + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2)) : '—';
+        var ddmStr = r.ddm ? (function () { var p = String(r.ddm).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : r.ddm; })() : '—';
+        var pcb = 0; try { var pr0 = (typeof PRODUCTS !== 'undefined' ? PRODUCTS : []).find(function (x) { return x.code === r.code; }); if (pr0) pcb = pr0.pcb || 0; } catch (e) {}
+        var colisStr = (pcb && r.qty != null) ? (' (' + Math.floor(r.qty / pcb) + ' colis)') : '';
+
+        // En-tête
+        doc.setTextColor(20, 20, 20); doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+        doc.text(crmCfg('companyName'), 14, 17);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(90, 90, 90);
+        doc.text(crmCfg('companyAddr'), 14, 23);
+        doc.setTextColor(HDR[0], HDR[1], HDR[2]); doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+        doc.text("FICHE D'ENTRÉE EN STOCK", 196, 17, { align: 'right' });
+        doc.setTextColor(60, 60, 60); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+        doc.text('Le ' + dateStr, 196, 24, { align: 'right' });
+        if (r.byEmail) doc.text('Par ' + r.byEmail, 196, 29, { align: 'right' });
+
+        // Produit + mouvement
+        doc.autoTable({
+          startY: 38,
+          head: [['Produit', 'Détail']],
+          body: [
+            ['Désignation', r.libelle || '—'],
+            ['Code', r.code || '—'],
+            ['EAN', r.ean || '—'],
+            ['Type de mouvement', typeLbl],
+            ['Quantité (unités)', (r.qty != null ? String(r.qty) : '—') + colisStr],
+            ['Stock avant → après', (r.stockBefore == null ? '—' : r.stockBefore) + '  →  ' + (r.stockAfter == null ? '—' : r.stockAfter)],
+            ['N° de lot', r.lot || '—'],
+            ['DDM maximum', ddmStr]
+          ],
+          theme: 'grid',
+          styles: { fontSize: 9, cellPadding: 2.2, textColor: [40, 40, 40] },
+          headStyles: { fillColor: HDR, textColor: 255, fontStyle: 'bold' },
+          columnStyles: { 0: { cellWidth: 60, fontStyle: 'bold', textColor: [90, 90, 90] }, 1: { cellWidth: 'auto' } },
+          margin: { left: 14, right: 14 }
+        });
+
+        // Prix
+        doc.autoTable({
+          startY: doc.lastAutoTable.finalY + 8,
+          head: [['Calcul du prix de vente', 'Montant']],
+          body: [
+            ["Prix d'achat (PA)", money(r.prixAchat)],
+            ['+ Frais' + (r.frais != null ? ' (' + r.frais + ' ' + uLabel(r.fraisU) + ')' : ''), ''],
+            ['= Prix de revient (PR)', money(r.pr)],
+            ['+ Marge' + (r.marge != null ? ' (' + r.marge + ' ' + uLabel(r.margeU) + ')' : ''), ''],
+            ['= PV théorique', money(r.pvTheorique)],
+            ['+ Commission' + (r.commission != null ? ' (' + r.commission + ' ' + uLabel(r.commissionU) + ')' : ''), ''],
+            ['= PV TOTAL', money(r.pvTotal)]
+          ],
+          theme: 'grid',
+          styles: { fontSize: 9, cellPadding: 2.2, textColor: [40, 40, 40] },
+          headStyles: { fillColor: HDR, textColor: 255, fontStyle: 'bold' },
+          columnStyles: { 0: { cellWidth: 120 }, 1: { cellWidth: 'auto', halign: 'right', fontStyle: 'bold' } },
+          didParseCell: function (data) {
+            if (data.section === 'body' && data.row.index === 6) { data.cell.styles.fillColor = [255, 240, 235]; data.cell.styles.textColor = HDR; data.cell.styles.fontStyle = 'bold'; }
+          },
+          margin: { left: 14, right: 14 }
+        });
+
+        if (r.note) {
+          var yN = doc.lastAutoTable.finalY + 8;
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(90, 90, 90);
+          doc.text('Note :', 14, yN);
+          doc.setFont('helvetica', 'normal'); doc.setTextColor(40, 40, 40);
+          doc.text(doc.splitTextToSize(String(r.note), 180), 14, yN + 5);
+        }
+
+        var pageH = doc.internal.pageSize.height;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(140, 140, 140);
+        doc.text(crmCfg('companyLegal'), 14, pageH - 9, { maxWidth: 182 });
+
+        var fname = 'Entree_stock_' + (r.code || 'produit') + '_' + (d ? d.toISOString().slice(0, 10) : 'date') + (r.lot ? '_lot' + String(r.lot).replace(/[^a-zA-Z0-9]/g, '') : '') + '.pdf';
+        doc.save(fname);
+        toast('📄 Fiche d\'entrée générée', 'ok');
+      } catch (e) { console.error('[Entrée PDF]', e); toast('Erreur PDF : ' + (e.message || e), 'err'); }
+    });
   }
 
   function reset() {
@@ -16759,7 +16861,7 @@ window.StockEntry = (function () {
     try { if (typeof stockRebuildFromHistory === 'function') stockRebuildFromHistory(function(){ renderTotals(); }); } catch(e){}
   }
 
-  return { mount: mount, save: save, reset: reset, refresh: refresh, scan: scan, exportPdf: exportPdf, downloadReport: downloadReport, deleteReport: deleteReport, edit: edit, remove: remove, cancelEdit: cancelEdit, filter: filter, filterClear: filterClear, calc: calc };
+  return { mount: mount, save: save, reset: reset, refresh: refresh, scan: scan, exportPdf: exportPdf, downloadReport: downloadReport, deleteReport: deleteReport, edit: edit, remove: remove, cancelEdit: cancelEdit, filter: filter, filterClear: filterClear, calc: calc, pdf: pdf };
 })();
 </script>
 
